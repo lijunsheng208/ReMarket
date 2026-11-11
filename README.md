@@ -28,5 +28,11 @@ make dev
 
 `make build` 构建工程，`make check` 执行检查，`make fmt` 格式化 Go 代码。
 
-当前为工程初始化阶段，后端服务、接口和部署配置尚未实现。
+当前已建立工程骨架及本地基础设施配置，后端业务服务和接口尚未实现。
 Go Module 暂定为 `remarket/backend`，确定远程仓库地址后可统一调整。
+
+## 本地基础设施
+
+首次复制 `.env.example` 为 `.env`（已有文件不要覆盖），执行 `make infra-config` 校验，`make infra-up` 启动五个组件并等待健康，`make infra-ps` 查看状态。
+
+`make infra-down` 停止容器并保留数据卷，`make infra-logs` 查看日志。详见 [基础设施文档](docs/architecture/local-infrastructure.md)。

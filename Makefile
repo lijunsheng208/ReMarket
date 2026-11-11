@@ -6,6 +6,7 @@ help:
 	@echo "build    Build backend and frontend"
 	@echo "check    Check backend and frontend"
 	@echo "fmt      Format Go source files"
+	@echo "infra-up / infra-down / infra-ps / infra-logs / infra-config  Manage local infrastructure"
 
 install:
 	npm --prefix frontend ci
@@ -24,3 +25,17 @@ check:
 
 fmt:
 	cd backend && go fmt ./...
+
+# Always resolve .env from the repository root.
+COMPOSE = docker compose --env-file .env -f deployments/docker-compose.yml
+.PHONY: infra-config infra-up infra-down infra-ps infra-logs
+infra-config:
+	$(COMPOSE) config --quiet
+infra-up:
+	$(COMPOSE) up -d --wait --wait-timeout 240
+infra-down:
+	$(COMPOSE) down
+infra-ps:
+	$(COMPOSE) ps
+infra-logs:
+	$(COMPOSE) logs --tail=100 -f
