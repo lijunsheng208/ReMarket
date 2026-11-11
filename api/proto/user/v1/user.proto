@@ -1,0 +1,26 @@
+syntax = "proto3";
+package remarket.user.v1;
+option go_package = "remarket/backend/gen/user/v1;userv1";
+import "google/protobuf/timestamp.proto";
+service UserService {
+  rpc Register(RegisterRequest) returns (UserResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc GetUser(GetUserRequest) returns (UserResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UserResponse);
+}
+message User {
+  int64 id = 1;
+  string username = 2;
+  string nickname = 3;
+  string avatar_object_key = 4;
+  string role = 5;
+  string status = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+message RegisterRequest { string username = 1; string password = 2; string nickname = 3; }
+message LoginRequest { string username = 1; string password = 2; }
+message LoginResponse { string access_token = 1; google.protobuf.Timestamp expires_at = 2; User user = 3; }
+message GetUserRequest { int64 id = 1; }
+// User identity comes from verified context, never a client-supplied user ID.
+message UpdateProfileRequest { optional string nickname = 1; optional string avatar_object_key = 2; }
+message UserResponse { User user = 1; }
