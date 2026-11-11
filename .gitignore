@@ -1,0 +1,21 @@
+# Frontend
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Build and test artifacts
+/bin/
+/coverage/
+*.test
+*.out
+
+# Editor and OS
+.DS_Store
+.idea/
+.vscode/
+*.log
