@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	userv1 "remarket/backend/gen/user/v1"
 	"remarket/backend/internal/gateway"
+	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/grpcx"
 	"syscall"
 	"time"
@@ -45,13 +46,22 @@ func run() error {
 			return errors.New("Gateway RPC 超时必须大于零且不超过 30 秒")
 		}
 	}
+	// 与 User Service 使用相同 JWT 配置，但双方独立验证签名及声明。
+	jwtConfig, err := auth.JWTConfigFromEnv()
+	if err != nil {
+		return err
+	}
+	tokens, err := auth.NewJWTManager(jwtConfig)
+	if err != nil {
+		return err
+	}
 	conn, err := grpcx.Dial(target, nil, timeout)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 	gin.SetMode(gin.ReleaseMode)
-	server := &http.Server{Addr: address, Handler: gateway.NewRouter(userv1.NewUserServiceClient(conn), timeout), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
+	server := &http.Server{Addr: address, Handler: gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
