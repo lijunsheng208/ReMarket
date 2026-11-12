@@ -1,6 +1,6 @@
 # Order Service 与 gRPC（第 1 批）
 
-已实现 Order Proto、生成代码、独立进程入口及 Handler → Service → Repository 查询链路。GetOrder、ListOrders 接入独立 JWT 验签和 Order 自有数据库；CreateOrder 已在后续批次实现幂等 PENDING 意图落库（尚无预占执行器）；CancelOrder、ConfirmOrder 仍明确返回 Unimplemented。Product ReserveProduct 已在后续批次补齐，Order 尚未接入，不宣称已实现订单创建或跨服务编排。
+已实现 Order Proto、生成代码、独立进程入口及 Handler → Service → Repository 查询链路。GetOrder、ListOrders 接入独立 JWT 验签和 Order 自有数据库；CreateOrder 已在后续批次实现幂等 PENDING 意图落库（已有定时预占恢复执行器）；CancelOrder、ConfirmOrder 仍明确返回 Unimplemented。Product ReserveProduct 已在后续批次补齐，Order 尚未接入，不宣称已实现订单创建或跨服务编排。
 
 ## 查询契约
 
@@ -33,3 +33,5 @@ ListOrders 必须选择 BUYER / SELLER，限定认证用户。page 默认 1、pa
 先补齐 Product ReserveProduct 和 Order 预占请求快照持久化，再实现创建与 Product RPC 编排；随后实现取消/双方确认、幂等恢复、Gateway 及联调。各批次完成后停止供 review，不将 Unimplemented 方法计入功能完成。
 
 最新幂等持久化范围与未完成项见 [幂等与补偿](order-idempotency.md)。启动前还需应用 Order 000002 快照迁移；第 1 批历史验收的创建 Unimplemented 只适用于未注入 Creator 的查询测试。
+
+最新第 2 批已接入 RESERVE 领取、结果查询和重试，详见幂等与补偿文档；当前 Order 启动需要配置与 Product 相同的独立 ORDER_PRODUCT_SERVICE_TOKEN。取消、确认、过期及 HTTP 订单路由仍未实现。

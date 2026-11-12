@@ -41,3 +41,20 @@ func NewCreated(order model.Order, now time.Time) (*model.OutboxEvent, error) {
 	}
 	return &model.OutboxEvent{EventID: id, EventType: "order.created.v1", AggregateType: "order", AggregateID: order.ID, AggregateVersion: order.AggregateVersion, SchemaVersion: 1, Payload: payload, OccurredAt: now, PublishStatus: model.PublishPending, NextAttemptAt: now, CreatedAt: now}, nil
 }
+
+// NewStateChanged 构造预占成功或明确失败事件，不改变订单和操作状态。
+func NewStateChanged(order model.Order, now time.Time) (*model.OutboxEvent, error) {
+	event, err := NewCreated(order, now)
+	if err != nil {
+		return nil, err
+	}
+	switch order.Status {
+	case model.StatusReserved:
+		event.EventType = "order.reserved.v1"
+	case model.StatusFailed:
+		event.EventType = "order.failed.v1"
+	default:
+		return nil, fmt.Errorf("不支持的订单事件状态")
+	}
+	return event, nil
+}

@@ -5,7 +5,7 @@ import "google/protobuf/timestamp.proto";
 
 // 所有订单方法要求用户 JWT，由 Order 独立验签；不接受客户端传入参与人身份。
 service OrderService {
-  // 创建返回持久化的 PENDING 意图，尚无预占执行器；取消和确认仍为 Unimplemented。
+  // 创建返回持久化的 PENDING 意图，由后台预占执行器推进；取消和确认仍为 Unimplemented。
   rpc CreateOrder(CreateOrderRequest) returns (OrderResponse);
   rpc GetOrder(GetOrderRequest) returns (OrderResponse);
   rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
