@@ -11,6 +11,7 @@ import (
 )
 
 type ReservationRepository interface {
+	WithReserve(context.Context, int64, int64, func(*model.Product, *model.ProductReservation, time.Time) (*model.ProductReservation, *model.OutboxEvent, error)) (*model.ProductReservation, error)
 	GetReservation(context.Context, int64) (*model.ProductReservation, error)
 	WithReservation(context.Context, int64, int64, func(*model.Product, *model.ProductReservation) (*model.OutboxEvent, error)) (*model.ProductReservation, error)
 }

@@ -1,6 +1,6 @@
-# Product 预占 RPC 契约（第 1 批）
+# Product 预占 RPC 契约与实现进度
 
-第 1 批完成 Proto、生成代码及业务规则设计。第 2 批已接入独立服务鉴权、快照增量迁移及模型。ReserveProduct 认证通过后仍返回 Unimplemented；GetReservation、ReleaseReservation、ConfirmReservation 已接入 Handler → Service → Repository 和事务事件写入。Gateway 不新增这些接口。
+第 1 批完成 Proto、生成代码及业务规则设计。第 2 批已接入独立服务鉴权、快照增量迁移及模型。四个 RPC 现均已接入 Handler → Service → Repository 和事务事件写入；分批历史记录见下文。Gateway 不新增这些接口。
 
 ## 调用身份与边界
 
@@ -87,3 +87,13 @@ Product model 与 handler 的真实 MySQL race 测试、全量 Go 测试、make 
 真实 HTTP 入口未新增。真实 gRPC→Service→Repository→独立临时 MySQL 的 race 测试通过：到期查询、无效参数、记录不存在、错误商品归属、重复释放/确认、相反终态拒绝、20 个确认/释放并发请求只有一种终态成功且只写一个事件、Outbox 故障后商品与预占全部回滚。临时库已清理，业务库未修改；全量 Go 测试和 git diff --check 通过。
 
 测试直接构造 RESERVED 商品及 ACTIVE 预占夹具；ReserveProduct 尚未实现，未验收从真实下单创建预占的完整闭环。本批不包括 RPC 超时补偿或服务重启恢复。
+
+## ReserveProduct 补齐与实际验收
+
+已实现完整请求校验、微秒截止时间、禁止自购和商品卖家/金额/版本快照校验。先锁商品、再查预占，锁定后读取数据库 UTC_TIMESTAMP(6) 判定首次期限；READ COMMITTED 避免缺失预占的间隙锁影响不同商品的同订单竞争。条件更新 ON_SALE 商品并递增版本，与 ACTIVE 预占和 product.reserved.v1 快照事件同事务提交。
+
+已有订单优先比较完整参数，返回 ACTIVE 或已结束记录，不重新激活、不增加事件；参数不同返回 AlreadyExists，历史未知快照返回 FailedPrecondition。跨商品同订单唯一键竞争失败后回滚，再读取赢家比较参数，同时兼容 GORM 翻译错误与 MySQL 驱动重复键错误。首次预占截止期限不限制固定最大时长，由可信 Order 持久化业务期限，后续配置阶段可补充上限。
+
+真实 gRPC→业务→独立临时 MySQL race 测试已通过：首次及重复预占、同键不同参数、释放后重复预占、自购/价格/版本/卖家/到期校验、非微秒时间、100 个订单竞争一个商品恰有一个成功、一个订单竞争两个商品一成功一冲突且失败商品回滚、Outbox 故障后商品与预占全部回滚。既有确认释放竞争测试也通过。临时库已清理，业务库未修改。首次跨商品测试发现重复键翻译识别缺失，修正后重跑通过。
+
+当前补齐 Product 前置能力，尚未实现 Order 创建编排、RPC 超时后的定时恢复，不能宣称端到端下单或分布式故障恢复已通过。

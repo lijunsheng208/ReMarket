@@ -1,0 +1,55 @@
+syntax = "proto3";
+package remarket.order.v1;
+option go_package = "remarket/backend/gen/order/v1;orderv1";
+import "google/protobuf/timestamp.proto";
+
+// 所有订单方法要求用户 JWT，由 Order 独立验签；不接受客户端传入参与人身份。
+service OrderService {
+  // 创建返回持久化的 PENDING 意图，尚无预占执行器；取消和确认仍为 Unimplemented。
+  rpc CreateOrder(CreateOrderRequest) returns (OrderResponse);
+  rpc GetOrder(GetOrderRequest) returns (OrderResponse);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  rpc CancelOrder(CancelOrderRequest) returns (OrderResponse);
+  rpc ConfirmOrder(ConfirmOrderRequest) returns (OrderResponse);
+}
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_RESERVED = 2;
+  ORDER_STATUS_CONFIRMING = 3;
+  ORDER_STATUS_CANCELLING = 4;
+  ORDER_STATUS_EXPIRING = 5;
+  ORDER_STATUS_COMPLETED = 6;
+  ORDER_STATUS_CANCELLED = 7;
+  ORDER_STATUS_EXPIRED = 8;
+  ORDER_STATUS_FAILED = 9;
+}
+enum OrderRole {
+  ORDER_ROLE_UNSPECIFIED = 0;
+  ORDER_ROLE_BUYER = 1;
+  ORDER_ROLE_SELLER = 2;
+}
+// 金额为人民币分；COMPLETED 表示双方确认，不代表系统收到在线支付。
+message Order {
+  int64 id = 1;
+  int64 buyer_id = 2;
+  int64 seller_id = 3;
+  int64 product_id = 4;
+  int64 price_cent = 5;
+  OrderStatus status = 6;
+  bool buyer_confirmed = 7;
+  bool seller_confirmed = 8;
+  int64 aggregate_version = 9;
+  google.protobuf.Timestamp expires_at = 10;
+  google.protobuf.Timestamp closed_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+message CreateOrderRequest { int64 product_id = 1; string idempotency_key = 2; }
+message GetOrderRequest { int64 id = 1; }
+// role 必须明确指定买家或卖家；只查询认证用户自己的订单。page 默认 1，page_size 默认 20、最大 100。
+message ListOrdersRequest { OrderRole role = 1; int32 page = 2; int32 page_size = 3; }
+message ListOrdersResponse { repeated Order orders = 1; int64 total = 2; }
+message CancelOrderRequest { int64 id = 1; }
+message ConfirmOrderRequest { int64 id = 1; }
+message OrderResponse { Order order = 1; }

@@ -13,7 +13,7 @@ service ProductService {
   rpc OffShelfProduct(ChangeProductStateRequest) returns (ProductResponse);
   rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
   // 以下接口仅供通过独立服务身份认证的 Order 调用，不接受普通用户凭据授权。
-  // 已接入独立服务凭据校验；ReserveProduct 尚未实现；查询、释放、确认已接入业务。
+  // 已接入独立服务凭据校验；预占、查询、释放、确认已接入业务，结果以本地事务提交为准。
   rpc ReserveProduct(ReserveProductRequest) returns (ReservationResponse);
   rpc GetReservation(GetReservationRequest) returns (ReservationResponse);
   rpc ReleaseReservation(ReleaseReservationRequest) returns (ReservationResponse);

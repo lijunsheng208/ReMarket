@@ -1,6 +1,6 @@
 # User 与 Product gRPC 基础
 
-已定义 User、Product v1 契约并生成 Go 代码。新增四个商品预占 RPC 契约，独立服务鉴权已接入；查询、释放、确认已实现，ReserveProduct 仍为 Unimplemented，详见 [预占契约](product-reservation.md)。Order、Feed 契约继续延后。
+已定义 User、Product v1 契约并生成 Go 代码。新增四个商品预占 RPC 契约，独立服务鉴权已接入；预占、查询、释放、确认均已实现，详见 [预占契约](product-reservation.md)。Order 契约及查询已实现，写接口仍为 Unimplemented，详见 [订单接口](order.md)；Feed 契约继续延后。
 
 ## 接口
 

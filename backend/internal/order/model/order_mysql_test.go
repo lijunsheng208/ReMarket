@@ -64,6 +64,13 @@ func TestOrderSchemaMySQL(t *testing.T) {
 			}
 		}
 	}
+	migration, err := os.ReadFile("../../../../migrations/order/000002_product_snapshot.up.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.ExecContext(ctx, string(migration)); err != nil {
+		t.Fatal(err)
+	}
 	now := time.Now().UTC().Truncate(time.Microsecond)
 	order := Order{BuyerID: 1, SellerID: 2, ProductID: 3, PriceCent: 100, Status: StatusPending, IdempotencyKey: "Key", RequestHash: strings.Repeat("a", 64), AggregateVersion: 1, CreatedAt: now, UpdatedAt: now, ExpiresAt: now.Add(time.Hour)}
 	if err := db.WithContext(ctx).Create(&order).Error; err != nil {

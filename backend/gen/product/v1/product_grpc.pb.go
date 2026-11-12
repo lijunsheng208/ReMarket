@@ -47,7 +47,7 @@ type ProductServiceClient interface {
 	OffShelfProduct(ctx context.Context, in *ChangeProductStateRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	ListCategories(ctx context.Context, in *ListCategoriesRequest, opts ...grpc.CallOption) (*ListCategoriesResponse, error)
 	// 以下接口仅供通过独立服务身份认证的 Order 调用，不接受普通用户凭据授权。
-	// 已接入独立服务凭据校验；ReserveProduct 尚未实现；查询、释放、确认已接入业务。
+	// 已接入独立服务凭据校验；预占、查询、释放、确认已接入业务，结果以本地事务提交为准。
 	ReserveProduct(ctx context.Context, in *ReserveProductRequest, opts ...grpc.CallOption) (*ReservationResponse, error)
 	GetReservation(ctx context.Context, in *GetReservationRequest, opts ...grpc.CallOption) (*ReservationResponse, error)
 	ReleaseReservation(ctx context.Context, in *ReleaseReservationRequest, opts ...grpc.CallOption) (*ReservationResponse, error)
@@ -196,7 +196,7 @@ type ProductServiceServer interface {
 	OffShelfProduct(context.Context, *ChangeProductStateRequest) (*ProductResponse, error)
 	ListCategories(context.Context, *ListCategoriesRequest) (*ListCategoriesResponse, error)
 	// 以下接口仅供通过独立服务身份认证的 Order 调用，不接受普通用户凭据授权。
-	// 已接入独立服务凭据校验；ReserveProduct 尚未实现；查询、释放、确认已接入业务。
+	// 已接入独立服务凭据校验；预占、查询、释放、确认已接入业务，结果以本地事务提交为准。
 	ReserveProduct(context.Context, *ReserveProductRequest) (*ReservationResponse, error)
 	GetReservation(context.Context, *GetReservationRequest) (*ReservationResponse, error)
 	ReleaseReservation(context.Context, *ReleaseReservationRequest) (*ReservationResponse, error)

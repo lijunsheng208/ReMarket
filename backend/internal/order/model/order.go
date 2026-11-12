@@ -40,21 +40,22 @@ const (
 
 // Order 对应 orders；外部实体仅保存 ID，价格为可信商品快照。
 type Order struct {
-	ID               int64 `gorm:"primaryKey;autoIncrement"`
-	BuyerID          int64
-	SellerID         int64
-	ProductID        int64
-	PriceCent        int64
-	Status           OrderStatus
-	IdempotencyKey   string
-	RequestHash      string
-	BuyerConfirmed   bool
-	SellerConfirmed  bool
-	AggregateVersion int64
-	ExpiresAt        time.Time
-	ClosedAt         *time.Time
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                     int64 `gorm:"primaryKey;autoIncrement"`
+	BuyerID                int64
+	SellerID               int64
+	ProductID              int64
+	ExpectedProductVersion *int64
+	PriceCent              int64
+	Status                 OrderStatus
+	IdempotencyKey         string
+	RequestHash            string
+	BuyerConfirmed         bool
+	SellerConfirmed        bool
+	AggregateVersion       int64
+	ExpiresAt              time.Time
+	ClosedAt               *time.Time
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 }
 
 // OrderOperation 对应 order_operations；可空字段区分尚未领取和已完成。

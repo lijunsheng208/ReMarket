@@ -5,16 +5,18 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	productv1 "remarket/backend/gen/product/v1"
 	"remarket/backend/internal/product/model"
+	"remarket/backend/internal/product/service"
 	"remarket/backend/pkg/apperror"
 )
 
 type ReservationManager interface {
+	Reserve(context.Context, service.ReserveInput) (*model.ProductReservation, error)
 	Get(context.Context, int64) (*model.ProductReservation, error)
 	Release(context.Context, int64, int64) (*model.ProductReservation, error)
 	Confirm(context.Context, int64, int64) (*model.ProductReservation, error)
 }
 
-// WithReservations 注入查询及终结预占能力，ReserveProduct 仍明确未实现。
+// WithReservations 注入商品预占、查询及终结能力。
 func (s *Server) WithReservations(manager ReservationManager) *Server {
 	s.reservations = manager
 	return s
@@ -76,4 +78,19 @@ func reservationResponse(r *model.ProductReservation) *productv1.ReservationResp
 		result.ReleasedAt = timestamppb.New(*r.ReleasedAt)
 	}
 	return &productv1.ReservationResponse{Reservation: result}
+}
+
+// ReserveProduct 校验 Timestamp 后传递完整快照，调用身份由独立服务鉴权验证。
+func (s *Server) ReserveProduct(ctx context.Context, req *productv1.ReserveProductRequest) (*productv1.ReservationResponse, error) {
+	if s.reservations == nil {
+		return s.UnimplementedProductServiceServer.ReserveProduct(ctx, req)
+	}
+	if req == nil || req.ExpiresAt == nil || req.ExpiresAt.CheckValid() != nil {
+		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "预占请求或截止时间无效"}
+	}
+	result, err := s.reservations.Reserve(ctx, service.ReserveInput{OrderID: req.OrderId, ProductID: req.ProductId, BuyerID: req.BuyerId, ExpectedSellerID: req.ExpectedSellerId, ExpectedPriceCent: req.ExpectedPriceCent, ExpectedProductVersion: req.ExpectedProductVersion, ExpiresAt: req.ExpiresAt.AsTime()})
+	if err != nil {
+		return nil, err
+	}
+	return reservationResponse(result), nil
 }

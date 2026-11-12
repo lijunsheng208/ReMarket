@@ -42,7 +42,7 @@ infra-logs:
 
 .PHONY: proto run-user run-product
 proto:
-	protoc -I api/proto --go_out=backend --go_opt=module=remarket/backend --go-grpc_out=backend --go-grpc_opt=module=remarket/backend api/proto/user/v1/user.proto api/proto/product/v1/product.proto
+	protoc -I api/proto --go_out=backend --go_opt=module=remarket/backend --go-grpc_out=backend --go-grpc_opt=module=remarket/backend api/proto/user/v1/user.proto api/proto/product/v1/product.proto api/proto/order/v1/order.proto
 run-user:
 	cd backend && go run ./cmd/user
 run-product:
@@ -51,3 +51,7 @@ run-product:
 .PHONY: run-gateway
 run-gateway:
 	cd backend && go run ./cmd/gateway
+
+.PHONY: run-order
+run-order:
+	cd backend && go run ./cmd/order
