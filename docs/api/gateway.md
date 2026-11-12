@@ -28,3 +28,5 @@ HTTP 原 Context 的取消及更早 Deadline 保留，Gateway 再施加 RPC 超�
 新增 TestAuthFlowMySQL，使用真实 HTTP 监听、内存 gRPC 传输、真实 User Handler/Service/Repository、bcrypt/JWT 及本机 MySQL。完整验证注册→登录→携带 Token 查询当前用户、篡改令牌拒绝、禁用账号后旧 Token 查询失败及再次登录失败。测试自动创建 remarket_auth_test_ 前缀临时库，应用已有迁移 SQL 后验证并清理，仅测试账号需要建库权限，不操作业务库。
 
 该完整链路及 Gateway race 测试已实测通过；这是组件联调，不代表独立进程/TCP gRPC、Nginx 或生产部署验收。提供 REMARKET_TEST_MYSQL_DSN 后执行 `cd backend && go test -race ./internal/gateway -v`，未配置时跳过 MySQL 用例。
+
+订单入口已新增：创建、详情与买卖列表，支持 HTTP Idempotency-Key。接口语义与本轮验证边界见 [订单 HTTP API](gateway-orders.md)，不包含取消、确认或订单过期功能。

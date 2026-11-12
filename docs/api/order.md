@@ -1,6 +1,6 @@
 # Order Service 与 gRPC（第 1 批）
 
-已实现 Order Proto、生成代码、独立进程入口及 Handler → Service → Repository 查询链路。GetOrder、ListOrders 接入独立 JWT 验签和 Order 自有数据库；CreateOrder 已在后续批次实现幂等 PENDING 意图落库（已有定时预占恢复执行器）；CancelOrder、ConfirmOrder 仍明确返回 Unimplemented。Product ReserveProduct 已在后续批次补齐，Order 尚未接入，不宣称已实现订单创建或跨服务编排。
+已实现 Order Proto、生成代码、独立进程入口及 Handler → Service → Repository 查询链路。GetOrder、ListOrders 接入独立 JWT 验签和 Order 自有数据库；CreateOrder 已在后续批次实现幂等 PENDING 意图落库（已有定时预占恢复执行器）；CancelOrder、ConfirmOrder 已在最新批次接入，见 [订单决定与恢复](order-decisions.md)。Product ReserveProduct 已在后续批次补齐，Order 尚未接入，不宣称已实现订单创建或跨服务编排。
 
 ## 查询契约
 
@@ -35,3 +35,9 @@ ListOrders 必须选择 BUYER / SELLER，限定认证用户。page 默认 1、pa
 最新幂等持久化范围与未完成项见 [幂等与补偿](order-idempotency.md)。启动前还需应用 Order 000002 快照迁移；第 1 批历史验收的创建 Unimplemented 只适用于未注入 Creator 的查询测试。
 
 最新第 2 批已接入 RESERVE 领取、结果查询和重试，详见幂等与补偿文档；当前 Order 启动需要配置与 Product 相同的独立 ORDER_PRODUCT_SERVICE_TOKEN。取消、确认、过期及 HTTP 订单路由仍未实现。
+
+最新 HTTP 接入：Gateway 已提供创建、详情及买卖列表，校验唯一 Idempotency-Key 并原样传递；详见 [订单 HTTP API](gateway-orders.md)。此前“Gateway 尚未接入”为历史范围，独立进程联调仍未验收。
+
+最新取消与确认能力、恢复行为和实际验收边界见 [订单决定与恢复](order-decisions.md)，覆盖此前尚未实现的历史记录；过期扫描仍待实现。
+
+最新超时能力：到期 RESERVED 扫描及安全释放已实现，与确认/取消共用订单锁，详见 [超时订单处理](order-expiry.md)。Order 进程启动同时运行恢复执行器及过期扫描器，此条覆盖此前过期扫描待实现的历史范围。

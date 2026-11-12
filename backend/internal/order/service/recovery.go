@@ -20,8 +20,8 @@ type RecoveryResult struct {
 	RetryDelay time.Duration
 }
 type RecoveryRepository interface {
-	ClaimReserve(context.Context) (*RecoveryJob, error)
-	FinishReserve(context.Context, *RecoveryJob, RecoveryResult) error
+	ClaimOperation(context.Context) (*RecoveryJob, error)
+	FinishOperation(context.Context, *RecoveryJob, RecoveryResult) error
 }
 type ReservationState struct {
 	OrderID, ProductID, BuyerID int64
@@ -31,6 +31,8 @@ type ReservationState struct {
 type ReservationClient interface {
 	Lookup(context.Context, int64) (*ReservationState, error)
 	Reserve(context.Context, model.Order) (*ReservationState, error)
+	Release(context.Context, model.Order) (*ReservationState, error)
+	Confirm(context.Context, model.Order) (*ReservationState, error)
 }
 type RecoveryService struct {
 	orders   RecoveryRepository
@@ -42,17 +44,20 @@ func NewRecovery(orders RecoveryRepository, products ReservationClient) *Recover
 	return &RecoveryService{orders: orders, products: products}
 }
 
-// RecoverOne 领取单个 RESERVE 操作，先查真实结果，结果未知时只安排重试，不推断失败。
+// RecoverOne 领取单个持久化操作，先查真实结果，结果未知时只安排重试，不推断失败。
 func (s *RecoveryService) RecoverOne(ctx context.Context) (bool, error) {
-	job, err := s.orders.ClaimReserve(ctx)
+	job, err := s.orders.ClaimOperation(ctx)
 	if err != nil || job == nil {
 		return false, err
+	}
+	if job.Operation.OperationType != model.OperationReserve {
+		return true, s.recoverTerminal(ctx, job)
 	}
 	result := RecoveryResult{Status: model.OperationRetry, ErrorCode: "REMOTE_UNKNOWN", RetryDelay: retryDelay(job.Operation.RetryCount)}
 	if job.Order.ExpectedProductVersion == nil {
 		result.ErrorCode = "MISSING_SNAPSHOT"
 		slog.ErrorContext(ctx, "订单恢复需要人工检查", "order_id", job.Order.ID, "code", result.ErrorCode)
-		return true, s.orders.FinishReserve(ctx, job, result)
+		return true, s.orders.FinishOperation(ctx, job, result)
 	}
 	state, err := s.products.Lookup(ctx, job.Order.ID)
 	if err == nil && state == nil {
@@ -66,7 +71,7 @@ func (s *RecoveryService) RecoverOne(ctx context.Context) (bool, error) {
 			} else if rejected && queryErr == nil {
 				result.Status = model.OperationFailed
 				result.ErrorCode = "RESERVE_REJECTED"
-				return true, s.orders.FinishReserve(ctx, job, result)
+				return true, s.orders.FinishOperation(ctx, job, result)
 			}
 		}
 	}
@@ -79,7 +84,7 @@ func (s *RecoveryService) RecoverOne(ctx context.Context) (bool, error) {
 			slog.ErrorContext(ctx, "订单恢复需要人工检查", "order_id", job.Order.ID, "code", result.ErrorCode)
 		}
 	}
-	return true, s.orders.FinishReserve(ctx, job, result)
+	return true, s.orders.FinishOperation(ctx, job, result)
 }
 
 // retryDelay 对连续失败指数退避并封顶一分钟，不因达到重试次数上限伪造远程失败。
@@ -116,4 +121,37 @@ func (s *RecoveryService) Run(ctx context.Context) {
 		case <-ticker.C:
 		}
 	}
+}
+
+// recoverTerminal 只执行已持久化的成交或关闭决定；未知和相反终态保留重试，绝不反向补偿。
+func (s *RecoveryService) recoverTerminal(ctx context.Context, job *RecoveryJob) error {
+	result := RecoveryResult{Status: model.OperationRetry, ErrorCode: "REMOTE_UNKNOWN", RetryDelay: retryDelay(job.Operation.RetryCount)}
+	target := "RELEASED"
+	if job.Operation.OperationType == model.OperationConfirm {
+		target = "CONFIRMED"
+	}
+	state, err := s.products.Lookup(ctx, job.Order.ID)
+	if err == nil && reservationMatches(state, job.Order) && state.Status == "ACTIVE" {
+		if job.Operation.OperationType == model.OperationConfirm {
+			state, err = s.products.Confirm(ctx, job.Order)
+		} else {
+			state, err = s.products.Release(ctx, job.Order)
+		}
+		if err != nil {
+			state, err = s.products.Lookup(ctx, job.Order.ID)
+		}
+	}
+	if err == nil && reservationMatches(state, job.Order) && state.Status == target {
+		result.Status = model.OperationSucceeded
+		result.ErrorCode = ""
+	} else if err == nil {
+		result.ErrorCode = "REMOTE_STATE_CONFLICT"
+		slog.ErrorContext(ctx, "订单终结恢复需要人工检查", "order_id", job.Order.ID, "code", result.ErrorCode)
+	}
+	return s.orders.FinishOperation(ctx, job, result)
+}
+
+// reservationMatches 核验远程结果属于持久化请求，避免对错配记录执行写操作。
+func reservationMatches(state *ReservationState, order model.Order) bool {
+	return state != nil && state.OrderID == order.ID && state.ProductID == order.ProductID && state.BuyerID == order.BuyerID && state.ExpiresAt.Equal(order.ExpiresAt)
 }

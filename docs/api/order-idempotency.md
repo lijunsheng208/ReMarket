@@ -1,6 +1,6 @@
 # 订单幂等与补偿（分批实现）
 
-当前完成幂等创建持久化，以及 RESERVE 操作领取、超时结果查询和定时恢复执行器。Gateway HTTP Idempotency-Key 尚未接入；取消、确认和过期操作尚未实现，不将第 4 项端到端验收标记完成。下文第 1 批未完成项为历史记录，以第 2 批为准。
+当前完成幂等创建持久化，以及 RESERVE 操作领取、超时结果查询和定时恢复执行器。Gateway HTTP Idempotency-Key 已在第 3 批接入；取消、确认和过期操作尚未实现，不将第 4 项端到端验收标记完成。下文第 1 批未完成项为历史记录，以第 2 批为准。
 
 ## 请求及身份
 
@@ -49,3 +49,15 @@ Order 启动时要求配置独立 ORDER_PRODUCT_SERVICE_TOKEN：至少 32 字节
 真实 Order MySQL + 真实 gRPC 协议（模拟 Product 服务）race 测试通过：远端成功但返回 DeadlineExceeded 后查询恢复、有效租约不重复领取、过期租约接管、旧令牌不能覆盖新租约、重建执行器读取持久化任务、远端不可用持久化 RETRY、明确拒绝安全 FAILED、状态事件失败时订单/操作回滚并可再次恢复、后台 Run 处理待执行任务并可取消退出。服务凭据由模拟 Product 明确检查。全量 Go 测试及差异检查通过，临时库已清理，业务库未修改。
 
 这里的远端超时和中断使用模拟服务状态及重建执行器验证，未进行真实 Product 进程联调、杀进程重启或网络故障注入。RELEASE / CONFIRM 操作执行与补偿等待订单取消/确认能力接入，当前执行器只处理 RESERVE。
+
+## 第 3 批：HTTP 接入
+
+Gateway 已实现创建、详情与买卖列表，唯一 Idempotency-Key 头原样传给 Order，同键去重仍由 Order 持久化执行。PENDING 返回 202 和 Location，其他已取得状态返回 200；超时后必须同键重试。真实 HTTP→gRPC 适配及认证 race 测试通过。此条覆盖此前“尚无 HTTP 订单路由”的历史记录，细节与实际验证范围见 [订单 HTTP API](gateway-orders.md)。本批未扩展 RELEASE / CONFIRM 操作或第 5 项过期任务。
+
+## 最新终结操作进度
+
+RELEASE / CONFIRM 已接入统一任务领取、租约及超时查询恢复，详情见 [订单决定与恢复](order-decisions.md)，覆盖此前只处理 RESERVE 的历史范围。订单过期扫描及真实独立进程故障验收仍待完成。
+
+## 最新过期处理进度
+
+已接入 RESERVED 到期扫描，EXPIRING→EXPIRED 复用 RELEASE 持久化恢复，详见 [超时订单处理](order-expiry.md)。这覆盖此前过期扫描未实现的历史记录；真实独立进程故障验收仍待完成。

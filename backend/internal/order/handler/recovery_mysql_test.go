@@ -146,21 +146,21 @@ func TestRecoveryMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	old, err := orders.ClaimReserve(ctx)
+	old, err := orders.ClaimOperation(ctx)
 	if err != nil || old == nil {
 		t.Fatal(err)
 	}
-	if extra, err := orders.ClaimReserve(ctx); err != nil || extra != nil {
+	if extra, err := orders.ClaimOperation(ctx); err != nil || extra != nil {
 		t.Fatal("有效租约被重复领取", err)
 	}
 	if _, err := pool.ExecContext(ctx, "UPDATE order_operations SET locked_until=DATE_SUB(UTC_TIMESTAMP(6),INTERVAL 1 SECOND) WHERE id=?", old.Operation.ID); err != nil {
 		t.Fatal(err)
 	}
-	fresh, err := orders.ClaimReserve(ctx)
+	fresh, err := orders.ClaimOperation(ctx)
 	if err != nil || fresh == nil || *fresh.Operation.LockToken == *old.Operation.LockToken {
 		t.Fatal("过期租约未接管", err)
 	}
-	if err := orders.FinishReserve(ctx, old, service.RecoveryResult{Status: model.OperationFailed, ErrorCode: "STALE"}); err != nil {
+	if err := orders.FinishOperation(ctx, old, service.RecoveryResult{Status: model.OperationFailed, ErrorCode: "STALE"}); err != nil {
 		t.Fatal(err)
 	}
 	got, err = orders.GetForParticipant(ctx, second.ID, 1)
@@ -313,5 +313,34 @@ func (p *recoveryProduct) ReserveProduct(ctx context.Context, req *productv1.Res
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.records[req.OrderId] = &productv1.Reservation{OrderId: req.OrderId, ProductId: req.ProductId, BuyerId: req.BuyerId, Status: productv1.ReservationStatus_RESERVATION_STATUS_ACTIVE, ExpiresAt: timestamppb.New(req.ExpiresAt.AsTime())}
+	return nil, status.Error(codes.DeadlineExceeded, "response lost")
+}
+
+// ReleaseReservation 模拟释放提交成功但响应丢失，执行器须通过查询完成本地状态。
+func (p *recoveryProduct) ReleaseReservation(ctx context.Context, req *productv1.ReleaseReservationRequest) (*productv1.ReservationResponse, error) {
+	return p.finish(ctx, req.OrderId, req.ProductId, productv1.ReservationStatus_RESERVATION_STATUS_RELEASED)
+}
+
+// ConfirmReservation 模拟成交提交成功但响应丢失。
+func (p *recoveryProduct) ConfirmReservation(ctx context.Context, req *productv1.ConfirmReservationRequest) (*productv1.ReservationResponse, error) {
+	return p.finish(ctx, req.OrderId, req.ProductId, productv1.ReservationStatus_RESERVATION_STATUS_CONFIRMED)
+}
+
+// finish 校验独立凭据和终态竞争，仅用于恢复协议测试。
+func (p *recoveryProduct) finish(ctx context.Context, orderID, productID int64, target productv1.ReservationStatus) (*productv1.ReservationResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if values := md.Get("authorization"); len(values) != 1 || values[0] != "Bearer "+strings.Repeat("s", 32) {
+		return nil, status.Error(codes.Unauthenticated, "bad auth")
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	record := p.records[orderID]
+	if record == nil {
+		return nil, status.Error(codes.NotFound, "missing")
+	}
+	if record.ProductId != productID || (record.Status != productv1.ReservationStatus_RESERVATION_STATUS_ACTIVE && record.Status != target) {
+		return nil, status.Error(codes.FailedPrecondition, "conflict")
+	}
+	record.Status = target
 	return nil, status.Error(codes.DeadlineExceeded, "response lost")
 }

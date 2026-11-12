@@ -32,7 +32,7 @@ const (
 //
 // 所有订单方法要求用户 JWT，由 Order 独立验签；不接受客户端传入参与人身份。
 type OrderServiceClient interface {
-	// 创建返回持久化的 PENDING 意图，由后台预占执行器推进；取消和确认仍为 Unimplemented。
+	// 创建及终结请求返回已持久化的真实状态，后台执行器推进跨服务操作。
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*OrderResponse, error)
 	GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*OrderResponse, error)
 	ListOrders(ctx context.Context, in *ListOrdersRequest, opts ...grpc.CallOption) (*ListOrdersResponse, error)
@@ -104,7 +104,7 @@ func (c *orderServiceClient) ConfirmOrder(ctx context.Context, in *ConfirmOrderR
 //
 // 所有订单方法要求用户 JWT，由 Order 独立验签；不接受客户端传入参与人身份。
 type OrderServiceServer interface {
-	// 创建返回持久化的 PENDING 意图，由后台预占执行器推进；取消和确认仍为 Unimplemented。
+	// 创建及终结请求返回已持久化的真实状态，后台执行器推进跨服务操作。
 	CreateOrder(context.Context, *CreateOrderRequest) (*OrderResponse, error)
 	GetOrder(context.Context, *GetOrderRequest) (*OrderResponse, error)
 	ListOrders(context.Context, *ListOrdersRequest) (*ListOrdersResponse, error)

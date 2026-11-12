@@ -79,3 +79,25 @@ func reservationState(result *productv1.ReservationResponse) (*service.Reservati
 	}
 	return &service.ReservationState{OrderID: r.OrderId, ProductID: r.ProductId, BuyerID: r.BuyerId, Status: state, ExpiresAt: r.ExpiresAt.AsTime()}, nil
 }
+
+// Release 执行已持久化关闭决定，错误保持未知结果，由执行器查询和重试。
+func (r *Reservations) Release(ctx context.Context, order model.Order) (*service.ReservationState, error) {
+	call, cancel := r.callContext(ctx)
+	defer cancel()
+	result, err := r.products.ReleaseReservation(call, &productv1.ReleaseReservationRequest{OrderId: order.ID, ProductId: order.ProductID})
+	if err != nil {
+		return nil, err
+	}
+	return reservationState(result)
+}
+
+// Confirm 执行已持久化双方确认决定，不因当前时间过期反向释放。
+func (r *Reservations) Confirm(ctx context.Context, order model.Order) (*service.ReservationState, error) {
+	call, cancel := r.callContext(ctx)
+	defer cancel()
+	result, err := r.products.ConfirmReservation(call, &productv1.ConfirmReservationRequest{OrderId: order.ID, ProductId: order.ProductID})
+	if err != nil {
+		return nil, err
+	}
+	return reservationState(result)
+}

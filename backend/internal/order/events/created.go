@@ -23,14 +23,16 @@ func NewID() (string, error) {
 // NewCreated 构造订单创建快照，金额与 ID 按字符串编码，不含幂等键或请求摘要。
 func NewCreated(order model.Order, now time.Time) (*model.OutboxEvent, error) {
 	data := struct {
-		OrderID   int64             `json:"order_id,string"`
-		BuyerID   int64             `json:"buyer_id,string"`
-		SellerID  int64             `json:"seller_id,string"`
-		ProductID int64             `json:"product_id,string"`
-		PriceCent int64             `json:"price_cent,string"`
-		Status    model.OrderStatus `json:"status"`
-		ExpiresAt time.Time         `json:"expires_at"`
-	}{order.ID, order.BuyerID, order.SellerID, order.ProductID, order.PriceCent, order.Status, order.ExpiresAt}
+		OrderID         int64             `json:"order_id,string"`
+		BuyerID         int64             `json:"buyer_id,string"`
+		SellerID        int64             `json:"seller_id,string"`
+		ProductID       int64             `json:"product_id,string"`
+		PriceCent       int64             `json:"price_cent,string"`
+		Status          model.OrderStatus `json:"status"`
+		ExpiresAt       time.Time         `json:"expires_at"`
+		BuyerConfirmed  bool              `json:"buyer_confirmed"`
+		SellerConfirmed bool              `json:"seller_confirmed"`
+	}{order.ID, order.BuyerID, order.SellerID, order.ProductID, order.PriceCent, order.Status, order.ExpiresAt, order.BuyerConfirmed, order.SellerConfirmed}
 	payload, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
@@ -42,7 +44,7 @@ func NewCreated(order model.Order, now time.Time) (*model.OutboxEvent, error) {
 	return &model.OutboxEvent{EventID: id, EventType: "order.created.v1", AggregateType: "order", AggregateID: order.ID, AggregateVersion: order.AggregateVersion, SchemaVersion: 1, Payload: payload, OccurredAt: now, PublishStatus: model.PublishPending, NextAttemptAt: now, CreatedAt: now}, nil
 }
 
-// NewStateChanged 构造预占成功或明确失败事件，不改变订单和操作状态。
+// NewStateChanged 构造订单状态变更事件，不改变订单和操作状态。
 func NewStateChanged(order model.Order, now time.Time) (*model.OutboxEvent, error) {
 	event, err := NewCreated(order, now)
 	if err != nil {
@@ -51,6 +53,18 @@ func NewStateChanged(order model.Order, now time.Time) (*model.OutboxEvent, erro
 	switch order.Status {
 	case model.StatusReserved:
 		event.EventType = "order.reserved.v1"
+	case model.StatusConfirming:
+		event.EventType = "order.confirming.v1"
+	case model.StatusCancelling:
+		event.EventType = "order.cancelling.v1"
+	case model.StatusExpiring:
+		event.EventType = "order.expiring.v1"
+	case model.StatusCompleted:
+		event.EventType = "order.completed.v1"
+	case model.StatusCancelled:
+		event.EventType = "order.cancelled.v1"
+	case model.StatusExpired:
+		event.EventType = "order.expired.v1"
 	case model.StatusFailed:
 		event.EventType = "order.failed.v1"
 	default:

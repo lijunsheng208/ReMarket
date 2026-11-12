@@ -16,8 +16,9 @@ type Query interface {
 }
 type Server struct {
 	orderv1.UnimplementedOrderServiceServer
-	creator Creator
-	query   Query
+	decisions Decisions
+	creator   Creator
+	query     Query
 }
 
 // New 注入查询业务；未注入的写操作明确返回 Unimplemented。

@@ -1,4 +1,4 @@
-// Order 进程提供独立鉴权的订单查询 RPC，支持幂等创建 PENDING 意图；已接入预占恢复执行器，取消和确认尚未实现。
+// Order 进程提供独立鉴权的订单查询 RPC，支持幂等创建 PENDING 意图；已接入预占恢复执行器，支持取消和双方确认的不可逆决定及恢复。
 package main
 
 import (
@@ -73,12 +73,14 @@ func run() error {
 		return err
 	}
 	creator := service.NewCreation(orders, client.NewProductReader(productClient))
-	orderv1.RegisterOrderServiceServer(server, handler.New(service.NewQuery(orders)).WithCreator(creator))
+	orderv1.RegisterOrderServiceServer(server, handler.New(service.NewQuery(orders)).WithCreator(creator).WithDecisions(service.NewDecision(orders)))
 	workerCtx, stopWorker := context.WithCancel(ctx)
 	done := make(chan struct{})
+	expiryDone := make(chan struct{})
+	go func() { defer close(expiryDone); service.NewExpiry(orders).Run(workerCtx) }()
 	go func() { defer close(done); service.NewRecovery(orders, reservations).Run(workerCtx) }()
 	// 先取消并等待工作者退出，再关闭 gRPC Client 与数据库连接池。
-	defer func() { stopWorker(); <-done }()
+	defer func() { stopWorker(); <-done; <-expiryDone }()
 	slog.Info("订单查询及预占恢复服务已启动", "address", listener.Addr().String())
 	return grpcx.Serve(ctx, listener, server)
 }
