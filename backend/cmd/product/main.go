@@ -56,7 +56,8 @@ func run() error {
 	defer listener.Close()
 	// 商品写接口默认鉴权，当前仅匿名放行健康检查；公开读取在对应业务阶段增加。
 	server := grpcx.NewServer(slog.Default(), grpcx.AuthInterceptor(tokens, "/grpc.health.v1.Health/Check"))
-	productv1.RegisterProductServiceServer(server, handler.New(service.New(repository.NewProductRepository(db))))
+	products := repository.NewProductRepository(db)
+	productv1.RegisterProductServiceServer(server, handler.NewWithPublisher(service.New(products), service.NewPublisher(products)))
 	slog.Info("商品服务已启动，创建草稿 RPC 已接入", "address", listener.Addr().String())
 	return grpcx.Serve(ctx, listener, server)
 }
