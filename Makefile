@@ -47,3 +47,7 @@ run-user:
 	cd backend && go run ./cmd/user
 run-product:
 	cd backend && go run ./cmd/product
+
+.PHONY: run-gateway
+run-gateway:
+	cd backend && go run ./cmd/gateway
