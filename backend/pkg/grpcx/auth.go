@@ -37,3 +37,19 @@ func AuthInterceptor(verifier auth.TokenVerifier, publicMethods ...string) grpc.
 		return handler(verified, req)
 	}
 }
+
+// OptionalAuthInterceptor 对指定方法允许无凭据访问；一旦提供凭据仍必须验签，写方法保持强制鉴权。
+func OptionalAuthInterceptor(verifier auth.TokenVerifier, optionalMethods []string, publicMethods ...string) grpc.UnaryServerInterceptor {
+	optional := make(map[string]bool)
+	for _, method := range optionalMethods {
+		optional[method] = true
+	}
+	required := AuthInterceptor(verifier, publicMethods...)
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		md, _ := metadata.FromIncomingContext(ctx)
+		if optional[info.FullMethod] && len(md.Get("authorization")) == 0 {
+			return handler(ctx, req)
+		}
+		return required(ctx, req, info, handler)
+	}
+}
