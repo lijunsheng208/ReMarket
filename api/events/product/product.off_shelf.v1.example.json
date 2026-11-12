@@ -1,0 +1,19 @@
+{
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
+  "event_type": "product.off_shelf.v1",
+  "aggregate_type": "product",
+  "aggregate_id": "101",
+  "aggregate_version": "3",
+  "schema_version": 1,
+  "occurred_at": "2026-11-12T08:00:00Z",
+  "data": {
+    "product_id": "101",
+    "seller_id": "7",
+    "category_id": "1",
+    "title": "二手机械键盘",
+    "description": "功能正常，附带原装线材。",
+    "price_cent": "15000",
+    "status": "OFF_SHELF",
+    "first_published_at": "2026-11-12T08:00:00Z"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "product.updated.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "event_type": {
+      "const": "product.updated.v1"
+    },
+    "aggregate_type": {
+      "const": "product"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,18}$",
+      "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+    },
+    "aggregate_version": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,18}$",
+      "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "product_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+        },
+        "seller_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+        },
+        "category_id": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "description": {
+          "type": "string",
+          "description": "UTF-8 不超过 16384 字节"
+        },
+        "price_cent": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+        },
+        "status": {
+          "const": "ON_SALE"
+        },
+        "first_published_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "product_id",
+        "seller_id",
+        "category_id",
+        "title",
+        "description",
+        "price_cent",
+        "status",
+        "first_published_at"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "schema_version",
+    "occurred_at",
+    "data"
+  ]
+}

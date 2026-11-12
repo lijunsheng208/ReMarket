@@ -1,12 +1,12 @@
 # product.published.v1
 
-契约见 `product.published.v1.schema.json`，完整消息示例见 `product.published.v1.example.json`。当前只定义首次发布事件，不提前实现消费者或 MQ 投递。
+契约见 `product.published.v1.schema.json`，完整消息示例见 `product.published.v1.example.json`。已补充 updated、off_shelf 的独立 Schema 与示例，消费者和 MQ 投递尚未实现。
 
 ## 产生条件
 
 仅在商品首次从 DRAFT 成功进入 ON_SALE 时生成。后续 Service 必须在同一数据库事务中锁定商品、校验身份和版本、更新状态与首次发布时间、递增 aggregate_version，再插入 Outbox。新草稿版本为 1，首次发布后的版本至少为 2；草稿被编辑过时可更大。
 
-重新上架使用 product.updated.v1，保留首次发布时间，不重复产生本事件。对应 updated、off_shelf 等契约将在实现相应业务时补充。
+重新上架使用 product.updated.v1，保留首次发布时间，不重复产生本事件。updated、off_shelf 契约及商品事务写入现已实现。
 
 ## 数据约定
 

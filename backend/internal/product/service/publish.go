@@ -43,7 +43,9 @@ func (s *PublishService) Publish(ctx context.Context, id, expectedVersion int64)
 		if product.Status == model.StatusOnSale {
 			return nil, nil
 		}
-		if product.Status != model.StatusDraft || product.FirstPublishedAt != nil {
+		first := product.Status == model.StatusDraft && product.FirstPublishedAt == nil
+		relisting := product.Status == model.StatusOffShelf && product.FirstPublishedAt != nil
+		if !first && !relisting {
 			return nil, &apperror.Error{Kind: apperror.FailedPrecondition, Message: "当前商品状态不允许首次发布"}
 		}
 		if !category.Enabled {
@@ -55,9 +57,14 @@ func (s *PublishService) Publish(ctx context.Context, id, expectedVersion int64)
 		now := time.Now().UTC().Truncate(time.Microsecond)
 		product.Status = model.StatusOnSale
 		product.AggregateVersion++
-		product.FirstPublishedAt = &now
+		if first {
+			product.FirstPublishedAt = &now
+		}
 		product.UpdatedAt = now
 		// 构造器再次检查快照合法性；历史首次发布判断已由上方状态规则完成。
-		return events.NewPublishedOutbox(*product, now)
+		if first {
+			return events.NewPublishedOutbox(*product, now)
+		}
+		return events.NewUpdatedOutbox(*product, now)
 	})
 }

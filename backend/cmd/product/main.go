@@ -68,8 +68,9 @@ func run() error {
 		return err
 	}
 	defer userConn.Close()
-	query := service.NewQuery(products, client.NewUserVerifier(userv1.NewUserServiceClient(userConn)))
-	productv1.RegisterProductServiceServer(server, handler.NewWithQuery(service.New(products), service.NewPublisher(products), query))
+	adminVerifier := client.NewUserVerifier(userv1.NewUserServiceClient(userConn))
+	query := service.NewQuery(products, adminVerifier)
+	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products), service.NewPublisher(products), query, service.NewMutation(products, adminVerifier)))
 	slog.Info("商品服务已启动，创建草稿 RPC 已接入", "address", listener.Addr().String())
 	return grpcx.Serve(ctx, listener, server)
 }
