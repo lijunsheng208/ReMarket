@@ -40,6 +40,10 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	productAuth, err := handler.NewAuthInterceptor(tokens, os.Getenv("ORDER_PRODUCT_SERVICE_TOKEN"), config.Secret)
+	if err != nil {
+		return err
+	}
 	dbCtx, dbCancel := context.WithTimeout(ctx, 5*time.Second)
 	db, pool, err := database.OpenMySQL(dbCtx, database.MySQLConfig{Address: os.Getenv("PRODUCT_MYSQL_ADDR"), Username: os.Getenv("PRODUCT_MYSQL_USERNAME"), Password: os.Getenv("MYSQL_PRODUCT_PASSWORD"), Database: os.Getenv("PRODUCT_MYSQL_DATABASE")})
 	dbCancel()
@@ -56,8 +60,8 @@ func run() error {
 		return err
 	}
 	defer listener.Close()
-	// 商品写接口默认鉴权，当前仅匿名放行健康检查；公开读取在对应业务阶段增加。
-	server := grpcx.NewServer(slog.Default(), grpcx.OptionalAuthInterceptor(tokens, []string{productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName, productv1.ProductService_ListCategories_FullMethodName}, "/grpc.health.v1.Health/Check"))
+	// 预占方法使用独立服务凭据；其他方法保留用户鉴权和公开读取规则。
+	server := grpcx.NewServer(slog.Default(), productAuth)
 	products := repository.NewProductRepository(db)
 	target := os.Getenv("USER_GRPC_TARGET")
 	if target == "" {
@@ -70,7 +74,7 @@ func run() error {
 	defer userConn.Close()
 	adminVerifier := client.NewUserVerifier(userv1.NewUserServiceClient(userConn))
 	query := service.NewQuery(products, adminVerifier)
-	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products), service.NewPublisher(products), query, service.NewMutation(products, adminVerifier)).WithCategories(service.NewCategories(products)).WithOwnList(query))
+	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products), service.NewPublisher(products), query, service.NewMutation(products, adminVerifier)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products)))
 	slog.Info("商品服务已启动，创建草稿 RPC 已接入", "address", listener.Addr().String())
 	return grpcx.Serve(ctx, listener, server)
 }

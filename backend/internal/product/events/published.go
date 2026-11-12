@@ -48,6 +48,18 @@ func NewPublishedOutbox(product model.Product, occurredAt time.Time) (*model.Out
 
 const UpdatedV1 = "product.updated.v1"
 const OffShelfV1 = "product.off_shelf.v1"
+const ReleasedV1 = "product.released.v1"
+const SoldV1 = "product.sold.v1"
+
+// NewReleasedOutbox 构造预占释放后的可售商品快照。
+func NewReleasedOutbox(product model.Product, occurredAt time.Time) (*model.OutboxEvent, error) {
+	return newVisibleOutbox(product, occurredAt, ReleasedV1)
+}
+
+// NewSoldOutbox 构造成交后的商品快照，不表示收到在线支付。
+func NewSoldOutbox(product model.Product, occurredAt time.Time) (*model.OutboxEvent, error) {
+	return newVisibleOutbox(product, occurredAt, SoldV1)
+}
 
 // NewUpdatedOutbox 构造在售编辑或重新上架快照，保留原首次发布时间。
 func NewUpdatedOutbox(product model.Product, occurredAt time.Time) (*model.OutboxEvent, error) {
@@ -61,7 +73,7 @@ func NewOffShelfOutbox(product model.Product, occurredAt time.Time) (*model.Outb
 
 // newVisibleOutbox 统一生成公开视图事件，状态必须与事件类型一致。
 func newVisibleOutbox(product model.Product, occurredAt time.Time, eventType string) (*model.OutboxEvent, error) {
-	if product.ID <= 0 || product.SellerID <= 0 || product.CategoryID <= 0 || product.PriceCent <= 0 || product.AggregateVersion < 2 || ((eventType != OffShelfV1 && product.Status != model.StatusOnSale) || (eventType == OffShelfV1 && product.Status != model.StatusOffShelf)) || product.FirstPublishedAt == nil || product.FirstPublishedAt.IsZero() || occurredAt.IsZero() || product.FirstPublishedAt.After(occurredAt) || !utf8.ValidString(product.Title) || strings.TrimSpace(product.Title) == "" || utf8.RuneCountInString(product.Title) > 128 || !utf8.ValidString(product.Description) || len(product.Description) > 16<<10 {
+	if product.ID <= 0 || product.SellerID <= 0 || product.CategoryID <= 0 || product.PriceCent <= 0 || product.AggregateVersion < 2 || ((eventType == SoldV1 && product.Status != model.StatusSold) || (eventType == OffShelfV1 && product.Status != model.StatusOffShelf) || (eventType != SoldV1 && eventType != OffShelfV1 && product.Status != model.StatusOnSale)) || product.FirstPublishedAt == nil || product.FirstPublishedAt.IsZero() || occurredAt.IsZero() || product.FirstPublishedAt.After(occurredAt) || !utf8.ValidString(product.Title) || strings.TrimSpace(product.Title) == "" || utf8.RuneCountInString(product.Title) > 128 || !utf8.ValidString(product.Description) || len(product.Description) > 16<<10 {
 		return nil, ErrInvalidPublishedProduct
 	}
 	// 统一 UTC 微秒精度，与数据库 DATETIME(6) 对齐。

@@ -80,6 +80,59 @@ func (ProductStatus) EnumDescriptor() ([]byte, []int) {
 	return file_product_v1_product_proto_rawDescGZIP(), []int{0}
 }
 
+// ACTIVE 仅表示有效预占；过期时间本身不触发释放。
+type ReservationStatus int32
+
+const (
+	ReservationStatus_RESERVATION_STATUS_UNSPECIFIED ReservationStatus = 0
+	ReservationStatus_RESERVATION_STATUS_ACTIVE      ReservationStatus = 1
+	ReservationStatus_RESERVATION_STATUS_RELEASED    ReservationStatus = 2
+	ReservationStatus_RESERVATION_STATUS_CONFIRMED   ReservationStatus = 3
+)
+
+// Enum value maps for ReservationStatus.
+var (
+	ReservationStatus_name = map[int32]string{
+		0: "RESERVATION_STATUS_UNSPECIFIED",
+		1: "RESERVATION_STATUS_ACTIVE",
+		2: "RESERVATION_STATUS_RELEASED",
+		3: "RESERVATION_STATUS_CONFIRMED",
+	}
+	ReservationStatus_value = map[string]int32{
+		"RESERVATION_STATUS_UNSPECIFIED": 0,
+		"RESERVATION_STATUS_ACTIVE":      1,
+		"RESERVATION_STATUS_RELEASED":    2,
+		"RESERVATION_STATUS_CONFIRMED":   3,
+	}
+)
+
+func (x ReservationStatus) Enum() *ReservationStatus {
+	p := new(ReservationStatus)
+	*p = x
+	return p
+}
+
+func (x ReservationStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ReservationStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_product_v1_product_proto_enumTypes[1].Descriptor()
+}
+
+func (ReservationStatus) Type() protoreflect.EnumType {
+	return &file_product_v1_product_proto_enumTypes[1]
+}
+
+func (x ReservationStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ReservationStatus.Descriptor instead.
+func (ReservationStatus) EnumDescriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{1}
+}
+
 type ProductImage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -826,6 +879,411 @@ func (x *ListCategoriesResponse) GetCategories() []*Category {
 	return nil
 }
 
+// 返回实际预占状态；重复预占可能返回已经释放或确认的历史记录。
+type Reservation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	OrderId       int64                  `protobuf:"varint,2,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ProductId     int64                  `protobuf:"varint,3,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	BuyerId       int64                  `protobuf:"varint,4,opt,name=buyer_id,json=buyerId,proto3" json:"buyer_id,omitempty"`
+	Status        ReservationStatus      `protobuf:"varint,5,opt,name=status,proto3,enum=remarket.product.v1.ReservationStatus" json:"status,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ConfirmedAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=confirmed_at,json=confirmedAt,proto3" json:"confirmed_at,omitempty"`
+	ReleasedAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=released_at,json=releasedAt,proto3" json:"released_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Reservation) Reset() {
+	*x = Reservation{}
+	mi := &file_product_v1_product_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Reservation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Reservation) ProtoMessage() {}
+
+func (x *Reservation) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Reservation.ProtoReflect.Descriptor instead.
+func (*Reservation) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *Reservation) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Reservation) GetOrderId() int64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+func (x *Reservation) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *Reservation) GetBuyerId() int64 {
+	if x != nil {
+		return x.BuyerId
+	}
+	return 0
+}
+
+func (x *Reservation) GetStatus() ReservationStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ReservationStatus_RESERVATION_STATUS_UNSPECIFIED
+}
+
+func (x *Reservation) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *Reservation) GetConfirmedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ConfirmedAt
+	}
+	return nil
+}
+
+func (x *Reservation) GetReleasedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReleasedAt
+	}
+	return nil
+}
+
+func (x *Reservation) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Reservation) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+// order_id 是预占幂等键。Order 在调用前必须持久化所有参数，重试不得修改。
+// 卖家、金额和版本是 Order 保存的可信商品快照，用于首次预占时条件校验。
+type ReserveProductRequest struct {
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	OrderId                int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ProductId              int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	BuyerId                int64                  `protobuf:"varint,3,opt,name=buyer_id,json=buyerId,proto3" json:"buyer_id,omitempty"`
+	ExpectedSellerId       int64                  `protobuf:"varint,4,opt,name=expected_seller_id,json=expectedSellerId,proto3" json:"expected_seller_id,omitempty"`
+	ExpectedPriceCent      int64                  `protobuf:"varint,5,opt,name=expected_price_cent,json=expectedPriceCent,proto3" json:"expected_price_cent,omitempty"`
+	ExpectedProductVersion int64                  `protobuf:"varint,6,opt,name=expected_product_version,json=expectedProductVersion,proto3" json:"expected_product_version,omitempty"`
+	ExpiresAt              *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *ReserveProductRequest) Reset() {
+	*x = ReserveProductRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReserveProductRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReserveProductRequest) ProtoMessage() {}
+
+func (x *ReserveProductRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReserveProductRequest.ProtoReflect.Descriptor instead.
+func (*ReserveProductRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ReserveProductRequest) GetOrderId() int64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+func (x *ReserveProductRequest) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *ReserveProductRequest) GetBuyerId() int64 {
+	if x != nil {
+		return x.BuyerId
+	}
+	return 0
+}
+
+func (x *ReserveProductRequest) GetExpectedSellerId() int64 {
+	if x != nil {
+		return x.ExpectedSellerId
+	}
+	return 0
+}
+
+func (x *ReserveProductRequest) GetExpectedPriceCent() int64 {
+	if x != nil {
+		return x.ExpectedPriceCent
+	}
+	return 0
+}
+
+func (x *ReserveProductRequest) GetExpectedProductVersion() int64 {
+	if x != nil {
+		return x.ExpectedProductVersion
+	}
+	return 0
+}
+
+func (x *ReserveProductRequest) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+type GetReservationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderId       int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetReservationRequest) Reset() {
+	*x = GetReservationRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetReservationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReservationRequest) ProtoMessage() {}
+
+func (x *GetReservationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReservationRequest.ProtoReflect.Descriptor instead.
+func (*GetReservationRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetReservationRequest) GetOrderId() int64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+// 仅释放与订单、商品匹配的预占，不按商品 ID 批量释放。
+type ReleaseReservationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderId       int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ProductId     int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseReservationRequest) Reset() {
+	*x = ReleaseReservationRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseReservationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseReservationRequest) ProtoMessage() {}
+
+func (x *ReleaseReservationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseReservationRequest.ProtoReflect.Descriptor instead.
+func (*ReleaseReservationRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ReleaseReservationRequest) GetOrderId() int64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+func (x *ReleaseReservationRequest) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+// 仅在 Order 已持久化双方确认及 CONFIRMING 决定后调用。
+type ConfirmReservationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrderId       int64                  `protobuf:"varint,1,opt,name=order_id,json=orderId,proto3" json:"order_id,omitempty"`
+	ProductId     int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmReservationRequest) Reset() {
+	*x = ConfirmReservationRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmReservationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmReservationRequest) ProtoMessage() {}
+
+func (x *ConfirmReservationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmReservationRequest.ProtoReflect.Descriptor instead.
+func (*ConfirmReservationRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ConfirmReservationRequest) GetOrderId() int64 {
+	if x != nil {
+		return x.OrderId
+	}
+	return 0
+}
+
+func (x *ConfirmReservationRequest) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+type ReservationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Reservation   *Reservation           `protobuf:"bytes,1,opt,name=reservation,proto3" json:"reservation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReservationResponse) Reset() {
+	*x = ReservationResponse{}
+	mi := &file_product_v1_product_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReservationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReservationResponse) ProtoMessage() {}
+
+func (x *ReservationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReservationResponse.ProtoReflect.Descriptor instead.
+func (*ReservationResponse) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ReservationResponse) GetReservation() *Reservation {
+	if x != nil {
+		return x.Reservation
+	}
+	return nil
+}
+
 var File_product_v1_product_proto protoreflect.FileDescriptor
 
 const file_product_v1_product_proto_rawDesc = "" +
@@ -900,14 +1358,58 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x16ListCategoriesResponse\x12=\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x1d.remarket.product.v1.CategoryR\n" +
-	"categories*\xb9\x01\n" +
+	"categories\"\xdf\x03\n" +
+	"\vReservation\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
+	"\border_id\x18\x02 \x01(\x03R\aorderId\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x03 \x01(\x03R\tproductId\x12\x19\n" +
+	"\bbuyer_id\x18\x04 \x01(\x03R\abuyerId\x12>\n" +
+	"\x06status\x18\x05 \x01(\x0e2&.remarket.product.v1.ReservationStatusR\x06status\x129\n" +
+	"\n" +
+	"expires_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12=\n" +
+	"\fconfirmed_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vconfirmedAt\x12;\n" +
+	"\vreleased_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"releasedAt\x129\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xbf\x02\n" +
+	"\x15ReserveProductRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\x03R\aorderId\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x02 \x01(\x03R\tproductId\x12\x19\n" +
+	"\bbuyer_id\x18\x03 \x01(\x03R\abuyerId\x12,\n" +
+	"\x12expected_seller_id\x18\x04 \x01(\x03R\x10expectedSellerId\x12.\n" +
+	"\x13expected_price_cent\x18\x05 \x01(\x03R\x11expectedPriceCent\x128\n" +
+	"\x18expected_product_version\x18\x06 \x01(\x03R\x16expectedProductVersion\x129\n" +
+	"\n" +
+	"expires_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"2\n" +
+	"\x15GetReservationRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\x03R\aorderId\"U\n" +
+	"\x19ReleaseReservationRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\x03R\aorderId\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x02 \x01(\x03R\tproductId\"U\n" +
+	"\x19ConfirmReservationRequest\x12\x19\n" +
+	"\border_id\x18\x01 \x01(\x03R\aorderId\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x02 \x01(\x03R\tproductId\"Y\n" +
+	"\x13ReservationResponse\x12B\n" +
+	"\vreservation\x18\x01 \x01(\v2 .remarket.product.v1.ReservationR\vreservation*\xb9\x01\n" +
 	"\rProductStatus\x12\x1e\n" +
 	"\x1aPRODUCT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PRODUCT_STATUS_DRAFT\x10\x01\x12\x1a\n" +
 	"\x16PRODUCT_STATUS_ON_SALE\x10\x02\x12\x1b\n" +
 	"\x17PRODUCT_STATUS_RESERVED\x10\x03\x12\x17\n" +
 	"\x13PRODUCT_STATUS_SOLD\x10\x04\x12\x1c\n" +
-	"\x18PRODUCT_STATUS_OFF_SHELF\x10\x052\xb8\x06\n" +
+	"\x18PRODUCT_STATUS_OFF_SHELF\x10\x05*\x99\x01\n" +
+	"\x11ReservationStatus\x12\"\n" +
+	"\x1eRESERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19RESERVATION_STATUS_ACTIVE\x10\x01\x12\x1f\n" +
+	"\x1bRESERVATION_STATUS_RELEASED\x10\x02\x12 \n" +
+	"\x1cRESERVATION_STATUS_CONFIRMED\x10\x032\xe8\t\n" +
 	"\x0eProductService\x12`\n" +
 	"\rCreateProduct\x12).remarket.product.v1.CreateProductRequest\x1a$.remarket.product.v1.ProductResponse\x12Z\n" +
 	"\n" +
@@ -917,7 +1419,11 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\rUpdateProduct\x12).remarket.product.v1.UpdateProductRequest\x1a$.remarket.product.v1.ProductResponse\x12f\n" +
 	"\x0ePublishProduct\x12..remarket.product.v1.ChangeProductStateRequest\x1a$.remarket.product.v1.ProductResponse\x12g\n" +
 	"\x0fOffShelfProduct\x12..remarket.product.v1.ChangeProductStateRequest\x1a$.remarket.product.v1.ProductResponse\x12i\n" +
-	"\x0eListCategories\x12*.remarket.product.v1.ListCategoriesRequest\x1a+.remarket.product.v1.ListCategoriesResponseB+Z)remarket/backend/gen/product/v1;productv1b\x06proto3"
+	"\x0eListCategories\x12*.remarket.product.v1.ListCategoriesRequest\x1a+.remarket.product.v1.ListCategoriesResponse\x12f\n" +
+	"\x0eReserveProduct\x12*.remarket.product.v1.ReserveProductRequest\x1a(.remarket.product.v1.ReservationResponse\x12f\n" +
+	"\x0eGetReservation\x12*.remarket.product.v1.GetReservationRequest\x1a(.remarket.product.v1.ReservationResponse\x12n\n" +
+	"\x12ReleaseReservation\x12..remarket.product.v1.ReleaseReservationRequest\x1a(.remarket.product.v1.ReservationResponse\x12n\n" +
+	"\x12ConfirmReservation\x12..remarket.product.v1.ConfirmReservationRequest\x1a(.remarket.product.v1.ReservationResponseB+Z)remarket/backend/gen/product/v1;productv1b\x06proto3"
 
 var (
 	file_product_v1_product_proto_rawDescOnce sync.Once
@@ -931,54 +1437,77 @@ func file_product_v1_product_proto_rawDescGZIP() []byte {
 	return file_product_v1_product_proto_rawDescData
 }
 
-var file_product_v1_product_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_product_v1_product_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_product_v1_product_proto_goTypes = []any{
 	(ProductStatus)(0),                // 0: remarket.product.v1.ProductStatus
-	(*ProductImage)(nil),              // 1: remarket.product.v1.ProductImage
-	(*Product)(nil),                   // 2: remarket.product.v1.Product
-	(*CreateProductRequest)(nil),      // 3: remarket.product.v1.CreateProductRequest
-	(*GetProductRequest)(nil),         // 4: remarket.product.v1.GetProductRequest
-	(*ListProductsRequest)(nil),       // 5: remarket.product.v1.ListProductsRequest
-	(*ListProductsResponse)(nil),      // 6: remarket.product.v1.ListProductsResponse
-	(*UpdateProductRequest)(nil),      // 7: remarket.product.v1.UpdateProductRequest
-	(*ChangeProductStateRequest)(nil), // 8: remarket.product.v1.ChangeProductStateRequest
-	(*ProductResponse)(nil),           // 9: remarket.product.v1.ProductResponse
-	(*Category)(nil),                  // 10: remarket.product.v1.Category
-	(*ListCategoriesRequest)(nil),     // 11: remarket.product.v1.ListCategoriesRequest
-	(*ListCategoriesResponse)(nil),    // 12: remarket.product.v1.ListCategoriesResponse
-	(*timestamppb.Timestamp)(nil),     // 13: google.protobuf.Timestamp
+	(ReservationStatus)(0),            // 1: remarket.product.v1.ReservationStatus
+	(*ProductImage)(nil),              // 2: remarket.product.v1.ProductImage
+	(*Product)(nil),                   // 3: remarket.product.v1.Product
+	(*CreateProductRequest)(nil),      // 4: remarket.product.v1.CreateProductRequest
+	(*GetProductRequest)(nil),         // 5: remarket.product.v1.GetProductRequest
+	(*ListProductsRequest)(nil),       // 6: remarket.product.v1.ListProductsRequest
+	(*ListProductsResponse)(nil),      // 7: remarket.product.v1.ListProductsResponse
+	(*UpdateProductRequest)(nil),      // 8: remarket.product.v1.UpdateProductRequest
+	(*ChangeProductStateRequest)(nil), // 9: remarket.product.v1.ChangeProductStateRequest
+	(*ProductResponse)(nil),           // 10: remarket.product.v1.ProductResponse
+	(*Category)(nil),                  // 11: remarket.product.v1.Category
+	(*ListCategoriesRequest)(nil),     // 12: remarket.product.v1.ListCategoriesRequest
+	(*ListCategoriesResponse)(nil),    // 13: remarket.product.v1.ListCategoriesResponse
+	(*Reservation)(nil),               // 14: remarket.product.v1.Reservation
+	(*ReserveProductRequest)(nil),     // 15: remarket.product.v1.ReserveProductRequest
+	(*GetReservationRequest)(nil),     // 16: remarket.product.v1.GetReservationRequest
+	(*ReleaseReservationRequest)(nil), // 17: remarket.product.v1.ReleaseReservationRequest
+	(*ConfirmReservationRequest)(nil), // 18: remarket.product.v1.ConfirmReservationRequest
+	(*ReservationResponse)(nil),       // 19: remarket.product.v1.ReservationResponse
+	(*timestamppb.Timestamp)(nil),     // 20: google.protobuf.Timestamp
 }
 var file_product_v1_product_proto_depIdxs = []int32{
 	0,  // 0: remarket.product.v1.Product.status:type_name -> remarket.product.v1.ProductStatus
-	13, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
-	13, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
-	13, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 4: remarket.product.v1.Product.images:type_name -> remarket.product.v1.ProductImage
-	2,  // 5: remarket.product.v1.ListProductsResponse.products:type_name -> remarket.product.v1.Product
-	2,  // 6: remarket.product.v1.ProductResponse.product:type_name -> remarket.product.v1.Product
-	10, // 7: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
-	3,  // 8: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
-	4,  // 9: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
-	5,  // 10: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
-	5,  // 11: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
-	7,  // 12: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
-	8,  // 13: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	8,  // 14: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	11, // 15: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
-	9,  // 16: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
-	9,  // 17: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
-	6,  // 18: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
-	6,  // 19: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
-	9,  // 20: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
-	9,  // 21: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
-	9,  // 22: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
-	12, // 23: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
-	16, // [16:24] is the sub-list for method output_type
-	8,  // [8:16] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	20, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
+	20, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
+	20, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
+	2,  // 4: remarket.product.v1.Product.images:type_name -> remarket.product.v1.ProductImage
+	3,  // 5: remarket.product.v1.ListProductsResponse.products:type_name -> remarket.product.v1.Product
+	3,  // 6: remarket.product.v1.ProductResponse.product:type_name -> remarket.product.v1.Product
+	11, // 7: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
+	1,  // 8: remarket.product.v1.Reservation.status:type_name -> remarket.product.v1.ReservationStatus
+	20, // 9: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
+	20, // 10: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
+	20, // 11: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
+	20, // 12: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
+	20, // 13: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
+	20, // 14: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
+	14, // 15: remarket.product.v1.ReservationResponse.reservation:type_name -> remarket.product.v1.Reservation
+	4,  // 16: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
+	5,  // 17: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
+	6,  // 18: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
+	6,  // 19: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
+	8,  // 20: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
+	9,  // 21: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	9,  // 22: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	12, // 23: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
+	15, // 24: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
+	16, // 25: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
+	17, // 26: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
+	18, // 27: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
+	10, // 28: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
+	10, // 29: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
+	7,  // 30: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
+	7,  // 31: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
+	10, // 32: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
+	10, // 33: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
+	10, // 34: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
+	13, // 35: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
+	19, // 36: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
+	19, // 37: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
+	19, // 38: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
+	19, // 39: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
+	28, // [28:40] is the sub-list for method output_type
+	16, // [16:28] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_product_v1_product_proto_init() }
@@ -992,8 +1521,8 @@ func file_product_v1_product_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_product_v1_product_proto_rawDesc), len(file_product_v1_product_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   12,
+			NumEnums:      2,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

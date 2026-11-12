@@ -70,18 +70,22 @@ type ProductImage struct {
 
 // ProductReservation 对应 product_reservations，生成列只读，不由 GORM 插入或更新。
 type ProductReservation struct {
-	ID              int64 `gorm:"primaryKey;autoIncrement"`
-	ProductID       int64
-	OrderID         int64
-	BuyerID         int64
-	Status          ReservationStatus
-	ExpiresAt       time.Time
-	ConfirmedAt     *time.Time
-	ReleasedAt      *time.Time
-	ReleaseReason   *string
-	ActiveProductID *int64 `gorm:"->"`
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID        int64 `gorm:"primaryKey;autoIncrement"`
+	ProductID int64
+	OrderID   int64
+	BuyerID   int64
+	// 历史预占无可信快照，保留 NULL；后续新预占必须完整写入三项。
+	ExpectedSellerID       *int64
+	ExpectedPriceCent      *int64
+	ExpectedProductVersion *int64
+	Status                 ReservationStatus
+	ExpiresAt              time.Time
+	ConfirmedAt            *time.Time
+	ReleasedAt             *time.Time
+	ReleaseReason          *string
+	ActiveProductID        *int64 `gorm:"->"`
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 }
 
 // OutboxEvent 对应 outbox_events；Payload 仅存事件 data，不重复保存信封字段。

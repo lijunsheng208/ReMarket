@@ -12,6 +12,12 @@ service ProductService {
   rpc PublishProduct(ChangeProductStateRequest) returns (ProductResponse);
   rpc OffShelfProduct(ChangeProductStateRequest) returns (ProductResponse);
   rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+  // 以下接口仅供通过独立服务身份认证的 Order 调用，不接受普通用户凭据授权。
+  // 已接入独立服务凭据校验；ReserveProduct 尚未实现；查询、释放、确认已接入业务。
+  rpc ReserveProduct(ReserveProductRequest) returns (ReservationResponse);
+  rpc GetReservation(GetReservationRequest) returns (ReservationResponse);
+  rpc ReleaseReservation(ReleaseReservationRequest) returns (ReservationResponse);
+  rpc ConfirmReservation(ConfirmReservationRequest) returns (ReservationResponse);
 }
 enum ProductStatus {
   PRODUCT_STATUS_UNSPECIFIED = 0;
@@ -47,3 +53,43 @@ message ProductResponse { Product product = 1; }
 message Category { int64 id = 1; string code = 2; string name = 3; int32 sort_order = 4; }
 message ListCategoriesRequest {}
 message ListCategoriesResponse { repeated Category categories = 1; }
+
+// ACTIVE 仅表示有效预占；过期时间本身不触发释放。
+enum ReservationStatus {
+  RESERVATION_STATUS_UNSPECIFIED = 0;
+  RESERVATION_STATUS_ACTIVE = 1;
+  RESERVATION_STATUS_RELEASED = 2;
+  RESERVATION_STATUS_CONFIRMED = 3;
+}
+
+// 返回实际预占状态；重复预占可能返回已经释放或确认的历史记录。
+message Reservation {
+  int64 id = 1;
+  int64 order_id = 2;
+  int64 product_id = 3;
+  int64 buyer_id = 4;
+  ReservationStatus status = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp confirmed_at = 7;
+  google.protobuf.Timestamp released_at = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// order_id 是预占幂等键。Order 在调用前必须持久化所有参数，重试不得修改。
+// 卖家、金额和版本是 Order 保存的可信商品快照，用于首次预占时条件校验。
+message ReserveProductRequest {
+  int64 order_id = 1;
+  int64 product_id = 2;
+  int64 buyer_id = 3;
+  int64 expected_seller_id = 4;
+  int64 expected_price_cent = 5;
+  int64 expected_product_version = 6;
+  google.protobuf.Timestamp expires_at = 7;
+}
+message GetReservationRequest { int64 order_id = 1; }
+// 仅释放与订单、商品匹配的预占，不按商品 ID 批量释放。
+message ReleaseReservationRequest { int64 order_id = 1; int64 product_id = 2; }
+// 仅在 Order 已持久化双方确认及 CONFIRMING 决定后调用。
+message ConfirmReservationRequest { int64 order_id = 1; int64 product_id = 2; }
+message ReservationResponse { Reservation reservation = 1; }
