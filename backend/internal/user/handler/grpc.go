@@ -15,8 +15,9 @@ type Registrar interface {
 }
 type Server struct {
 	userv1.UnimplementedUserServiceServer
-	users Registrar
-	login LoginProvider
+	users   Registrar
+	login   LoginProvider
+	current CurrentUserProvider
 }
 
 // New 创建用户 RPC 适配器；未覆盖的登录等方法继续返回 Unimplemented。
@@ -62,6 +63,28 @@ func (s *Server) Register(ctx context.Context, req *userv1.RegisterRequest) (*us
 		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "注册请求不能为空"}
 	}
 	user, err := s.users.Register(ctx, service.RegisterInput{Username: req.Username, Password: req.Password, Nickname: req.Nickname})
+	if err != nil {
+		return nil, err
+	}
+	return &userv1.UserResponse{User: publicUser(user)}, nil
+}
+
+// CurrentUserProvider 定义当前用户查询业务契约。
+type CurrentUserProvider interface {
+	GetCurrentUser(context.Context) (*model.User, error)
+}
+
+// NewAuthenticated 注入注册、登录与当前用户业务，鉴权由服务器拦截器执行。
+func NewAuthenticated(users Registrar, login LoginProvider, current CurrentUserProvider) *Server {
+	return &Server{users: users, login: login, current: current}
+}
+
+// GetCurrentUser 查询已验证身份对应的账号并返回公开字段，不接受外部用户 ID。
+func (s *Server) GetCurrentUser(ctx context.Context, req *userv1.GetCurrentUserRequest) (*userv1.UserResponse, error) {
+	if s.current == nil {
+		return s.UnimplementedUserServiceServer.GetCurrentUser(ctx, req)
+	}
+	user, err := s.current.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, err
 	}

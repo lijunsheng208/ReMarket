@@ -161,8 +161,10 @@ func Dial(target string, credential credentials.TransportCredentials, timeout ti
 }
 
 // NewServer 创建带通用拦截器的服务端，将单次请求处理时间限制为最多五秒。
-func NewServer(logger *slog.Logger) *grpc.Server {
-	return grpc.NewServer(grpc.ChainUnaryInterceptor(ServerInterceptor(logger, 5*time.Second)))
+func NewServer(logger *slog.Logger, interceptors ...grpc.UnaryServerInterceptor) *grpc.Server {
+	// 通用拦截器位于最外层，使鉴权错误也经过日志、Request ID 及错误处理。
+	chain := append([]grpc.UnaryServerInterceptor{ServerInterceptor(logger, 5*time.Second)}, interceptors...)
+	return grpc.NewServer(grpc.ChainUnaryInterceptor(chain...))
 }
 
 // Serve 注册进程健康检查并启动服务，上下文取消时执行有时限的优雅关闭。

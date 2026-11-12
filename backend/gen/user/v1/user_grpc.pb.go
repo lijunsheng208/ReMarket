@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_Register_FullMethodName      = "/remarket.user.v1.UserService/Register"
-	UserService_Login_FullMethodName         = "/remarket.user.v1.UserService/Login"
-	UserService_GetUser_FullMethodName       = "/remarket.user.v1.UserService/GetUser"
-	UserService_UpdateProfile_FullMethodName = "/remarket.user.v1.UserService/UpdateProfile"
+	UserService_Register_FullMethodName       = "/remarket.user.v1.UserService/Register"
+	UserService_Login_FullMethodName          = "/remarket.user.v1.UserService/Login"
+	UserService_GetCurrentUser_FullMethodName = "/remarket.user.v1.UserService/GetCurrentUser"
+	UserService_GetUser_FullMethodName        = "/remarket.user.v1.UserService/GetUser"
+	UserService_UpdateProfile_FullMethodName  = "/remarket.user.v1.UserService/UpdateProfile"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -31,6 +32,8 @@ const (
 type UserServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// 从已验证身份获取当前用户，不接受用户 ID。
+	GetCurrentUser(ctx context.Context, in *GetCurrentUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UserResponse, error)
 }
@@ -63,6 +66,16 @@ func (c *userServiceClient) Login(ctx context.Context, in *LoginRequest, opts ..
 	return out, nil
 }
 
+func (c *userServiceClient) GetCurrentUser(ctx context.Context, in *GetCurrentUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserResponse)
+	err := c.cc.Invoke(ctx, UserService_GetCurrentUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserResponse)
@@ -89,6 +102,8 @@ func (c *userServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfile
 type UserServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*UserResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	// 从已验证身份获取当前用户，不接受用户 ID。
+	GetCurrentUser(context.Context, *GetCurrentUserRequest) (*UserResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*UserResponse, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*UserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
@@ -106,6 +121,9 @@ func (UnimplementedUserServiceServer) Register(context.Context, *RegisterRequest
 }
 func (UnimplementedUserServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedUserServiceServer) GetCurrentUser(context.Context, *GetCurrentUserRequest) (*UserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCurrentUser not implemented")
 }
 func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*UserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
@@ -170,6 +188,24 @@ func _UserService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetCurrentUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCurrentUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetCurrentUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetCurrentUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetCurrentUser(ctx, req.(*GetCurrentUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUserRequest)
 	if err := dec(in); err != nil {
@@ -220,6 +256,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _UserService_Login_Handler,
+		},
+		{
+			MethodName: "GetCurrentUser",
+			Handler:    _UserService_GetCurrentUser_Handler,
 		},
 		{
 			MethodName: "GetUser",

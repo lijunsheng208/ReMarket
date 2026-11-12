@@ -427,6 +427,42 @@ func (x *UserResponse) GetUser() *User {
 	return nil
 }
 
+type GetCurrentUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCurrentUserRequest) Reset() {
+	*x = GetCurrentUserRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCurrentUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCurrentUserRequest) ProtoMessage() {}
+
+func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCurrentUserRequest.ProtoReflect.Descriptor instead.
+func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{7}
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
@@ -461,10 +497,12 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\t_nicknameB\x14\n" +
 	"\x12_avatar_object_key\":\n" +
 	"\fUserResponse\x12*\n" +
-	"\x04user\x18\x01 \x01(\v2\x16.remarket.user.v1.UserR\x04user2\xcc\x02\n" +
+	"\x04user\x18\x01 \x01(\v2\x16.remarket.user.v1.UserR\x04user\"\x17\n" +
+	"\x15GetCurrentUserRequest2\xa7\x03\n" +
 	"\vUserService\x12M\n" +
 	"\bRegister\x12!.remarket.user.v1.RegisterRequest\x1a\x1e.remarket.user.v1.UserResponse\x12H\n" +
-	"\x05Login\x12\x1e.remarket.user.v1.LoginRequest\x1a\x1f.remarket.user.v1.LoginResponse\x12K\n" +
+	"\x05Login\x12\x1e.remarket.user.v1.LoginRequest\x1a\x1f.remarket.user.v1.LoginResponse\x12Y\n" +
+	"\x0eGetCurrentUser\x12'.remarket.user.v1.GetCurrentUserRequest\x1a\x1e.remarket.user.v1.UserResponse\x12K\n" +
 	"\aGetUser\x12 .remarket.user.v1.GetUserRequest\x1a\x1e.remarket.user.v1.UserResponse\x12W\n" +
 	"\rUpdateProfile\x12&.remarket.user.v1.UpdateProfileRequest\x1a\x1e.remarket.user.v1.UserResponseB%Z#remarket/backend/gen/user/v1;userv1b\x06proto3"
 
@@ -480,7 +518,7 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_user_v1_user_proto_rawDescData
 }
 
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_user_v1_user_proto_goTypes = []any{
 	(*User)(nil),                  // 0: remarket.user.v1.User
 	(*RegisterRequest)(nil),       // 1: remarket.user.v1.RegisterRequest
@@ -489,23 +527,26 @@ var file_user_v1_user_proto_goTypes = []any{
 	(*GetUserRequest)(nil),        // 4: remarket.user.v1.GetUserRequest
 	(*UpdateProfileRequest)(nil),  // 5: remarket.user.v1.UpdateProfileRequest
 	(*UserResponse)(nil),          // 6: remarket.user.v1.UserResponse
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
+	(*GetCurrentUserRequest)(nil), // 7: remarket.user.v1.GetCurrentUserRequest
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
 }
 var file_user_v1_user_proto_depIdxs = []int32{
-	7, // 0: remarket.user.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	7, // 1: remarket.user.v1.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
+	8, // 0: remarket.user.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	8, // 1: remarket.user.v1.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
 	0, // 2: remarket.user.v1.LoginResponse.user:type_name -> remarket.user.v1.User
 	0, // 3: remarket.user.v1.UserResponse.user:type_name -> remarket.user.v1.User
 	1, // 4: remarket.user.v1.UserService.Register:input_type -> remarket.user.v1.RegisterRequest
 	2, // 5: remarket.user.v1.UserService.Login:input_type -> remarket.user.v1.LoginRequest
-	4, // 6: remarket.user.v1.UserService.GetUser:input_type -> remarket.user.v1.GetUserRequest
-	5, // 7: remarket.user.v1.UserService.UpdateProfile:input_type -> remarket.user.v1.UpdateProfileRequest
-	6, // 8: remarket.user.v1.UserService.Register:output_type -> remarket.user.v1.UserResponse
-	3, // 9: remarket.user.v1.UserService.Login:output_type -> remarket.user.v1.LoginResponse
-	6, // 10: remarket.user.v1.UserService.GetUser:output_type -> remarket.user.v1.UserResponse
-	6, // 11: remarket.user.v1.UserService.UpdateProfile:output_type -> remarket.user.v1.UserResponse
-	8, // [8:12] is the sub-list for method output_type
-	4, // [4:8] is the sub-list for method input_type
+	7, // 6: remarket.user.v1.UserService.GetCurrentUser:input_type -> remarket.user.v1.GetCurrentUserRequest
+	4, // 7: remarket.user.v1.UserService.GetUser:input_type -> remarket.user.v1.GetUserRequest
+	5, // 8: remarket.user.v1.UserService.UpdateProfile:input_type -> remarket.user.v1.UpdateProfileRequest
+	6, // 9: remarket.user.v1.UserService.Register:output_type -> remarket.user.v1.UserResponse
+	3, // 10: remarket.user.v1.UserService.Login:output_type -> remarket.user.v1.LoginResponse
+	6, // 11: remarket.user.v1.UserService.GetCurrentUser:output_type -> remarket.user.v1.UserResponse
+	6, // 12: remarket.user.v1.UserService.GetUser:output_type -> remarket.user.v1.UserResponse
+	6, // 13: remarket.user.v1.UserService.UpdateProfile:output_type -> remarket.user.v1.UserResponse
+	9, // [9:14] is the sub-list for method output_type
+	4, // [4:9] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
 	4, // [4:4] is the sub-list for extension extendee
 	0, // [0:4] is the sub-list for field type_name
@@ -523,7 +564,7 @@ func file_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

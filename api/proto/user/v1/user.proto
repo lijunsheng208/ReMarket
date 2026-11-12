@@ -5,6 +5,8 @@ import "google/protobuf/timestamp.proto";
 service UserService {
   rpc Register(RegisterRequest) returns (UserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
+  // 从已验证身份获取当前用户，不接受用户 ID。
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (UserResponse);
   rpc GetUser(GetUserRequest) returns (UserResponse);
   rpc UpdateProfile(UpdateProfileRequest) returns (UserResponse);
 }
@@ -24,3 +26,5 @@ message GetUserRequest { int64 id = 1; }
 // User identity comes from verified context, never a client-supplied user ID.
 message UpdateProfileRequest { optional string nickname = 1; optional string avatar_object_key = 2; }
 message UserResponse { User user = 1; }
+
+message GetCurrentUserRequest {}
