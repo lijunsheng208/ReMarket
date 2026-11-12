@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	productv1 "remarket/backend/gen/product/v1"
 	userv1 "remarket/backend/gen/user/v1"
 	"remarket/backend/internal/gateway"
 	"remarket/backend/pkg/auth"
@@ -60,8 +61,19 @@ func run() error {
 		return err
 	}
 	defer conn.Close()
+	productTarget := os.Getenv("PRODUCT_GRPC_TARGET")
+	if productTarget == "" {
+		productTarget = "127.0.0.1:50052"
+	}
+	productConn, err := grpcx.Dial(productTarget, nil, timeout)
+	if err != nil {
+		return err
+	}
+	defer productConn.Close()
 	gin.SetMode(gin.ReleaseMode)
-	server := &http.Server{Addr: address, Handler: gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
+	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout)
+	gateway.AddProductRoutes(router, productv1.NewProductServiceClient(productConn), tokens, timeout)
+	server := &http.Server{Addr: address, Handler: router, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return err

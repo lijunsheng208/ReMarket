@@ -15,10 +15,11 @@ type DraftCreator interface {
 }
 type Server struct {
 	productv1.UnimplementedProductServiceServer
-	products  DraftCreator
-	publisher Publisher
-	reader    ProductReader
-	mutator   Mutator
+	products   DraftCreator
+	publisher  Publisher
+	reader     ProductReader
+	mutator    Mutator
+	categories CategoryLister
 }
 
 // New 注入创建草稿业务，其他商品 RPC 保留 Unimplemented。

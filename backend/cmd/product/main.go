@@ -57,7 +57,7 @@ func run() error {
 	}
 	defer listener.Close()
 	// 商品写接口默认鉴权，当前仅匿名放行健康检查；公开读取在对应业务阶段增加。
-	server := grpcx.NewServer(slog.Default(), grpcx.OptionalAuthInterceptor(tokens, []string{productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName}, "/grpc.health.v1.Health/Check"))
+	server := grpcx.NewServer(slog.Default(), grpcx.OptionalAuthInterceptor(tokens, []string{productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName, productv1.ProductService_ListCategories_FullMethodName}, "/grpc.health.v1.Health/Check"))
 	products := repository.NewProductRepository(db)
 	target := os.Getenv("USER_GRPC_TARGET")
 	if target == "" {
@@ -70,7 +70,7 @@ func run() error {
 	defer userConn.Close()
 	adminVerifier := client.NewUserVerifier(userv1.NewUserServiceClient(userConn))
 	query := service.NewQuery(products, adminVerifier)
-	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products), service.NewPublisher(products), query, service.NewMutation(products, adminVerifier)))
+	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products), service.NewPublisher(products), query, service.NewMutation(products, adminVerifier)).WithCategories(service.NewCategories(products)))
 	slog.Info("商品服务已启动，创建草稿 RPC 已接入", "address", listener.Addr().String())
 	return grpcx.Serve(ctx, listener, server)
 }
