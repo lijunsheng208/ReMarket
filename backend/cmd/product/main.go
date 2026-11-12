@@ -1,4 +1,4 @@
-// 本进程暴露 gRPC 契约，业务方法当前返回 Unimplemented。
+// 商品进程提供创建草稿 RPC，发布等业务暂未实现。
 package main
 
 import (
@@ -8,30 +8,55 @@ import (
 	"os"
 	"os/signal"
 	productv1 "remarket/backend/gen/product/v1"
+	"remarket/backend/internal/product/handler"
+	"remarket/backend/internal/product/repository"
+	"remarket/backend/internal/product/service"
+	"remarket/backend/pkg/auth"
+	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
 	"syscall"
+	"time"
 )
 
-// main 组装并启动 商品服务骨架，监听退出信号并交由 grpcx 执行优雅关闭。
+// main 启动商品服务，异常退出时只记录运行错误，不记录请求凭据。
 func main() {
-	// Ctrl+C 或 SIGTERM 触发根上下文取消，通知服务停止。
+	if err := run(); err != nil {
+		slog.Error("商品服务运行失败", "error", err)
+		os.Exit(1)
+	}
+}
+
+// run 组装鉴权、数据库及草稿业务，退出前关闭监听器和连接池。
+func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	config, err := auth.JWTConfigFromEnv()
+	if err != nil {
+		return err
+	}
+	tokens, err := auth.NewJWTManager(config)
+	if err != nil {
+		return err
+	}
+	dbCtx, dbCancel := context.WithTimeout(ctx, 5*time.Second)
+	db, pool, err := database.OpenMySQL(dbCtx, database.MySQLConfig{Address: os.Getenv("PRODUCT_MYSQL_ADDR"), Username: os.Getenv("PRODUCT_MYSQL_USERNAME"), Password: os.Getenv("MYSQL_PRODUCT_PASSWORD"), Database: os.Getenv("PRODUCT_MYSQL_DATABASE")})
+	dbCancel()
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
 	address := os.Getenv("PRODUCT_GRPC_ADDR")
 	if address == "" {
 		address = "127.0.0.1:50052"
 	}
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		slog.Error("listen failed", "error", err)
-		os.Exit(1)
+		return err
 	}
-	// 仅注册协议骨架，不将尚未实现的方法伪装成业务成功响应。
-	server := grpcx.NewServer(slog.Default())
-	productv1.RegisterProductServiceServer(server, &productv1.UnimplementedProductServiceServer{})
-	slog.Info("RPC scaffold listening; business methods are unimplemented", "address", listener.Addr().String())
-	if err := grpcx.Serve(ctx, listener, server); err != nil {
-		slog.Error("serve failed", "error", err)
-		os.Exit(1)
-	}
+	defer listener.Close()
+	// 商品写接口默认鉴权，当前仅匿名放行健康检查；公开读取在对应业务阶段增加。
+	server := grpcx.NewServer(slog.Default(), grpcx.AuthInterceptor(tokens, "/grpc.health.v1.Health/Check"))
+	productv1.RegisterProductServiceServer(server, handler.New(service.New(repository.NewProductRepository(db))))
+	slog.Info("商品服务已启动，创建草稿 RPC 已接入", "address", listener.Addr().String())
+	return grpcx.Serve(ctx, listener, server)
 }
