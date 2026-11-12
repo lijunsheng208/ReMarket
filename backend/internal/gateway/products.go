@@ -22,6 +22,7 @@ func AddProductRoutes(router *gin.Engine, products productv1.ProductServiceClien
 	read.GET("/products/:id", h.detail)
 	read.GET("/categories", h.categories)
 	write := router.Group("/api/v1/products", bearerAuth(verifier))
+	write.GET("/mine", h.listMine)
 	write.POST("", h.create)
 	write.PATCH("/:id", h.update)
 	write.POST("/:id/publish", h.publish)
@@ -114,6 +115,39 @@ func (h *productHTTP) list(c *gin.Context) {
 		}
 	}
 	h.call(c, 200, func(ctx context.Context) (proto.Message, error) { return h.products.ListProducts(ctx, request) })
+}
+
+// listMine 使用相同分页参数规则调用受保护的当前卖家列表。
+func (h *productHTTP) listMine(c *gin.Context) {
+	request := &productv1.ListProductsRequest{}
+	for _, key := range []string{"category_id", "page", "page_size"} {
+		values, exists := c.Request.URL.Query()[key]
+		if !exists {
+			continue
+		}
+		if len(values) != 1 {
+			writeError(c, 400, "InvalidArgument", "分页参数不能重复")
+			return
+		}
+		bits := 32
+		if key == "category_id" {
+			bits = 64
+		}
+		value, err := strconv.ParseInt(values[0], 10, bits)
+		if err != nil {
+			writeError(c, 400, "InvalidArgument", "分页或分类参数无效")
+			return
+		}
+		switch key {
+		case "category_id":
+			request.CategoryId = value
+		case "page":
+			request.Page = int32(value)
+		case "page_size":
+			request.PageSize = int32(value)
+		}
+	}
+	h.call(c, 200, func(ctx context.Context) (proto.Message, error) { return h.products.ListMyProducts(ctx, request) })
 }
 
 // detail 由 Product Service 统一判断商品的公开或所有者可见性。

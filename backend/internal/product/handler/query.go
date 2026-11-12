@@ -59,3 +59,27 @@ func productProto(p *model.Product) *productv1.Product {
 	}
 	return result
 }
+
+// OwnProductReader 定义当前卖家分页业务。
+type OwnProductReader interface {
+	ListMine(context.Context, int64, int32, int32) ([]model.Product, int64, error)
+}
+
+// WithOwnList 注入当前卖家分页能力，默认要求商品服务鉴权。
+func (s *Server) WithOwnList(reader OwnProductReader) *Server { s.ownReader = reader; return s }
+
+// ListMyProducts 从 Context 获取身份，忽略客户端提供的任何卖家头。
+func (s *Server) ListMyProducts(ctx context.Context, req *productv1.ListProductsRequest) (*productv1.ListProductsResponse, error) {
+	if s.ownReader == nil {
+		return s.UnimplementedProductServiceServer.ListMyProducts(ctx, req)
+	}
+	products, total, err := s.ownReader.ListMine(ctx, req.GetCategoryId(), req.GetPage(), req.GetPageSize())
+	if err != nil {
+		return nil, err
+	}
+	result := &productv1.ListProductsResponse{Total: total, Products: make([]*productv1.Product, 0, len(products))}
+	for i := range products {
+		result.Products = append(result.Products, productProto(&products[i]))
+	}
+	return result, nil
+}

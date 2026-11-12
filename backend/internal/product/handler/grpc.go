@@ -20,6 +20,7 @@ type Server struct {
 	reader     ProductReader
 	mutator    Mutator
 	categories CategoryLister
+	ownReader  OwnProductReader
 }
 
 // New 注入创建草稿业务，其他商品 RPC 保留 Unimplemented。

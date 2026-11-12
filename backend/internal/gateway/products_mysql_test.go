@@ -137,7 +137,7 @@ func TestProductHTTPMySQL(t *testing.T) {
 	products := pr.NewProductRepository(productGorm)
 	admins := productclient.NewUserVerifier(userClient)
 	productServer := grpcx.NewServer(nil, grpcx.OptionalAuthInterceptor(tokens, []string{productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName, productv1.ProductService_ListCategories_FullMethodName}))
-	productv1.RegisterProductServiceServer(productServer, ph.NewComplete(ps.New(products), ps.NewPublisher(products), ps.NewQuery(products, admins), ps.NewMutation(products, admins)).WithCategories(ps.NewCategories(products)))
+	productv1.RegisterProductServiceServer(productServer, ph.NewComplete(ps.New(products), ps.NewPublisher(products), ps.NewQuery(products, admins), ps.NewMutation(products, admins)).WithCategories(ps.NewCategories(products)).WithOwnList(ps.NewQuery(products, admins)))
 	productListener := bufconn.Listen(1 << 20)
 	go productServer.Serve(productListener)
 	defer productServer.Stop()
@@ -199,6 +199,29 @@ func TestProductHTTPMySQL(t *testing.T) {
 	json.Unmarshal(created["product"], &product)
 	id := product["id"].(string)
 	path := "/api/v1/products/" + id
+	call("GET", "/api/v1/products/mine", "", "", 401)
+	mine := call("GET", "/api/v1/products/mine?page=1&page_size=1", "", sellerToken, 200)
+	var total string
+	json.Unmarshal(mine["total"], &total)
+	if total != "1" {
+		t.Fatal("草稿未在我的商品中")
+	}
+	another := call("GET", "/api/v1/products/mine?seller_id=999", "", adminToken, 200)
+	var others []json.RawMessage
+	json.Unmarshal(another["products"], &others)
+	if len(others) != 0 {
+		t.Fatal("管理员越权读取其他卖家列表")
+	}
+	call("POST", "/api/v1/products", input, sellerToken, 201)
+	mine = call("GET", "/api/v1/products/mine?page=2&page_size=1", "", sellerToken, 200)
+	var items []json.RawMessage
+	json.Unmarshal(mine["products"], &items)
+	json.Unmarshal(mine["total"], &total)
+	if total != "2" || len(items) != 1 {
+		t.Fatal("我的商品分页总数错误")
+	}
+	call("GET", "/api/v1/products/mine?page_size=101", "", sellerToken, 400)
+
 	call("GET", path, "", "", 404)
 	call("GET", path, "", sellerToken, 200)
 	call("POST", path+"/publish", `{"expected_version":"1"}`, sellerToken, 200)

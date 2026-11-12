@@ -907,11 +907,12 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x16PRODUCT_STATUS_ON_SALE\x10\x02\x12\x1b\n" +
 	"\x17PRODUCT_STATUS_RESERVED\x10\x03\x12\x17\n" +
 	"\x13PRODUCT_STATUS_SOLD\x10\x04\x12\x1c\n" +
-	"\x18PRODUCT_STATUS_OFF_SHELF\x10\x052\xd1\x05\n" +
+	"\x18PRODUCT_STATUS_OFF_SHELF\x10\x052\xb8\x06\n" +
 	"\x0eProductService\x12`\n" +
 	"\rCreateProduct\x12).remarket.product.v1.CreateProductRequest\x1a$.remarket.product.v1.ProductResponse\x12Z\n" +
 	"\n" +
-	"GetProduct\x12&.remarket.product.v1.GetProductRequest\x1a$.remarket.product.v1.ProductResponse\x12c\n" +
+	"GetProduct\x12&.remarket.product.v1.GetProductRequest\x1a$.remarket.product.v1.ProductResponse\x12e\n" +
+	"\x0eListMyProducts\x12(.remarket.product.v1.ListProductsRequest\x1a).remarket.product.v1.ListProductsResponse\x12c\n" +
 	"\fListProducts\x12(.remarket.product.v1.ListProductsRequest\x1a).remarket.product.v1.ListProductsResponse\x12`\n" +
 	"\rUpdateProduct\x12).remarket.product.v1.UpdateProductRequest\x1a$.remarket.product.v1.ProductResponse\x12f\n" +
 	"\x0ePublishProduct\x12..remarket.product.v1.ChangeProductStateRequest\x1a$.remarket.product.v1.ProductResponse\x12g\n" +
@@ -959,20 +960,22 @@ var file_product_v1_product_proto_depIdxs = []int32{
 	10, // 7: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
 	3,  // 8: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
 	4,  // 9: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
-	5,  // 10: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
-	7,  // 11: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
-	8,  // 12: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	8,  // 13: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	11, // 14: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
-	9,  // 15: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
-	9,  // 16: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
-	6,  // 17: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
-	9,  // 18: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
-	9,  // 19: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
-	9,  // 20: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
-	12, // 21: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
-	15, // [15:22] is the sub-list for method output_type
-	8,  // [8:15] is the sub-list for method input_type
+	5,  // 10: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
+	5,  // 11: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
+	7,  // 12: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
+	8,  // 13: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	8,  // 14: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	11, // 15: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
+	9,  // 16: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
+	9,  // 17: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
+	6,  // 18: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
+	6,  // 19: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
+	9,  // 20: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
+	9,  // 21: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
+	9,  // 22: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
+	12, // 23: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
+	16, // [16:24] is the sub-list for method output_type
+	8,  // [8:16] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name

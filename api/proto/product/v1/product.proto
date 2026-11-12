@@ -5,6 +5,8 @@ import "google/protobuf/timestamp.proto";
 service ProductService {
   rpc CreateProduct(CreateProductRequest) returns (ProductResponse);
   rpc GetProduct(GetProductRequest) returns (ProductResponse);
+  // 从已验证身份取得卖家 ID，查询当前用户全部状态的商品。
+  rpc ListMyProducts(ListProductsRequest) returns (ListProductsResponse);
   rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
   rpc UpdateProduct(UpdateProductRequest) returns (ProductResponse);
   rpc PublishProduct(ChangeProductStateRequest) returns (ProductResponse);
