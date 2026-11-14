@@ -16,6 +16,7 @@ import (
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/outbox"
 	"syscall"
 	"time"
 )
@@ -47,6 +48,12 @@ func run() error {
 		return err
 	}
 	defer pool.Close()
+	stopOutbox, err := outbox.Start(ctx, pool, "order", func(event string) { slog.Warn("Outbox 发布", "event", event) })
+	if err != nil {
+		return err
+	}
+	defer stopOutbox()
+
 	address := os.Getenv("ORDER_GRPC_ADDR")
 	if address == "" {
 		address = "127.0.0.1:50053"

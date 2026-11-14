@@ -18,6 +18,7 @@ import (
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/outbox"
 	redisx "remarket/backend/pkg/redis"
 	"strconv"
 	"syscall"
@@ -55,6 +56,12 @@ func run() error {
 		return err
 	}
 	defer pool.Close()
+	stopOutbox, err := outbox.Start(ctx, pool, "product", func(event string) { slog.Warn("Outbox 发布", "event", event) })
+	if err != nil {
+		return err
+	}
+	defer stopOutbox()
+
 	address := os.Getenv("PRODUCT_GRPC_ADDR")
 	if address == "" {
 		address = "127.0.0.1:50052"
