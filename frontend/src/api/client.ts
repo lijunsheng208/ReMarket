@@ -4,9 +4,10 @@ export interface Product { id: string; seller_id: string; category_id: string; t
 export class ApiError extends Error { status: number; requestId?: string; constructor(message: string, status: number, requestId?: string) { super(message); this.status = status; this.requestId = requestId } }
 
 // request 统一调用同源 Gateway；不记录密码及 Token，超时和取消传递给 fetch。
-export async function request<T>(path: string, options: { method?: string; body?: unknown; token?: string; signal?: AbortSignal } = {}): Promise<T> {
+export async function request<T>(path: string, options: { method?: string; body?: unknown; token?: string; signal?: AbortSignal; idempotencyKey?: string } = {}): Promise<T> {
   const headers: Record<string, string> = {}
   if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+  if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
   if (options.token) headers.Authorization = `Bearer ${options.token}`
   let response: Response
   try {

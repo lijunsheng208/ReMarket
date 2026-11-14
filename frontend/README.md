@@ -5,7 +5,7 @@ React + TypeScript + Vite，参考二手商城的信息布局：白底蓝色强�
 ## 启动联调
 
 1. 启动 MySQL 并迁移 User/Product 表及分类种子。
-2. 为 User、Product、Gateway 导出数据库及一致的 JWT 配置，分别执行根目录 make run-user、make run-product、make run-gateway。
+2. 订单功能还需应用 Order 000001/000002、Product 000003 迁移（已执行的版本不要重跑），为 User、Product、Order、Gateway 导出各自数据库和一致 JWT 配置。Order/Product 配置相同的独立 ORDER_PRODUCT_SERVICE_TOKEN，Gateway 配置 ORDER_GRPC_TARGET；分别执行 make run-user、make run-product、make run-order、make run-gateway。
 3. 依赖未安装时执行 make install，然后 make dev，打开 Vite 打印的地址（默认 http://127.0.0.1:5173/）。
 
 Vite 将 /api 代理至 http://127.0.0.1:8080，不需要后端 CORS。可在 frontend/.env.local 设置 GATEWAY_PROXY_TARGET 后重启 Vite。不要将数据库密码或 JWT_SECRET 放入前端。
@@ -28,3 +28,11 @@ npm run build、npm run lint 已通过，金额精度/输入边界/API 客户端
 Vite 开发代理不会包含在生产产物中，生产需 Nginx 将 /api 代理至 Gateway。本次不发布网站，不执行业务库迁移。
 
 顶部查找框按商品编号查询，不提供全文搜索。没有收藏、消息等无后端支持的假入口。图片字段当前只有对象键，未当作可访问 URL 使用；商品市场明确显示暂无图片占位，后续图片 URL 能力完成后可替换。
+
+## 订单页面（本轮）
+
+新增商品详情购买入口、确认下单、我买到的/我卖出的列表、订单详情、取消与双方确认。下单键跨重试保留，PENDING 不当作成功预占；页面查询真实最终状态。详情与实现边界见 [订单前端说明](../docs/api/order-web.md)。
+
+build、lint（无警告）、test:orders 四个 Node API/结算键测试及差异检查通过。浏览器宿主不可用且 Python Playwright 未安装，未验收截图、点击及真实后端联调。运行 `npm run test:orders`，本轮验证使用 Node 26.4.0 的原生 TypeScript 类型擦除与模块钩子，无新增 npm 依赖。
+
+本地启动复核（2026-11-13）：缺失 Order 000001/000002 与 Product 000003 已应用到本地业务库并记录版本，请勿再次执行；Order/Product/Gateway 已加载当前代码，健康、商品及买卖订单列表实测 200。订单标题辅助小字已移除，前端 build/lint 通过。尚未进行完整浏览器交易验收。
