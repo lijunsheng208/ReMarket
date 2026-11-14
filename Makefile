@@ -72,3 +72,17 @@ redis-check:
 .PHONY: run-event-consumer
 run-event-consumer:
 	cd backend && go run ./cmd/event-consumer
+
+# Fault infrastructure has its own project, network, ports and volumes.
+DAY3_COMPOSE = docker compose --env-file .env -p remarket-day3-test -f deployments/docker-compose.day3-test.yml
+.PHONY: day3-test-config day3-test-up day3-test-down day3-test
+day3-test-config:
+	$(DAY3_COMPOSE) config --quiet
+day3-test-up:
+	$(DAY3_COMPOSE) up -d --wait --wait-timeout 240 redis kafka
+	$(DAY3_COMPOSE) run --rm kafka-init
+day3-test-down:
+	$(DAY3_COMPOSE) down
+day3-test:
+	@test -n "$$REMARKET_TEST_MYSQL_DSN" || (echo "Set REMARKET_TEST_MYSQL_DSN to a test database administrator"; exit 1)
+	cd backend && REDIS_INTEGRATION=1 KAFKA_INTEGRATION=1 go test -race ./internal/eventtest ./internal/product/service ./internal/product/cache ./internal/product/repository ./internal/product/handler ./internal/gateway ./pkg/redis ./pkg/ratelimit ./pkg/kafka ./pkg/outbox -count=1

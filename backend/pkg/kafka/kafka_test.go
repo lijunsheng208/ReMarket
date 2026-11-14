@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/twmb/franz-go/pkg/kmsg"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -197,5 +198,50 @@ func TestExistingProductContract(t *testing.T) {
 	e, err := DecodeEnvelope(raw)
 	if err != nil || e.AggregateType != "product" || len(e.Data) == 0 {
 		t.Fatalf("现有事件不兼容: %v", err)
+	}
+}
+
+// TestEventContractFixtures 验证全部业务示例可由当前信封解码，Schema 文件为合法 JSON。
+func TestEventContractFixtures(t *testing.T) {
+	files, err := filepath.Glob("../../../api/events/*/*.example.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count := 0
+	for _, file := range files {
+		if strings.Contains(file, "/common/") {
+			continue
+		}
+		raw, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		e, err := DecodeEnvelope(raw)
+		if err != nil {
+			t.Fatalf("%s: %v", file, err)
+		}
+		var data struct {
+			Status string `json:"status"`
+		}
+		if err := json.Unmarshal(e.Data, &data); err != nil {
+			t.Fatal(err)
+		}
+		if data.Status == "" {
+			t.Fatal("业务示例缺少状态")
+		}
+		count++
+	}
+	if count != 15 {
+		t.Fatalf("商品/订单示例覆盖不足: %d", count)
+	}
+	schemas, err := filepath.Glob("../../../api/events/*/*.schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range schemas {
+		raw, err := os.ReadFile(file)
+		if err != nil || !json.Valid(raw) {
+			t.Fatalf("Schema JSON 无效: %s", file)
+		}
 	}
 }

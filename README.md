@@ -1,46 +1,60 @@
 # ReMarket
 
-Go 微服务二手交易平台，使用 Monorepo 管理前后端、接口契约及部署配置。
+React + TypeScript 前端与 Go 微服务后端的二手交易平台 Monorepo。
+
+## 当前范围
+
+User、Product、Order 与 Gateway 已有业务实现。Day 3 已接入商品详情缓存、Gateway Redis Lua 限流、Kafka Producer/Consumer、Outbox Publisher，以及独立测试消费者的幂等、Retry/DLT 和重放。Feed、搜索消费和聊天不在本轮范围内。
+
+代码实现、测试验收和运行启用分别记录：详见 [Day 3 联调验收](docs/testing/day3-acceptance.md)。Outbox 和限流默认关闭；测试消费者需独立建库迁移，不随基础设施自动启动。
 
 ## 目录
 
-- `frontend/`：React + Vite + TypeScript 前端。
-- `backend/cmd/`：Gateway、User、Product、Order、Search、Feed、Chat 和 Worker 入口。
-- `backend/internal/`：各服务内部实现。
-- `backend/pkg/`：公共技术组件，不存放共享业务模型。
-- `backend/gen/`：生成的接口代码。
-- `api/proto/`：版本化 gRPC 接口定义。
-- `api/events/`：异步事件契约。
-- `migrations/`：按服务划分的数据库迁移。
-- `deployments/`：部署与监控配置。
-- `tests/`：集成、并发与压测。
-- `docs/`：架构、数据库及接口文档。
-- `scripts/`：工程辅助脚本。
+- `frontend/`：React + Vite + TypeScript。
+- `backend/cmd/`：User、Product、Order、Gateway、连接探测及 event-consumer 入口。
+- `backend/internal/`：服务业务实现；`backend/pkg/`：技术组件。
+- `api/proto/`、`backend/gen/`：协议源及生成代码。
+- `api/events/`：主事件与 Retry/DLT 契约。
+- `migrations/`：按服务版本化迁移；`deployments/`：基础设施。
+- `docs/`：设计、运行及验收说明。
 
 ## 本地开发
 
-安装 Go 和 Node.js 后执行：
+首次复制 `.env.example` 为 `.env`，已有文件不要覆盖。安装项目要求的 Go、Node.js 与 Docker Compose，然后执行：
 
 ```sh
+make infra-config
+make infra-up
+make infra-ps
 make install
 make dev
 ```
 
-`make build` 构建工程，`make check` 执行检查，`make fmt` 格式化 Go 代码。
+基础设施包含 MySQL、Redis、Kafka、Elasticsearch、MinIO 五个组件及一次性 Topic 初始化；不自动迁移业务表。已有卷修改初始化脚本不会重新建账号，不使用删除数据卷代替迁移。
 
-当前已建立工程骨架及本地基础设施配置，后端业务服务和接口尚未实现。
-Go Module 暂定为 `remarket/backend`，确定远程仓库地址后可统一调整。
+运行 Go 服务前加载根目录环境，再按需启动 User、Product、Order、Gateway：
 
-## 本地基础设施
+```sh
+set -a
+. ./.env
+set +a
+make run-user
+# 其他终端分别运行 make run-product / run-order / run-gateway
+```
 
-首次复制 `.env.example` 为 `.env`（已有文件不要覆盖），执行 `make infra-config` 校验，`make infra-up` 启动五个组件并等待健康，`make infra-ps` 查看状态。
+`make check` 执行 Go 测试与前端 lint/build，`make build` 构建，`make fmt` 格式化。`make kafka-check` / `make redis-check` 加载 .env 后只读探测连接。`make infra-down` 保留数据卷。
 
-`make infra-down` 停止容器并保留数据卷，`make infra-logs` 查看日志。详见 [基础设施文档](docs/architecture/local-infrastructure.md)。
+## Day 3 操作与复验
 
-Day 3 Kafka：`make kafka-up` 启动 Broker 并初始化 Topic，`make kafka-check` 验证 Go 客户端连接。配置与边界见 [基础设施文档](docs/architecture/local-infrastructure.md#day-3-kafka)。
+| 模块 | 运行约束与说明 |
+| --- | --- |
+| 商品缓存 | 先执行 Product 000004，详情缓存与失效恢复必须同时启用；见 [缓存设计](docs/cache/product-detail.md) |
+| Lua 限流 | GATEWAY_RATE_LIMIT_ENABLED=true 后重启 Gateway；[配额与故障策略](docs/api/rate-limit.md) |
+| Kafka | `make kafka-up` 启动与初始化；[Producer/Consumer](docs/api/kafka.md) |
+| Outbox | 各服务 *_OUTBOX_ENABLED 显式启用，仅访问自身库；[发布器说明](docs/api/outbox-publisher.md) |
+| 测试消费者 | 专用库迁移后 `make run-event-consumer`；[Retry/DLT/重放](docs/api/event-consumer.md) |
+| 契约 | [事件契约目录](api/events/README.md)，主消息使用 data，Retry/DLT 使用 Packet |
 
-Gateway 分布式限流：设置 `GATEWAY_RATE_LIMIT_ENABLED=true` 后加载环境并重启 Gateway。规则、429 和 Redis 故障策略见 [Redis Lua 限流](docs/api/rate-limit.md)。
+加载 Redis/Kafka 环境并设置可创建/清理临时库的 `REMARKET_TEST_MYSQL_DSN` 后，运行 `make day3-test`。测试使用独立临时资源，不消费业务库积压。完整命令和边界见 [联调验收](docs/testing/day3-acceptance.md)。
 
-Kafka Producer/Consumer 基础封装与 ACK、Offset 语义见 [Kafka 使用说明](docs/api/kafka.md)。
-
-测试消费者与显式 DLT 重放见 [消费者说明](docs/api/event-consumer.md)，需先建立专用数据库并执行迁移；不会自动消费业务事件。
+真实停机实验使用 `make day3-test-up` 创建独立项目（Redis 16380、Kafka 19092、独立网络和卷），结束后 `make day3-test-down` 保留隔离卷；不能在正常基础设施上直接做停机故障注入。

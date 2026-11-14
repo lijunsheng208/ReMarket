@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReMarket Retry/DLT Packet v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "source": {
+      "type": "string"
+    },
+    "origin_topic": {
+      "type": "string"
+    },
+    "origin_partition": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "origin_offset": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "original_key": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "contentEncoding": "base64"
+    },
+    "original_value": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "contentEncoding": "base64"
+    },
+    "round": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{32})?$"
+    },
+    "stage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "ready_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "replay": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "source",
+    "origin_topic",
+    "origin_partition",
+    "origin_offset",
+    "original_key",
+    "original_value",
+    "round",
+    "stage",
+    "ready_at",
+    "replay",
+    "reason"
+  ]
+}

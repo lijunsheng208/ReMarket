@@ -551,3 +551,62 @@ func TestNegativeFillRaceAcceptance(t *testing.T) {
 		t.Fatal("晚到空值覆盖了新商品")
 	}
 }
+
+// TestRedisServerOutageAcceptance 只在显式隔离环境停 Redis，验证降级、AOF重启及持久化失效恢复。
+func TestRedisServerOutageAcceptance(t *testing.T) {
+	if os.Getenv("DAY3_REDIS_FAULT") != "1" {
+		t.Skip("仅隔离 Compose 故障验收启用")
+	}
+	f := cacheSetup(t)
+	cfg, err := rx.LoadConfig()
+	must(t, err)
+	if !strings.HasSuffix(cfg.Address, ":16380") {
+		t.Fatal("故障测试必须使用隔离 Redis 16380")
+	}
+	f.create(t)
+	q := f.query(t, f.repo, f.store)
+	_, err = q.GetDetail(f.ctx, f.id)
+	must(t, err)
+	// 无论测试结果如何都恢复隔离 Redis，正常业务 Redis 不受影响。
+	t.Cleanup(func() {
+		recover, stop := context.WithTimeout(context.Background(), 60*time.Second)
+		defer stop()
+		redisFaultCommand(t, recover, "start")
+	})
+	redisFaultCommand(t, f.ctx, "stop")
+	_, err = q.GetDetail(f.ctx, f.id)
+	must(t, err)
+	title := "Redis停机期间修改"
+	hook := NewInvalidationRunner(f.repo, f.store, nil)
+	_, err = NewMutation(f.repo, nil).WithInvalidation(hook).Update(f.seller, UpdateInput{ID: f.id, ExpectedVersion: 2, Title: &title})
+	must(t, err)
+	var pending int64
+	must(t, f.db.Model(&repository.Invalidation{}).Where("status<>'DONE'").Count(&pending).Error)
+	if pending == 0 {
+		t.Fatal("停机期间任务丢失")
+	}
+	redisFaultCommand(t, f.ctx, "start")
+	must(t, f.db.Exec("UPDATE product_cache_invalidations SET next_attempt_at=UTC_TIMESTAMP(6),locked_until=UTC_TIMESTAMP(6)-INTERVAL 1 SECOND WHERE status<>'DONE'").Error)
+	if !hook.Process(f.ctx, f.id) {
+		t.Fatal("Redis重启后未恢复失效")
+	}
+	d, err := q.GetDetail(f.ctx, f.id)
+	must(t, err)
+	if d.Product.Title != title {
+		t.Fatal("Redis恢复了旧视图且未失效")
+	}
+}
+
+// redisFaultCommand 限定固定隔离项目，不执行删除卷或停止业务 Redis 的操作。
+func redisFaultCommand(t *testing.T, ctx context.Context, action string) {
+	t.Helper()
+	args := []string{"compose", "--env-file", "../../../../.env", "-p", "remarket-day3-test", "-f", "../../../../deployments/docker-compose.day3-test.yml"}
+	if action == "stop" {
+		args = append(args, "stop", "redis")
+	} else {
+		args = append(args, "up", "-d", "--wait", "--wait-timeout", "45", "redis")
+	}
+	if output, err := exec.CommandContext(ctx, "docker", args...).CombinedOutput(); err != nil {
+		t.Errorf("隔离Redis操作失败: %v %s", err, output)
+	}
+}

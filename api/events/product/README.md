@@ -1,6 +1,6 @@
 # product.published.v1
 
-契约见 `product.published.v1.schema.json`，完整消息示例见 `product.published.v1.example.json`。已补充 updated、off_shelf 的独立 Schema 与示例，消费者和 MQ 投递尚未实现。
+契约见 `product.published.v1.schema.json`，完整消息示例见 `product.published.v1.example.json`。现有 published、updated、off_shelf、reserved、released、sold 六类事件均有 Schema 与示例。Outbox Publisher 与独立测试消费者已实现，是否运行取决于显式开关和部署，不代表 Feed/Search 业务消费者完成。
 
 ## 产生条件
 
@@ -19,6 +19,6 @@
 - 时间使用 UTC RFC3339，精度不超过微秒；occurred_at 不早于首次发布时间。
 - outbox_events.payload **仅存 data**；event_id、类型、聚合标识、版本、occurred_at 来自 Outbox 独立列，发布器组装消息信封，避免重复存储。
 
-Go 构造函数 `events.NewPublishedOutbox` 仅从已发布快照生成 PENDING 记录，不执行状态转换、不判断历史是否已经发布、不落库。数据库事务及首次发布判断仍由后续 Service/Repository 实现。
+Go 构造函数 `events.NewPublishedOutbox` 仅从已发布快照生成 PENDING 记录，不执行状态转换、不判断历史是否已经发布、不落库。数据库事务及首次发布判断已在 Product Service/Repository 中实现。
 
 消费者需按 event_id 幂等，对状态快照按 aggregate_version 防止旧事件覆盖新视图。Feed 的首次发布动态应与搜索状态投影分别处理，不能简单以“见过更高版本”为由丢弃尚未处理的首次发布业务动作。

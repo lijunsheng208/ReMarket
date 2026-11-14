@@ -2,7 +2,9 @@ package eventtest
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
 	"remarket/backend/pkg/kafka"
 	"testing"
 	"time"
@@ -44,5 +46,23 @@ func TestConfigValidation(t *testing.T) {
 	var business *BusinessError
 	if !errors.As(&BusinessError{Temporary: true}, &business) || !business.Temporary {
 		t.Fatal("业务错误分类失败")
+	}
+}
+
+// TestTransferContractFixture 验证已发布的 Retry/DLT 示例与实际 Packet 及嵌套信封兼容。
+func TestTransferContractFixture(t *testing.T) {
+	raw, err := os.ReadFile("../../../api/events/common/transfer.v1.example.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var packet Packet
+	if err := json.Unmarshal(raw, &packet); err != nil {
+		t.Fatal(err)
+	}
+	if packet.Version != 1 || packet.Stage != 1 || len(packet.Key) == 0 {
+		t.Fatal("转移协议不兼容")
+	}
+	if _, err := kafka.DecodeEnvelope(packet.Value); err != nil {
+		t.Fatal(err)
 	}
 }

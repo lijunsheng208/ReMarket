@@ -1,0 +1,20 @@
+{
+  "event_id": "550e8400-e29b-41d4-a716-446655440000",
+  "event_type": "order.confirming.v1",
+  "aggregate_type": "order",
+  "aggregate_id": "101",
+  "aggregate_version": "2",
+  "schema_version": 1,
+  "occurred_at": "2026-11-14T08:00:00Z",
+  "data": {
+    "order_id": "101",
+    "buyer_id": "7",
+    "seller_id": "8",
+    "product_id": "201",
+    "price_cent": "1000",
+    "status": "CONFIRMING",
+    "expires_at": "2026-11-14T08:15:00Z",
+    "buyer_confirmed": false,
+    "seller_confirmed": false
+  }
+}

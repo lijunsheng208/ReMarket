@@ -22,7 +22,7 @@ make infra-ps
 
 本机验证时发现其他项目占用 6379 和 9200，因此本地 `.env` 分别改为 16379 和 19200；示例文件仍保留标准端口。未修改其他项目容器。
 
-MySQL 首次空卷启动时执行 `deployments/mysql/init/01-databases.sh`，创建 `remarket_user`、`remarket_product`、`remarket_order`、`remarket_chat` 四个库和同名账号，各账号仅拥有自身库的 SELECT、INSERT、UPDATE、DELETE 权限。密码变量分别为 `MYSQL_USER_PASSWORD` 等。业务表尚未创建，后续通过 `migrations/` 执行版本化迁移；迁移需管理账号或专用迁移账号。
+MySQL 首次空卷启动时执行 `deployments/mysql/init/01-databases.sh`，创建 `remarket_user`、`remarket_product`、`remarket_order`、`remarket_chat` 四个库和同名账号，各账号仅拥有自身库的 SELECT、INSERT、UPDATE、DELETE 权限。密码变量分别为 `MYSQL_USER_PASSWORD` 等。业务表通过 `migrations/` 显式执行版本化迁移，首次启动基础设施不自动创建业务表；迁移需管理账号或专用迁移账号。
 
 已有数据卷时更改初始化脚本或 `.env` 不会自动修改 MySQL 账号密码。修改已有账号需显式执行变更。不要删除已有数据卷来代替迁移。Worker 不配置跨库通用账号。
 
@@ -55,3 +55,7 @@ MinIO 复用本机已有的官方 `RELEASE.2024-12-18T13-15-44Z` 开发镜像：
 单测：`cd backend && go test ./pkg/redis`。真实只读集成及 race：从根目录加载 `.env` 后，在 backend 下执行 `REDIS_INTEGRATION=1 go test -race ./pkg/redis -v`；未设置该变量时明确跳过真实测试。检查失败不会自动启动基础设施。后续缓存将自行决定 Redis 故障降级，Open 本身不会返回一个伪装健康的客户端。
 
 实现参数依据 [go-redis Options](https://github.com/redis/go-redis/blob/v9.17.2/options.go)；连接池与超时背景见 [Redis 生产使用说明](https://redis.io/docs/latest/develop/clients/go/produsage/)。
+
+## Day 3 隔离故障环境
+
+`deployments/docker-compose.day3-test.yml` 只部署 Redis/Kafka/Topic 初始化，固定由 `make day3-test-up` 使用独立项目 remarket-day3-test。默认端口16380/19092、独立网络与带项目前缀的数据卷，不共用正常基础设施卷。`make day3-test-down` 不删除卷。真实停机与完整复验见 [联调验收](../testing/day3-acceptance.md)。

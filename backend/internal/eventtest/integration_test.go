@@ -10,7 +10,9 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/kmsg"
 	"os"
+	"os/exec"
 	"remarket/backend/pkg/kafka"
+	"remarket/backend/pkg/outbox"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -35,7 +37,11 @@ func setup(t *testing.T) *fixture {
 	if dsn == "" || os.Getenv("KAFKA_INTEGRATION") != "1" {
 		t.Skip("需要 MySQL/Kafka 集成开关")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	budget := 40 * time.Second
+	if os.Getenv("DAY3_BROKER_FAULT") == "1" {
+		budget = 120 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), budget)
 	t.Cleanup(cancel)
 	cfg, err := driver.ParseDSN(dsn)
 	check(t, err)
@@ -363,5 +369,147 @@ func TestPermanentFailure(t *testing.T) {
 	check(t, f.db.QueryRow("SELECT COUNT(*) FROM event_views").Scan(&count))
 	if count != 0 {
 		t.Fatal("永久失败业务未回滚")
+	}
+}
+
+type lostACKState struct{ *outbox.Store }
+
+// Finish 模拟 Kafka ACK 后数据库完成更新失败，保留租约等待重投。
+func (s lostACKState) Finish(context.Context, *outbox.Task, string, string, time.Duration) error {
+	return errors.New("injected database completion failure")
+}
+
+// TestOutboxToConsumerAcceptance 串联独立发布库、Kafka、独立消费库，验证 ACK 窗口重投不重复执行业务。
+func TestOutboxToConsumerAcceptance(t *testing.T) {
+	for _, aggregate := range []string{"product", "order"} {
+		t.Run(aggregate, func(t *testing.T) {
+			f := setup(t)
+			f.cfg.Aggregate = aggregate
+			f.event.AggregateType = aggregate
+			f.event.EventType = aggregate + ".updated.v1"
+			if aggregate == "order" {
+				f.event.EventType = "order.created.v1"
+			}
+			dsn, err := driver.ParseDSN(os.Getenv("REMARKET_TEST_MYSQL_DSN"))
+			check(t, err)
+			admin, err := sql.Open("mysql", dsn.FormatDSN())
+			check(t, err)
+			defer admin.Close()
+			name := fmt.Sprintf("remarket_publisher_link_test_%d", time.Now().UnixNano())
+			_, err = admin.ExecContext(f.ctx, "CREATE DATABASE "+name)
+			check(t, err)
+			defer func() {
+				_, err := admin.Exec("DROP DATABASE " + name)
+				if err != nil {
+					t.Error(err)
+				}
+			}()
+			dsn.DBName = name
+			dsn.ParseTime = true
+			dsn.Loc = time.UTC
+			publisherDB, err := sql.Open("mysql", dsn.FormatDSN())
+			check(t, err)
+			defer publisherDB.Close()
+			raw, err := os.ReadFile("../../../migrations/" + aggregate + "/000001_core.up.sql")
+			check(t, err)
+			start := strings.Index(string(raw), "CREATE TABLE outbox_events (")
+			schema := string(raw)[start:]
+			schema = schema[:strings.Index(schema, ";")+1]
+			_, err = publisherDB.ExecContext(f.ctx, schema)
+			check(t, err)
+			e := f.event
+			_, err = publisherDB.ExecContext(f.ctx, `INSERT INTO outbox_events(event_id,event_type,aggregate_type,aggregate_id,aggregate_version,schema_version,payload,occurred_at) VALUES(?,?,?,?,?,?,?,?)`, e.EventID, e.EventType, e.AggregateType, e.AggregateID, e.AggregateVersion, e.SchemaVersion, []byte(e.Data), e.OccurredAt)
+			check(t, err)
+			topics := kafka.DefaultTopics()
+			if aggregate == "product" {
+				topics.Product = f.cfg.Main
+			} else {
+				topics.Order = f.cfg.Main
+			}
+			producer, err := kafka.NewProducer(f.connection, topics, 5*time.Second)
+			check(t, err)
+			defer producer.Close()
+			store, err := outbox.NewStore(publisherDB, aggregate)
+			check(t, err)
+			if os.Getenv("DAY3_BROKER_FAULT") == "1" {
+				// 仅独立验收环境允许停机，避免误停止正常业务 Broker。
+				if !strings.Contains(f.connection.Brokers[0], ":19092") {
+					t.Fatal("停机验收必须使用隔离 Kafka 19092 端口")
+				}
+				faultKafka(t, f.ctx, "stop")
+				unavailable, err := outbox.New(store, producer, outbox.DefaultConfig(), nil)
+				check(t, err)
+				if !unavailable.Step(f.ctx) {
+					t.Fatal("中断期间未领取")
+				}
+				var status string
+				check(t, publisherDB.QueryRowContext(f.ctx, "SELECT publish_status FROM outbox_events").Scan(&status))
+				if status != "PENDING" && status != "PROCESSING" {
+					t.Fatal("Broker 中断却标记成功")
+				}
+				faultKafka(t, f.ctx, "start")
+				_, err = publisherDB.ExecContext(f.ctx, "UPDATE outbox_events SET next_attempt_at=UTC_TIMESTAMP(6),locked_until=UTC_TIMESTAMP(6)-INTERVAL 1 SECOND")
+				check(t, err)
+			}
+			interrupted, err := outbox.New(lostACKState{store}, producer, outbox.DefaultConfig(), nil)
+			check(t, err)
+			if !interrupted.Step(f.ctx) {
+				t.Fatal("未发布首次消息")
+			}
+			// 已获得真实 Kafka ACK，但更新失败；让测试数据库租约过期，再重建发布器。
+			_, err = publisherDB.ExecContext(f.ctx, "UPDATE outbox_events SET locked_until=UTC_TIMESTAMP(6)-INTERVAL 1 SECOND WHERE publish_status='PROCESSING'")
+			check(t, err)
+			recovered, err := outbox.New(store, producer, outbox.DefaultConfig(), nil)
+			check(t, err)
+			if !recovered.Step(f.ctx) {
+				t.Fatal("未恢复投递")
+			}
+			var status string
+			check(t, publisherDB.QueryRowContext(f.ctx, "SELECT publish_status FROM outbox_events").Scan(&status))
+			if status != "PUBLISHED" {
+				t.Fatal("发布未完成")
+			}
+			var effects atomic.Int32
+			receiver, err := New(NewStore(f.db, func(ctx context.Context, tx *sql.Tx, e kafka.Envelope) error {
+				effects.Add(1)
+				return ApplyView(ctx, tx, e)
+			}), f.sender, f.cfg)
+			check(t, err)
+			for offset := int64(0); offset < 2; offset++ {
+				message := f.read(t, f.cfg.Main, offset)
+				check(t, receiver.Handle(f.ctx, message))
+			}
+			var count int
+			check(t, f.db.QueryRowContext(f.ctx, "SELECT COUNT(*) FROM event_views").Scan(&count))
+			if effects.Load() != 1 || count != 1 {
+				t.Fatal("发布重复导致业务重复")
+			}
+			check(t, f.db.QueryRowContext(f.ctx, "SELECT status FROM event_inbox WHERE event_id=?", e.EventID).Scan(&status))
+			if status != "DONE" {
+				t.Fatal("消费去重结果未提交")
+			}
+		})
+	}
+}
+
+// faultKafka 仅启停固定隔离项目，恢复失败时由清理动作再次尝试启动。
+func faultKafka(t *testing.T, ctx context.Context, action string) {
+	t.Helper()
+	args := []string{"compose", "--env-file", "../../../.env", "-p", "remarket-day3-test", "-f", "../../../deployments/docker-compose.day3-test.yml"}
+	if action == "stop" {
+		args = append(args, "stop", "kafka")
+		t.Cleanup(func() {
+			recover, stop := context.WithTimeout(context.Background(), 60*time.Second)
+			defer stop()
+			cmd := exec.CommandContext(recover, "docker", "compose", "--env-file", "../../../.env", "-p", "remarket-day3-test", "-f", "../../../deployments/docker-compose.day3-test.yml", "up", "-d", "--wait", "--wait-timeout", "45", "kafka")
+			if output, err := cmd.CombinedOutput(); err != nil {
+				t.Errorf("恢复隔离 Kafka 失败: %v %s", err, output)
+			}
+		})
+	} else {
+		args = append(args, "up", "-d", "--wait", "--wait-timeout", "45", "kafka")
+	}
+	if output, err := exec.CommandContext(ctx, "docker", args...).CombinedOutput(); err != nil {
+		t.Fatalf("隔离 Kafka 操作失败: %v %s", err, output)
 	}
 }

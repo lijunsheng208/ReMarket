@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReMarket Event Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.:-]{1,128}$"
+    },
+    "event_type": {
+      "type": "string",
+      "pattern": "^(product|order)\\.[a-z_]+\\.v1$"
+    },
+    "aggregate_type": {
+      "enum": [
+        "product",
+        "order"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,18}$",
+      "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+    },
+    "aggregate_version": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,18}$",
+      "description": "正数 int64 的十进制字符串，消费者须检查不超过 9223372036854775807"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_version",
+    "schema_version",
+    "occurred_at",
+    "data"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "source": "remarket.product.events.v1",
+  "origin_topic": "remarket.product.events.v1",
+  "origin_partition": 0,
+  "origin_offset": "0",
+  "original_key": "MTAx",
+  "original_value": "eyJldmVudF9pZCI6ICI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCAiZXZlbnRfdHlwZSI6ICJwcm9kdWN0LnB1Ymxpc2hlZC52MSIsICJhZ2dyZWdhdGVfdHlwZSI6ICJwcm9kdWN0IiwgImFnZ3JlZ2F0ZV9pZCI6ICIxMDEiLCAiYWdncmVnYXRlX3ZlcnNpb24iOiAiMiIsICJzY2hlbWFfdmVyc2lvbiI6IDEsICJvY2N1cnJlZF9hdCI6ICIyMDI2LTExLTEyVDA4OjAwOjAwWiIsICJkYXRhIjogeyJwcm9kdWN0X2lkIjogIjEwMSIsICJzZWxsZXJfaWQiOiAiNyIsICJjYXRlZ29yeV9pZCI6ICIxIiwgInRpdGxlIjogIlx1NGU4Y1x1NjI0Ylx1NjczYVx1NjhiMFx1OTUyZVx1NzZkOCIsICJkZXNjcmlwdGlvbiI6ICJcdTUyOWZcdTgwZmRcdTZiNjNcdTVlMzhcdWZmMGNcdTk2NDRcdTVlMjZcdTUzOWZcdTg4YzVcdTdlYmZcdTY3NTBcdTMwMDIiLCAicHJpY2VfY2VudCI6ICIxNTAwMCIsICJzdGF0dXMiOiAiT05fU0FMRSIsICJmaXJzdF9wdWJsaXNoZWRfYXQiOiAiMjAyNi0xMS0xMlQwODowMDowMFoifX0=",
+  "round": "",
+  "stage": 1,
+  "ready_at": "2026-11-14T08:00:01Z",
+  "replay": false,
+  "reason": "temporary_business_error"
+}
