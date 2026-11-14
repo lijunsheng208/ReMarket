@@ -40,3 +40,5 @@ Go Module 暂定为 `remarket/backend`，确定远程仓库地址后可统一调
 Day 3 Kafka：`make kafka-up` 启动 Broker 并初始化 Topic，`make kafka-check` 验证 Go 客户端连接。配置与边界见 [基础设施文档](docs/architecture/local-infrastructure.md#day-3-kafka)。
 
 Gateway 分布式限流：设置 `GATEWAY_RATE_LIMIT_ENABLED=true` 后加载环境并重启 Gateway。规则、429 和 Redis 故障策略见 [Redis Lua 限流](docs/api/rate-limit.md)。
+
+Kafka Producer/Consumer 基础封装与 ACK、Offset 语义见 [Kafka 使用说明](docs/api/kafka.md)。
