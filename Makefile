@@ -68,3 +68,7 @@ kafka-check:
 .PHONY: redis-check
 redis-check:
 	set -a; . ./.env; set +a; cd backend && go run ./cmd/redis-check
+
+.PHONY: run-event-consumer
+run-event-consumer:
+	cd backend && go run ./cmd/event-consumer

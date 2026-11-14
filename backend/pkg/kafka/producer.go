@@ -63,3 +63,23 @@ func (p *Producer) Publish(ctx context.Context, event Envelope) (Receipt, error)
 
 // Close 释放生产者连接，应在所有 Publish 调用返回后执行。
 func (p *Producer) Close() { p.client.Close() }
+
+// PublishRaw 向已配置的六个 Topic 之一可靠发送原始协议消息，供 Retry/DLT 与显式重放使用。
+func (p *Producer) PublishRaw(ctx context.Context, topic string, key, value []byte) (Receipt, error) {
+	allowed := false
+	for _, name := range []string{p.topics.Product, p.topics.Order, p.topics.ProductRetry, p.topics.OrderRetry, p.topics.ProductDLT, p.topics.OrderDLT} {
+		if topic == name {
+			allowed = true
+		}
+	}
+	if !allowed {
+		return Receipt{}, fmt.Errorf("未配置的 Kafka Topic")
+	}
+	bounded, cancel := context.WithTimeout(ctx, p.timeout)
+	defer cancel()
+	record := &kgo.Record{Topic: topic, Key: append([]byte(nil), key...), Value: append([]byte(nil), value...)}
+	if err := p.client.ProduceSync(bounded, record).FirstErr(); err != nil {
+		return Receipt{}, fmt.Errorf("Kafka 转移未确认: %w", err)
+	}
+	return Receipt{record.Topic, record.Partition, record.Offset}, nil
+}

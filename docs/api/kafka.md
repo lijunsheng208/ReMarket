@@ -41,3 +41,5 @@ BlockRebalanceOnPoll 把处理与提交限制在同一轮分区所有权内，�
 参考：[franz-go v1.22.3 文档](https://pkg.go.dev/github.com/twmb/franz-go@v1.22.3/pkg/kgo)，尤其 BlockRebalanceOnPoll、PollRecords、CommitRecords 的配套约束。
 
 Outbox 发布器已单独实现，状态机、配置与验证边界见 [Outbox Publisher](outbox-publisher.md)。本页此前“未接入”是基础封装阶段范围；消费者幂等和 Retry/DLT 仍未实现。
+
+测试消费者的持久化幂等、Retry/DLT 与重放已单独实现，接口及故障边界见 [测试消费者](event-consumer.md)，不代表 Feed/Search 消费业务完成。

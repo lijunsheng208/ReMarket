@@ -21,11 +21,13 @@ type Envelope struct {
 	Data             json.RawMessage `json:"data"`
 }
 
+var eventIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_.:-]{1,128}$`)
+
 var eventTypePattern = regexp.MustCompile(`^(product|order)\.[a-z_]+\.v1$`)
 
 // Validate 校验信封，不验证业务载荷字段，不接受未知信封版本。
 func (e Envelope) Validate() error {
-	if strings.TrimSpace(e.EventID) == "" || len(e.EventID) > 128 || !eventTypePattern.MatchString(e.EventType) || !strings.HasPrefix(e.EventType, e.AggregateType+".") || (e.AggregateType != "product" && e.AggregateType != "order") || e.AggregateID <= 0 || e.AggregateVersion <= 0 || e.SchemaVersion != 1 || e.OccurredAt.IsZero() {
+	if !eventIDPattern.MatchString(e.EventID) || !eventTypePattern.MatchString(e.EventType) || !strings.HasPrefix(e.EventType, e.AggregateType+".") || (e.AggregateType != "product" && e.AggregateType != "order") || e.AggregateID <= 0 || e.AggregateVersion <= 0 || e.SchemaVersion != 1 || e.OccurredAt.IsZero() {
 		return fmt.Errorf("事件信封无效")
 	}
 	var object map[string]json.RawMessage

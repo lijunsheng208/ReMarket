@@ -42,3 +42,5 @@ Day 3 Kafka：`make kafka-up` 启动 Broker 并初始化 Topic，`make kafka-che
 Gateway 分布式限流：设置 `GATEWAY_RATE_LIMIT_ENABLED=true` 后加载环境并重启 Gateway。规则、429 和 Redis 故障策略见 [Redis Lua 限流](docs/api/rate-limit.md)。
 
 Kafka Producer/Consumer 基础封装与 ACK、Offset 语义见 [Kafka 使用说明](docs/api/kafka.md)。
+
+测试消费者与显式 DLT 重放见 [消费者说明](docs/api/event-consumer.md)，需先建立专用数据库并执行迁移；不会自动消费业务事件。
