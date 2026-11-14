@@ -32,7 +32,14 @@ func NewProductRepository(db *gorm.DB) *ProductRepository { return &ProductRepos
 // CreateDraft 显式写入 DRAFT 和初始版本 1，不产生发布事件。
 func (r *ProductRepository) CreateDraft(ctx context.Context, params CreateDraftParams) (*model.Product, error) {
 	product := &model.Product{SellerID: params.SellerID, CategoryID: params.CategoryID, Title: params.Title, Description: params.Description, PriceCent: params.PriceCent, Status: model.StatusDraft, AggregateVersion: 1}
-	if err := r.db.WithContext(ctx).Create(product).Error; err != nil {
+	// 草稿和失效任务同事务，关闭缓存时也保留恢复记录。
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(product).Error; err != nil {
+			return err
+		}
+		return enqueueInvalidation(tx, product.ID, product.AggregateVersion)
+	})
+	if err != nil {
 		// 当前商品表的外键仅引用分类；账号引用不跨库建立外键。
 		if errors.Is(err, gorm.ErrForeignKeyViolated) {
 			return nil, ErrCategoryReference

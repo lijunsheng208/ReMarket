@@ -70,6 +70,15 @@ func TestProductRepositoryMySQL(t *testing.T) {
 	if _, err := pool.Exec(string(seed)); err != nil {
 		t.Fatal(err)
 	}
+	// 失效任务表是所有商品写事务的新前置迁移，仅在测试临时库执行。
+	cacheDDL, cacheErr := os.ReadFile("../../../../migrations/product/000004_cache_invalidations.up.sql")
+	if cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+	if cacheErr := db.Exec(string(cacheDDL)).Error; cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+
 	repo := NewProductRepository(db)
 	ctx := context.Background()
 	categories, err := repo.ListEnabledCategories(ctx)
@@ -164,6 +173,51 @@ func TestProductRepositoryMySQL(t *testing.T) {
 	categories, err = repo.ListEnabledCategories(ctx)
 	if err != nil || categories == nil || len(categories) != 0 {
 		t.Fatal("空列表语义错误")
+	}
+	// 领取、租约接管与故障回滚均仅操作本测试临时库。
+	task, err := repo.ClaimInvalidation(ctx, draft.ID, time.Second)
+	if err != nil || task == nil {
+		t.Fatalf("领取失败: %v", err)
+	}
+	if next, err := repo.ClaimInvalidation(ctx, draft.ID, time.Second); err != nil || next != nil {
+		t.Fatal("未过期任务被重复领取")
+	}
+	if err := db.Exec("UPDATE product_cache_invalidations SET locked_until=UTC_TIMESTAMP(6)-INTERVAL 1 SECOND WHERE id=?", task.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	takeover, err := repo.ClaimInvalidation(ctx, draft.ID, time.Second)
+	if err != nil || takeover == nil || *takeover.LockToken == *task.LockToken {
+		t.Fatal("租约接管失败")
+	}
+	if err := repo.FinishInvalidation(ctx, task, true, 0); err == nil {
+		t.Fatal("旧令牌覆盖新租约")
+	}
+	if err := repo.FinishInvalidation(ctx, takeover, false, 0); err != nil {
+		t.Fatal(err)
+	}
+	retry, err := repo.ClaimInvalidation(ctx, draft.ID, time.Second)
+	if err != nil || retry == nil || retry.Attempts != 3 {
+		t.Fatal("失败重试次数错误")
+	}
+	if err := repo.FinishInvalidation(ctx, retry, true, 0); err != nil {
+		t.Fatal(err)
+	}
+	var before int64
+	if err := db.Raw("SELECT COUNT(*) FROM products").Scan(&before).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Exec("CREATE TRIGGER fail_cache_task BEFORE INSERT ON product_cache_invalidations FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='injected'").Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.CreateDraft(ctx, params); err == nil {
+		t.Fatal("任务写入失败未回滚")
+	}
+	if err := db.Exec("DROP TRIGGER fail_cache_task").Error; err != nil {
+		t.Fatal(err)
+	}
+	var after int64
+	if err := db.Raw("SELECT COUNT(*) FROM products").Scan(&after).Error; err != nil || after != before {
+		t.Fatal("草稿未回滚")
 	}
 	pool.Close()
 	if _, err := repo.GetByID(ctx, draft.ID); err == nil || errors.Is(err, ErrProductNotFound) {

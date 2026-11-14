@@ -16,7 +16,10 @@ type DraftRepository interface {
 	GetCategoryByID(context.Context, int64) (*model.Category, error)
 	CreateDraft(context.Context, repository.CreateDraftParams) (*model.Product, error)
 }
-type Service struct{ products DraftRepository }
+type Service struct {
+	products     DraftRepository
+	invalidation PostCommit
+}
 type CreateDraftInput struct {
 	CategoryID         int64
 	Title, Description string
@@ -59,5 +62,16 @@ func (s *Service) CreateDraft(ctx context.Context, input CreateDraftInput) (*mod
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	return s.products.CreateDraft(ctx, repository.CreateDraftParams{SellerID: identity.UserID, CategoryID: input.CategoryID, Title: title, Description: input.Description, PriceCent: input.PriceCent})
+	result, err := s.products.CreateDraft(ctx, repository.CreateDraftParams{SellerID: identity.UserID, CategoryID: input.CategoryID, Title: title, Description: input.Description, PriceCent: input.PriceCent})
+	if err == nil {
+		notifyCommit(ctx, s.invalidation, result.ID, nil)
+	}
+	return result, err
+}
+
+// WithInvalidation 返回带提交后失效器的独立服务副本，应在启动组装阶段调用。
+func (s *Service) WithInvalidation(hook PostCommit) *Service {
+	copy := *s
+	copy.invalidation = hook
+	return &copy
 }

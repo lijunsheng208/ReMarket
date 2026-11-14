@@ -93,6 +93,15 @@ func TestReserveProductMySQL(t *testing.T) {
 	}
 	listener := bufconn.Listen(1 << 20)
 	server := grpcx.NewServer(nil, interceptor)
+	// 失效任务表是所有商品写事务的新前置迁移，仅在测试临时库执行。
+	cacheDDL, cacheErr := os.ReadFile("../../../../migrations/product/000004_cache_invalidations.up.sql")
+	if cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+	if cacheErr := db.Exec(string(cacheDDL)).Error; cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+
 	productv1.RegisterProductServiceServer(server, New(nil).WithReservations(service.NewReservations(repository.NewProductRepository(db))))
 	go server.Serve(listener)
 	defer server.Stop()

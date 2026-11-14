@@ -41,7 +41,10 @@ func (r *ProductRepository) WithPublication(ctx context.Context, id int64, chang
 			return errors.New("商品版本更新失败")
 		}
 		// 必须使用同一个 tx，事件插入失败时已执行的商品更新也会回滚。
-		return tx.Create(event).Error
+		if err := tx.Create(event).Error; err != nil {
+			return err
+		}
+		return enqueueInvalidation(tx, result.ID, result.AggregateVersion)
 	})
 	if err != nil {
 		return nil, err

@@ -46,9 +46,11 @@ func (r *ProductRepository) WithMutation(ctx context.Context, id, targetCategory
 			return errors.New("商品版本更新失败")
 		}
 		if event != nil {
-			return tx.Create(event).Error
+			if err := tx.Create(event).Error; err != nil {
+				return err
+			}
 		}
-		return nil
+		return enqueueInvalidation(tx, product.ID, product.AggregateVersion)
 	})
 	if err != nil {
 		return nil, err

@@ -16,8 +16,9 @@ type MutationRepository interface {
 	WithMutation(context.Context, int64, int64, func(*model.Product, *model.Category) (*model.OutboxEvent, bool, error)) (*model.Product, error)
 }
 type MutationService struct {
-	products MutationRepository
-	admins   AdminVerifier
+	invalidation PostCommit
+	products     MutationRepository
+	admins       AdminVerifier
 }
 type UpdateInput struct {
 	ID, ExpectedVersion int64
@@ -93,7 +94,7 @@ func (s *MutationService) Update(ctx context.Context, input UpdateInput) (*model
 	if input.PriceCent != nil && *input.PriceCent <= 0 {
 		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "商品价格必须为正整数"}
 	}
-	return s.products.WithMutation(ctx, input.ID, target, func(p *model.Product, c *model.Category) (*model.OutboxEvent, bool, error) {
+	result, err := s.products.WithMutation(ctx, input.ID, target, func(p *model.Product, c *model.Category) (*model.OutboxEvent, bool, error) {
 		if p.SellerID != identity.UserID {
 			return nil, false, &apperror.Error{Kind: apperror.Forbidden, Message: "只能编辑自己的商品"}
 		}
@@ -131,6 +132,8 @@ func (s *MutationService) Update(ctx context.Context, input UpdateInput) (*model
 		}
 		return nil, true, nil
 	})
+	notifyCommit(ctx, s.invalidation, input.ID, err)
+	return result, err
 }
 
 // OffShelf 允许卖家或经核实的管理员下架在售商品，不允许下架预占或成交商品。
@@ -147,7 +150,7 @@ func (s *MutationService) OffShelf(ctx context.Context, id, version int64) (*mod
 			return nil, err
 		}
 	}
-	return s.products.WithMutation(ctx, id, 0, func(p *model.Product, c *model.Category) (*model.OutboxEvent, bool, error) {
+	result, err := s.products.WithMutation(ctx, id, 0, func(p *model.Product, c *model.Category) (*model.OutboxEvent, bool, error) {
 		if p.SellerID != identity.UserID && !admin {
 			return nil, false, &apperror.Error{Kind: apperror.Forbidden, Message: "无权下架该商品"}
 		}
@@ -167,4 +170,13 @@ func (s *MutationService) OffShelf(ctx context.Context, id, version int64) (*mod
 		event, err := events.NewOffShelfOutbox(*p, p.UpdatedAt)
 		return event, true, err
 	})
+	notifyCommit(ctx, s.invalidation, id, err)
+	return result, err
+}
+
+// WithInvalidation 返回带提交后失效器的独立服务副本，应在启动组装阶段调用。
+func (s *MutationService) WithInvalidation(hook PostCommit) *MutationService {
+	copy := *s
+	copy.invalidation = hook
+	return &copy
 }

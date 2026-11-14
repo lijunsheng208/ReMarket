@@ -83,6 +83,15 @@ func TestPublicationMySQL(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// 失效任务表是所有商品写事务的新前置迁移，仅在测试临时库执行。
+	cacheDDL, cacheErr := os.ReadFile("../../../../migrations/product/000004_cache_invalidations.up.sql")
+	if cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+	if cacheErr := db.Exec(string(cacheDDL)).Error; cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+
 	repo := repository.NewProductRepository(db)
 	tokens, err := auth.NewJWTManager(auth.JWTConfig{Secret: strings.Repeat("s", 32), Issuer: "remarket", Audience: "api", AccessTTL: time.Hour})
 	if err != nil {

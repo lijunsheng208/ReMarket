@@ -134,6 +134,15 @@ func TestProductHTTPMySQL(t *testing.T) {
 	}
 	defer userConn.Close()
 	userClient := userv1.NewUserServiceClient(userConn)
+	// 失效任务表是所有商品写事务的新前置迁移，仅在测试临时库执行。
+	cacheDDL, cacheErr := os.ReadFile("../../../migrations/product/000004_cache_invalidations.up.sql")
+	if cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+	if cacheErr := productGorm.Exec(string(cacheDDL)).Error; cacheErr != nil {
+		t.Fatal(cacheErr)
+	}
+
 	products := pr.NewProductRepository(productGorm)
 	admins := productclient.NewUserVerifier(userClient)
 	productServer := grpcx.NewServer(nil, grpcx.OptionalAuthInterceptor(tokens, []string{productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName, productv1.ProductService_ListCategories_FullMethodName}))

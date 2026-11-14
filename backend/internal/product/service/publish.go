@@ -13,7 +13,10 @@ import (
 type PublicationRepository interface {
 	WithPublication(context.Context, int64, func(*model.Product, *model.Category) (*model.OutboxEvent, error)) (*model.Product, error)
 }
-type PublishService struct{ products PublicationRepository }
+type PublishService struct {
+	products     PublicationRepository
+	invalidation PostCommit
+}
 
 // NewPublisher 创建发布业务，事务及持久化通过 Repository 注入。
 func NewPublisher(products PublicationRepository) *PublishService {
@@ -32,7 +35,7 @@ func (s *PublishService) Publish(ctx context.Context, id, expectedVersion int64)
 	if id <= 0 || expectedVersion <= 0 {
 		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "商品 ID 和版本必须为正整数"}
 	}
-	return s.products.WithPublication(ctx, id, func(product *model.Product, category *model.Category) (*model.OutboxEvent, error) {
+	result, err := s.products.WithPublication(ctx, id, func(product *model.Product, category *model.Category) (*model.OutboxEvent, error) {
 		if product.SellerID != identity.UserID {
 			return nil, &apperror.Error{Kind: apperror.Forbidden, Message: "只能发布自己的商品"}
 		}
@@ -67,4 +70,13 @@ func (s *PublishService) Publish(ctx context.Context, id, expectedVersion int64)
 		}
 		return events.NewUpdatedOutbox(*product, now)
 	})
+	notifyCommit(ctx, s.invalidation, id, err)
+	return result, err
+}
+
+// WithInvalidation 返回带提交后失效器的独立服务副本，应在启动组装阶段调用。
+func (s *PublishService) WithInvalidation(hook PostCommit) *PublishService {
+	copy := *s
+	copy.invalidation = hook
+	return &copy
 }

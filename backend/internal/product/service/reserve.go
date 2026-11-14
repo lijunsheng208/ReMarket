@@ -23,7 +23,7 @@ func (s *ReservationService) Reserve(ctx context.Context, input ReserveInput) (*
 	if input.OrderID <= 0 || input.ProductID <= 0 || input.BuyerID <= 0 || input.ExpectedSellerID <= 0 || input.ExpectedPriceCent <= 0 || input.ExpectedProductVersion <= 0 || input.ExpiresAt.IsZero() || input.ExpiresAt.Year() < 1000 || input.ExpiresAt.Year() > 9999 || input.ExpiresAt.Nanosecond()%1000 != 0 {
 		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "预占参数或时间精度无效"}
 	}
-	return s.reservations.WithReserve(ctx, input.ProductID, input.OrderID, func(product *model.Product, existing *model.ProductReservation, now time.Time) (*model.ProductReservation, *model.OutboxEvent, error) {
+	result, err := s.reservations.WithReserve(ctx, input.ProductID, input.OrderID, func(product *model.Product, existing *model.ProductReservation, now time.Time) (*model.ProductReservation, *model.OutboxEvent, error) {
 		if existing != nil {
 			if existing.ExpectedSellerID == nil || existing.ExpectedPriceCent == nil || existing.ExpectedProductVersion == nil {
 				return nil, nil, &apperror.Error{Kind: apperror.FailedPrecondition, Message: "历史预占缺少请求快照"}
@@ -43,4 +43,6 @@ func (s *ReservationService) Reserve(ctx context.Context, input ReserveInput) (*
 		event, err := events.NewReservedOutbox(*product, now)
 		return reservation, event, err
 	})
+	notifyCommit(ctx, s.invalidation, input.ProductID, err)
+	return result, err
 }

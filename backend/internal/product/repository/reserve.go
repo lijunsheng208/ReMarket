@@ -57,7 +57,10 @@ func (r *ProductRepository) WithReserve(ctx context.Context, productID, orderID 
 		if err := tx.Create(result).Error; err != nil {
 			return err
 		}
-		return tx.Create(event).Error
+		if err := tx.Create(event).Error; err != nil {
+			return err
+		}
+		return enqueueInvalidation(tx, product.ID, product.AggregateVersion)
 	}, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
 	var duplicate *driver.MySQLError
 	if errors.Is(err, gorm.ErrDuplicatedKey) || (errors.As(err, &duplicate) && duplicate.Number == 1062) {

@@ -66,7 +66,10 @@ func (r *ProductRepository) WithReservation(ctx context.Context, orderID, produc
 			return errors.New("预占状态更新失败")
 		}
 		// Outbox 插入失败时回滚商品及预占，不能残留部分完成状态。
-		return tx.Create(event).Error
+		if err := tx.Create(event).Error; err != nil {
+			return err
+		}
+		return enqueueInvalidation(tx, product.ID, product.AggregateVersion)
 	})
 	if err != nil {
 		return nil, err

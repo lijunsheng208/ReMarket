@@ -15,7 +15,10 @@ type ReservationRepository interface {
 	GetReservation(context.Context, int64) (*model.ProductReservation, error)
 	WithReservation(context.Context, int64, int64, func(*model.Product, *model.ProductReservation) (*model.OutboxEvent, error)) (*model.ProductReservation, error)
 }
-type ReservationService struct{ reservations ReservationRepository }
+type ReservationService struct {
+	reservations ReservationRepository
+	invalidation PostCommit
+}
 
 // NewReservations 注入预占持久化；服务调用身份由 RPC 边界独立验证，不建立虚假用户身份。
 func NewReservations(reservations ReservationRepository) *ReservationService {
@@ -51,7 +54,7 @@ func (s *ReservationService) finish(ctx context.Context, orderID, productID int6
 	if orderID <= 0 || productID <= 0 {
 		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "订单和商品 ID 必须为正整数"}
 	}
-	return s.reservations.WithReservation(ctx, orderID, productID, func(product *model.Product, reservation *model.ProductReservation) (*model.OutboxEvent, error) {
+	result, err := s.reservations.WithReservation(ctx, orderID, productID, func(product *model.Product, reservation *model.ProductReservation) (*model.OutboxEvent, error) {
 		target := model.ReservationReleased
 		if confirm {
 			target = model.ReservationConfirmed
@@ -83,4 +86,13 @@ func (s *ReservationService) finish(ctx context.Context, orderID, productID int6
 		reservation.ReleasedAt = &now
 		return events.NewReleasedOutbox(*product, now)
 	})
+	notifyCommit(ctx, s.invalidation, productID, err)
+	return result, err
+}
+
+// WithInvalidation 返回带提交后失效器的独立服务副本，应在启动组装阶段调用。
+func (s *ReservationService) WithInvalidation(hook PostCommit) *ReservationService {
+	copy := *s
+	copy.invalidation = hook
+	return &copy
 }
