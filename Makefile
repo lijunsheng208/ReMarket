@@ -64,3 +64,7 @@ kafka-topics:
 	$(COMPOSE) run --rm kafka-init
 kafka-check:
 	set -a; . ./.env; set +a; cd backend && go run ./cmd/kafka-check
+
+.PHONY: redis-check
+redis-check:
+	set -a; . ./.env; set +a; cd backend && go run ./cmd/redis-check

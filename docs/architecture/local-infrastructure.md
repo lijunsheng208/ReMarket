@@ -43,3 +43,15 @@ MinIO 复用本机已有的官方 `RELEASE.2024-12-18T13-15-44Z` 开发镜像：
 `make kafka-check` 加载根目录 .env，运行 franz-go 协议 Ping，失败返回非零状态；支持 KAFKA_BROKERS、KAFKA_CLIENT_ID、KAFKA_CONNECT_TIMEOUT。客户端保留默认幂等生产能力并设置 acks=all，本阶段尚未实现 Producer/Consumer 业务封装、Outbox 投递及 Retry/DLT 流转。
 
 参考：[Apache Kafka Docker](https://kafka.apache.org/41/getting-started/docker/)、[franz-go 客户端](https://pkg.go.dev/github.com/twmb/franz-go/pkg/kgo)。
+
+## Redis Go 客户端（商品缓存计划 2）
+
+`make redis-check` 加载根目录 `.env` 并只执行 PING，不写业务 Key。`backend/pkg/redis.Open` 校验配置、派生启动超时、探测失败关闭连接池；成功后由调用方 Close。尚未组装进 Product，也未启用缓存或限流。
+
+配置：`REDIS_ADDR` 优先，否则使用 `127.0.0.1:${REDIS_PORT:-6379}`；容器内显式设置 `redis:6379`。`REDIS_USERNAME` 可为空，密码来自现有 `REDIS_PASSWORD`；`REDIS_DB` 默认 0，不假定服务端 DB 数量。当前仅单节点 TCP 明文配置，不含 TLS、Sentinel 或 Cluster。
+
+连接池 `REDIS_POOL_SIZE=10` 同时作为 MaxActiveConns 硬上限；`REDIS_MIN_IDLE_CONNS=0`。启动探测 `REDIS_CONNECT_TIMEOUT=2s`，拨号 `REDIS_DIAL_TIMEOUT=1s`，读、写、池等待分别为 `REDIS_READ_TIMEOUT/REDIS_WRITE_TIMEOUT/REDIS_POOL_TIMEOUT=200ms`。这些为开发初始值，需结合延迟调整。开启 ContextTimeoutEnabled，不延长上游 Deadline；禁用命令自动重试，拨号仅一次尝试。读写超时也约束驱动内部操作，调用者仍需传入有限的 Context，不把这些超时之和当作整个请求预算。
+
+单测：`cd backend && go test ./pkg/redis`。真实只读集成及 race：从根目录加载 `.env` 后，在 backend 下执行 `REDIS_INTEGRATION=1 go test -race ./pkg/redis -v`；未设置该变量时明确跳过真实测试。检查失败不会自动启动基础设施。后续缓存将自行决定 Redis 故障降级，Open 本身不会返回一个伪装健康的客户端。
+
+实现参数依据 [go-redis Options](https://github.com/redis/go-redis/blob/v9.17.2/options.go)；连接池与超时背景见 [Redis 生产使用说明](https://redis.io/docs/latest/develop/clients/go/produsage/)。
