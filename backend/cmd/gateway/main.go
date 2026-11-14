@@ -16,6 +16,8 @@ import (
 	"remarket/backend/internal/gateway"
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/grpcx"
+	rl "remarket/backend/pkg/ratelimit"
+	rx "remarket/backend/pkg/redis"
 	"syscall"
 	"time"
 )
@@ -81,7 +83,28 @@ func run() error {
 	}
 	defer orderConn.Close()
 	gin.SetMode(gin.ReleaseMode)
-	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout)
+	rateConfig, err := gateway.RateConfigFromEnv()
+	if err != nil {
+		return err
+	}
+	var middleware []gin.HandlerFunc
+	if rateConfig.Enabled {
+		cfg, err := rx.LoadConfig()
+		if err != nil {
+			return err
+		}
+		client, err := rx.Open(ctx, cfg)
+		if err != nil {
+			return err
+		}
+		defer client.Close()
+		limiter, err := gateway.NewGatewayLimiter(rl.New(client), tokens, rateConfig)
+		if err != nil {
+			return err
+		}
+		middleware = append(middleware, limiter.Middleware())
+	}
+	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
 	gateway.AddProductRoutes(router, productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddOrderRoutes(router, orderv1.NewOrderServiceClient(orderConn), tokens, timeout)
 	server := &http.Server{Addr: address, Handler: router, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}

@@ -35,7 +35,7 @@ type Handler struct {
 var requestIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]{1,128}$`)
 
 // NewRouter 创建匿名注册和登录路由，不记录请求体、密码或响应 Token。
-func NewRouter(users UserClient, timeout time.Duration) *gin.Engine {
+func NewRouter(users UserClient, timeout time.Duration, middleware ...gin.HandlerFunc) *gin.Engine {
 	if timeout <= 0 {
 		timeout = 3 * time.Second
 	}
@@ -43,6 +43,7 @@ func NewRouter(users UserClient, timeout time.Duration) *gin.Engine {
 	router := gin.New()
 	_ = router.SetTrustedProxies(nil)
 	router.Use(requestContext(), recoverRequest())
+	router.Use(middleware...)
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
 	router.POST("/api/v1/auth/register", h.register)
 	router.POST("/api/v1/auth/login", h.login)

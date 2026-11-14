@@ -38,3 +38,5 @@ Go Module 暂定为 `remarket/backend`，确定远程仓库地址后可统一调
 `make infra-down` 停止容器并保留数据卷，`make infra-logs` 查看日志。详见 [基础设施文档](docs/architecture/local-infrastructure.md)。
 
 Day 3 Kafka：`make kafka-up` 启动 Broker 并初始化 Topic，`make kafka-check` 验证 Go 客户端连接。配置与边界见 [基础设施文档](docs/architecture/local-infrastructure.md#day-3-kafka)。
+
+Gateway 分布式限流：设置 `GATEWAY_RATE_LIMIT_ENABLED=true` 后加载环境并重启 Gateway。规则、429 和 Redis 故障策略见 [Redis Lua 限流](docs/api/rate-limit.md)。

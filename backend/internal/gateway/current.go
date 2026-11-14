@@ -17,8 +17,8 @@ type CurrentUserClient interface {
 }
 
 // NewAuthenticatedRouter 在匿名路由上增加当前用户接口，要求调用方注入已配置的验签组件。
-func NewAuthenticatedRouter(users UserClient, current CurrentUserClient, verifier auth.TokenVerifier, timeout time.Duration) *gin.Engine {
-	router := NewRouter(users, timeout)
+func NewAuthenticatedRouter(users UserClient, current CurrentUserClient, verifier auth.TokenVerifier, timeout time.Duration, middleware ...gin.HandlerFunc) *gin.Engine {
+	router := NewRouter(users, timeout, middleware...)
 	if timeout <= 0 {
 		timeout = 3 * time.Second
 	}
