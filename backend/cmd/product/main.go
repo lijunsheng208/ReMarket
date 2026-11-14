@@ -77,7 +77,7 @@ func run() error {
 	}
 	defer userConn.Close()
 	adminVerifier := client.NewUserVerifier(userv1.NewUserServiceClient(userConn))
-	// 仅显式启用失效恢复；详情缓存仍待组合故障验收后另行开启。
+	// 详情缓存必须与可靠失效恢复同时开启，防止只读缓存长期保留旧值。
 	var hook service.PostCommit
 	enabled := false
 	if raw := os.Getenv("PRODUCT_CACHE_INVALIDATION_ENABLED"); raw != "" {
@@ -86,7 +86,22 @@ func run() error {
 			return fmt.Errorf("PRODUCT_CACHE_INVALIDATION_ENABLED 必须为布尔值")
 		}
 	}
+	cacheEnabled := false
+	if raw := os.Getenv("PRODUCT_DETAIL_CACHE_ENABLED"); raw != "" {
+		cacheEnabled, err = strconv.ParseBool(raw)
+		if err != nil {
+			return fmt.Errorf("PRODUCT_DETAIL_CACHE_ENABLED 必须为布尔值")
+		}
+	}
+	if cacheEnabled && !enabled {
+		return fmt.Errorf("详情缓存需要启用持久化失效恢复")
+	}
+	var detailStore *pc.Store
 	if enabled {
+		if err := db.Exec("SELECT id, product_id, aggregate_version, status, lock_token FROM product_cache_invalidations LIMIT 0").Error; err != nil {
+			return fmt.Errorf("缓存失效表未就绪，请先应用 Product 000004 迁移")
+		}
+
 		cfg, err := redisx.LoadConfig()
 		if err != nil {
 			return err
@@ -100,6 +115,7 @@ func run() error {
 		if err != nil {
 			return err
 		}
+		detailStore = store
 		runner := service.NewInvalidationRunner(products, store, func(event string) { slog.Warn("缓存失效恢复", "event", event) })
 		hook = runner
 		workerCtx, stop := context.WithCancel(ctx)
@@ -109,7 +125,14 @@ func run() error {
 		defer func() { stop(); <-done }()
 	}
 	query := service.NewQuery(products, adminVerifier)
+	if cacheEnabled {
+		query, err = service.NewCachedQuery(products, adminVerifier, detailStore, ctx, service.DetailLoadConfig{MaxConcurrent: 10, MaxWaiting: 100, LoadTimeout: 3 * time.Second, WaitTimeout: 100 * time.Millisecond, CacheTimeout: 200 * time.Millisecond, Observe: func(event string) { slog.Warn("商品缓存", "event", event) }})
+		if err != nil {
+			return err
+		}
+	}
+
 	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)))
-	slog.Info("商品服务已启动，创建草稿 RPC 已接入", "address", listener.Addr().String())
+	slog.Info("商品服务已启动", "address", listener.Addr().String(), "detail_cache_enabled", cacheEnabled, "invalidation_enabled", enabled)
 	return grpcx.Serve(ctx, listener, server)
 }

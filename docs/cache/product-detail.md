@@ -135,3 +135,17 @@ Repository 使用数据库时间判断待重试和租约到期，`FOR UPDATE SKI
 Product 入口新增 `PRODUCT_CACHE_INVALIDATION_ENABLED=false`，显式打开后组装 Redis 和 Runner，并将 hook 注入所有写服务。关闭时仍持久化任务，开启后恢复积压。入口退出先取消并等待 Runner，再关闭 Redis/数据库；开启恢复时 Redis 启动探测失败会阻止启动。此开关只启用失效恢复，不启用详情缓存；读路径仍使用 NewQuery，计划 6 组合验收后再评审启用。
 
 实际验证：真实 MySQL 临时库及 race 测试通过 Repository、Product Handler、Service、Gateway 相关回归，验证迁移执行、任务写入故障下草稿事务回滚、重复领取隔离、强制租约过期接管、旧令牌拒绝及失败重试。Runner 单测验证领取→Redis→完成的顺序、失败结果与退避封顶、取消/业务失败不执行同步 hook。本轮没有重新验证 Redis Lua，未完成真实 Redis+MySQL Runner 组合、独立进程崩溃恢复及每个业务入口任务写入故障注入；这些仍需计划 6 验收，不以模拟 ACK 顺序代替真实消息/缓存链路验证。
+
+## 本机迁移与启用记录
+
+2026-11-14（Asia/Shanghai）：检查 Product 业务库确认预占快照字段及迁移版本 3 已存在，000004 目标表不存在。已执行 000004 建表迁移，并在既有 schema_migrations 按 SHA-256 校验和写入版本 4，执行前 dirty=1、成功后 dirty=0；未修改既有商品数据。
+
+Product 入口支持 PRODUCT_DETAIL_CACHE_ENABLED，启用时强制要求 PRODUCT_CACHE_INVALIDATION_ENABLED 同时开启，并检查任务表可访问。本机 .env 两项已设 true；示例仍默认 false。服务已重启并监听 127.0.0.1:50052，启动日志确认两项启用。详情回源默认并发 10、总在途 miss 100、加载预算 3 秒、容量等待 100ms、单次缓存预算 200ms；当前为固定开发值。
+
+本轮全量 Go 测试与构建通过。通过真实 gRPC 查询现有公开商品，验证缓存生成、重复查询、主动原子失效后缓存消失及再查询重新填充。没有通过数据库 SQL 计数证明第二次 RPC 零 SQL，也未在业务库修改商品验证提交后自动失效；多进程崩溃和完整故障矩阵仍待计划 6，不将本次启用表述为全部验收完成。
+
+后续重新启动时，从根目录加载 .env 再执行 make run-product；Makefile 不会自动加载环境变量。仅本机 .env 启用了缓存，代码默认关闭。关闭详情缓存可将 PRODUCT_DETAIL_CACHE_ENABLED 设 false 后重启，失效恢复可继续运行清理积压。
+
+## 计划 6 实施记录
+
+已新增真实 Redis/MySQL 组合、SQL 读取计数、所有写入口任务矩阵、同快照并发、正负旧读晚回填、客户端断连及独立 Worker 两处强杀恢复测试；相关 race 回归通过。实际环境、复验命令与未覆盖故障见 [计划 6 验收](product-cache-acceptance.md)。此前各阶段的“待组合验收”记录为历史状态，以该验收表为本轮结果；Redis 服务端重启/切主等未覆盖项仍未验收。
