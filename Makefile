@@ -55,3 +55,12 @@ run-gateway:
 .PHONY: run-order
 run-order:
 	cd backend && go run ./cmd/order
+
+.PHONY: kafka-up kafka-topics kafka-check
+kafka-up:
+	$(COMPOSE) up -d --wait --wait-timeout 240 kafka
+	$(COMPOSE) run --rm kafka-init
+kafka-topics:
+	$(COMPOSE) run --rm kafka-init
+kafka-check:
+	set -a; . ./.env; set +a; cd backend && go run ./cmd/kafka-check

@@ -46,24 +46,51 @@ services:
       timeout: 5s
       retries: 6
 
-  rabbitmq:
+  kafka:
     <<: *defaults
-    image: rabbitmq:4.1-management-alpine
-    hostname: rabbitmq
+    image: apache/kafka:4.1.2
+    hostname: kafka
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Set RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:19092,HOST://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,HOST://127.0.0.1:${KAFKA_PORT:-9092}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
     ports:
-      - "127.0.0.1:${RABBITMQ_PORT:-5672}:5672"
-      - "127.0.0.1:${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+      - "127.0.0.1:${KAFKA_PORT:-9092}:9092"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity"]
-      interval: 15s
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --list >/dev/null"]
+      interval: 10s
       timeout: 10s
-      retries: 10
+      retries: 12
       start_period: 30s
+
+  kafka-init:
+    image: apache/kafka:4.1.2
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_TOPIC_PARTITIONS: ${KAFKA_TOPIC_PARTITIONS:-3}
+      KAFKA_RETENTION_MS: ${KAFKA_RETENTION_MS:-604800000}
+      KAFKA_DLT_RETENTION_MS: ${KAFKA_DLT_RETENTION_MS:-2592000000}
+    volumes:
+      - ./kafka/init-topics.sh:/init-topics.sh:ro
+    entrypoint: ["/bin/bash", "/init-topics.sh"]
 
   elasticsearch:
     <<: *defaults
@@ -106,6 +133,6 @@ services:
 volumes:
   mysql_data:
   redis_data:
-  rabbitmq_data:
+  kafka_data:
   elasticsearch_data:
   minio_data:
