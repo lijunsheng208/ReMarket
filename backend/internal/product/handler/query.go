@@ -62,6 +62,7 @@ func productProto(p *model.Product) *productv1.Product {
 
 // OwnProductReader 定义当前卖家分页业务。
 type OwnProductReader interface {
+	StatisticsMine(context.Context) (*model.ProductStatistics, error)
 	ListMine(context.Context, int64, int32, int32) ([]model.Product, int64, error)
 }
 
@@ -77,7 +78,11 @@ func (s *Server) ListMyProducts(ctx context.Context, req *productv1.ListProducts
 	if err != nil {
 		return nil, err
 	}
-	result := &productv1.ListProductsResponse{Total: total, Products: make([]*productv1.Product, 0, len(products))}
+	counts, err := s.ownReader.StatisticsMine(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := &productv1.ListProductsResponse{Statistics: &productv1.ProductStatistics{Total: counts.Total, OnSale: counts.OnSale, Sold: counts.Sold, OffShelf: counts.OffShelf}, Total: total, Products: make([]*productv1.Product, 0, len(products))}
 	for i := range products {
 		result.Products = append(result.Products, productProto(&products[i]))
 	}

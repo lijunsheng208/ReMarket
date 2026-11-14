@@ -73,3 +73,10 @@ func (r *ProductRepository) GetDetailSnapshot(ctx context.Context, id int64) (*m
 	}
 	return &product, images, nil
 }
+
+// CountBySeller 单条聚合查询统计卖家所有商品，不应用分页或分类筛选，空集合返回零。
+func (r *ProductRepository) CountBySeller(ctx context.Context, sellerID int64) (*model.ProductStatistics, error) {
+	var counts model.ProductStatistics
+	err := r.db.WithContext(ctx).Model(&model.Product{}).Select("COUNT(*) AS total, COALESCE(SUM(status = 'ON_SALE'),0) AS on_sale, COALESCE(SUM(status = 'SOLD'),0) AS sold, COALESCE(SUM(status = 'OFF_SHELF'),0) AS off_shelf").Where("seller_id = ?", sellerID).Scan(&counts).Error
+	return &counts, err
+}

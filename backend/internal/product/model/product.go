@@ -123,3 +123,6 @@ func (ProductReservation) TableName() string { return "product_reservations" }
 
 // TableName 明确 Outbox 表名。
 func (OutboxEvent) TableName() string { return "outbox_events" }
+
+// ProductStatistics 是当前卖家全量状态计数，不对应持久化表。
+type ProductStatistics struct{ Total, OnSale, Sold, OffShelf int64 }

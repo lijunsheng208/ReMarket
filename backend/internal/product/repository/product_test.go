@@ -219,6 +219,36 @@ func TestProductRepositoryMySQL(t *testing.T) {
 	if err := db.Raw("SELECT COUNT(*) FROM products").Scan(&after).Error; err != nil || after != before {
 		t.Fatal("草稿未回滚")
 	}
+	// 全量统计跨越每页12条的边界，且不能混入其他卖家数据。
+	t.Run("全量卖家统计", func(t *testing.T) {
+		now := time.Now().UTC()
+		items := make([]model.Product, 0, 27)
+		for i := 0; i < 27; i++ {
+			state := model.StatusOnSale
+			if i >= 15 {
+				state = model.StatusSold
+			}
+			if i >= 22 {
+				state = model.StatusOffShelf
+			}
+			items = append(items, model.Product{SellerID: 987654321, CategoryID: category.ID, Title: "统计测试", PriceCent: 100, Status: state, AggregateVersion: 1, FirstPublishedAt: &now})
+		}
+		if err := db.Create(&items).Error; err != nil {
+			t.Fatal(err)
+		}
+		counts, err := repo.CountBySeller(ctx, 987654321)
+		if err != nil || counts.Total != 27 || counts.OnSale != 15 || counts.Sold != 7 || counts.OffShelf != 5 {
+			t.Fatalf("全量统计错误: %+v %v", counts, err)
+		}
+		rows, total, err := repo.ListBySeller(ctx, 987654321, 0, 12, 12)
+		if err != nil || len(rows) != 12 || total != 27 {
+			t.Fatal("分页前提不成立")
+		}
+		empty, err := repo.CountBySeller(ctx, 987654322)
+		if err != nil || empty.Total != 0 || empty.OnSale != 0 {
+			t.Fatal("空卖家或隔离统计错误")
+		}
+	})
 	pool.Close()
 	if _, err := repo.GetByID(ctx, draft.ID); err == nil || errors.Is(err, ErrProductNotFound) {
 		t.Fatal("内部故障误映射")

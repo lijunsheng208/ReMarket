@@ -9,6 +9,7 @@ import (
 )
 
 type QueryRepository interface {
+	CountBySeller(context.Context, int64) (*model.ProductStatistics, error)
 	ListBySeller(context.Context, int64, int64, int, int) ([]model.Product, int64, error)
 	GetByID(context.Context, int64) (*model.Product, error)
 	ListOnSale(context.Context, int64, int, int) ([]model.Product, int64, error)
@@ -133,4 +134,16 @@ func (s *QueryService) visible(ctx context.Context, product *model.Product) erro
 		}
 	}
 	return nil
+}
+
+// StatisticsMine 从可信身份取得卖家，统计其全部商品，不接受客户端卖家ID。
+func (s *QueryService) StatisticsMine(ctx context.Context) (*model.ProductStatistics, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	identity, ok := auth.IdentityFromContext(ctx)
+	if !ok {
+		return nil, &apperror.Error{Kind: apperror.Unauthenticated, Message: "请先登录"}
+	}
+	return s.products.CountBySeller(ctx, identity.UserID)
 }

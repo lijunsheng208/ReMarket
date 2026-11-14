@@ -67,7 +67,7 @@ export function OrdersPage({ user, token, role, changeRole, message, initialId, 
   // closeDetail 关闭初始下单详情并刷新列表，以服务端最新状态展示。
   function closeDetail() { setDetailId(null); clearInitial(); setRevision(value => value + 1) }
   return <section className="orders-page">
-    <div className="orders-heading"><div><h1>我的订单</h1></div><button onClick={() => setRevision(value => value + 1)} disabled={loading}>刷新列表</button></div>
+    <div className="orders-heading"><div><h1>我的订单</h1><p>查看和管理你的买入 / 卖出订单</p></div><button onClick={() => setRevision(value => value + 1)} disabled={loading}>刷新列表</button></div>
     <div className="orders-tabs" aria-label="订单类型"><button aria-pressed={role === 'buyer'} className={role === 'buyer' ? 'active' : ''} onClick={() => switchRole('buyer')}>我买到的</button><button aria-pressed={role === 'seller'} className={role === 'seller' ? 'active' : ''} onClick={() => switchRole('seller')}>我卖出的</button><span>{total} 笔订单</span></div>
     {error ? <div className="empty error" role="alert"><h3>订单暂时无法加载</h3><p>{error}</p><button onClick={() => setRevision(value => value + 1)}>重新加载</button></div> : loading ? <div className="order-loading" role="status">正在读取订单…</div> : orders.length ? <div className="order-list">{orders.map(order => <article className="order-card" key={order.id}>
       <div className="order-card-top"><span>订单 #{order.id}</span><OrderBadge order={order} /></div>

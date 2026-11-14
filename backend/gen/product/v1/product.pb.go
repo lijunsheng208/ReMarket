@@ -499,17 +499,87 @@ func (x *ListProductsRequest) GetPageSize() int32 {
 	return 0
 }
 
+// Seller statistics cover all seller products, independent of pagination/category filters.
+type ProductStatistics struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Total         int64                  `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	OnSale        int64                  `protobuf:"varint,2,opt,name=on_sale,json=onSale,proto3" json:"on_sale,omitempty"`
+	Sold          int64                  `protobuf:"varint,3,opt,name=sold,proto3" json:"sold,omitempty"`
+	OffShelf      int64                  `protobuf:"varint,4,opt,name=off_shelf,json=offShelf,proto3" json:"off_shelf,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProductStatistics) Reset() {
+	*x = ProductStatistics{}
+	mi := &file_product_v1_product_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProductStatistics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProductStatistics) ProtoMessage() {}
+
+func (x *ProductStatistics) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProductStatistics.ProtoReflect.Descriptor instead.
+func (*ProductStatistics) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ProductStatistics) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ProductStatistics) GetOnSale() int64 {
+	if x != nil {
+		return x.OnSale
+	}
+	return 0
+}
+
+func (x *ProductStatistics) GetSold() int64 {
+	if x != nil {
+		return x.Sold
+	}
+	return 0
+}
+
+func (x *ProductStatistics) GetOffShelf() int64 {
+	if x != nil {
+		return x.OffShelf
+	}
+	return 0
+}
+
 type ListProductsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Products      []*Product             `protobuf:"bytes,1,rep,name=products,proto3" json:"products,omitempty"`
 	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	Statistics    *ProductStatistics     `protobuf:"bytes,3,opt,name=statistics,proto3" json:"statistics,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListProductsResponse) Reset() {
 	*x = ListProductsResponse{}
-	mi := &file_product_v1_product_proto_msgTypes[5]
+	mi := &file_product_v1_product_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -521,7 +591,7 @@ func (x *ListProductsResponse) String() string {
 func (*ListProductsResponse) ProtoMessage() {}
 
 func (x *ListProductsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[5]
+	mi := &file_product_v1_product_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -534,7 +604,7 @@ func (x *ListProductsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProductsResponse.ProtoReflect.Descriptor instead.
 func (*ListProductsResponse) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{5}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListProductsResponse) GetProducts() []*Product {
@@ -551,6 +621,13 @@ func (x *ListProductsResponse) GetTotal() int64 {
 	return 0
 }
 
+func (x *ListProductsResponse) GetStatistics() *ProductStatistics {
+	if x != nil {
+		return x.Statistics
+	}
+	return nil
+}
+
 type UpdateProductRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -565,7 +642,7 @@ type UpdateProductRequest struct {
 
 func (x *UpdateProductRequest) Reset() {
 	*x = UpdateProductRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[6]
+	mi := &file_product_v1_product_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -577,7 +654,7 @@ func (x *UpdateProductRequest) String() string {
 func (*UpdateProductRequest) ProtoMessage() {}
 
 func (x *UpdateProductRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[6]
+	mi := &file_product_v1_product_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -590,7 +667,7 @@ func (x *UpdateProductRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProductRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProductRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{6}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *UpdateProductRequest) GetId() int64 {
@@ -645,7 +722,7 @@ type ChangeProductStateRequest struct {
 
 func (x *ChangeProductStateRequest) Reset() {
 	*x = ChangeProductStateRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[7]
+	mi := &file_product_v1_product_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -657,7 +734,7 @@ func (x *ChangeProductStateRequest) String() string {
 func (*ChangeProductStateRequest) ProtoMessage() {}
 
 func (x *ChangeProductStateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[7]
+	mi := &file_product_v1_product_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -670,7 +747,7 @@ func (x *ChangeProductStateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeProductStateRequest.ProtoReflect.Descriptor instead.
 func (*ChangeProductStateRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{7}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ChangeProductStateRequest) GetId() int64 {
@@ -696,7 +773,7 @@ type ProductResponse struct {
 
 func (x *ProductResponse) Reset() {
 	*x = ProductResponse{}
-	mi := &file_product_v1_product_proto_msgTypes[8]
+	mi := &file_product_v1_product_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -708,7 +785,7 @@ func (x *ProductResponse) String() string {
 func (*ProductResponse) ProtoMessage() {}
 
 func (x *ProductResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[8]
+	mi := &file_product_v1_product_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -721,7 +798,7 @@ func (x *ProductResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProductResponse.ProtoReflect.Descriptor instead.
 func (*ProductResponse) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{8}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ProductResponse) GetProduct() *Product {
@@ -743,7 +820,7 @@ type Category struct {
 
 func (x *Category) Reset() {
 	*x = Category{}
-	mi := &file_product_v1_product_proto_msgTypes[9]
+	mi := &file_product_v1_product_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -755,7 +832,7 @@ func (x *Category) String() string {
 func (*Category) ProtoMessage() {}
 
 func (x *Category) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[9]
+	mi := &file_product_v1_product_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -768,7 +845,7 @@ func (x *Category) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Category.ProtoReflect.Descriptor instead.
 func (*Category) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{9}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Category) GetId() int64 {
@@ -807,7 +884,7 @@ type ListCategoriesRequest struct {
 
 func (x *ListCategoriesRequest) Reset() {
 	*x = ListCategoriesRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[10]
+	mi := &file_product_v1_product_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -819,7 +896,7 @@ func (x *ListCategoriesRequest) String() string {
 func (*ListCategoriesRequest) ProtoMessage() {}
 
 func (x *ListCategoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[10]
+	mi := &file_product_v1_product_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -832,7 +909,7 @@ func (x *ListCategoriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCategoriesRequest.ProtoReflect.Descriptor instead.
 func (*ListCategoriesRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{10}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{11}
 }
 
 type ListCategoriesResponse struct {
@@ -844,7 +921,7 @@ type ListCategoriesResponse struct {
 
 func (x *ListCategoriesResponse) Reset() {
 	*x = ListCategoriesResponse{}
-	mi := &file_product_v1_product_proto_msgTypes[11]
+	mi := &file_product_v1_product_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -856,7 +933,7 @@ func (x *ListCategoriesResponse) String() string {
 func (*ListCategoriesResponse) ProtoMessage() {}
 
 func (x *ListCategoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[11]
+	mi := &file_product_v1_product_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -869,7 +946,7 @@ func (x *ListCategoriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCategoriesResponse.ProtoReflect.Descriptor instead.
 func (*ListCategoriesResponse) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{11}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListCategoriesResponse) GetCategories() []*Category {
@@ -898,7 +975,7 @@ type Reservation struct {
 
 func (x *Reservation) Reset() {
 	*x = Reservation{}
-	mi := &file_product_v1_product_proto_msgTypes[12]
+	mi := &file_product_v1_product_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -910,7 +987,7 @@ func (x *Reservation) String() string {
 func (*Reservation) ProtoMessage() {}
 
 func (x *Reservation) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[12]
+	mi := &file_product_v1_product_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -923,7 +1000,7 @@ func (x *Reservation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Reservation.ProtoReflect.Descriptor instead.
 func (*Reservation) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{12}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Reservation) GetId() int64 {
@@ -1013,7 +1090,7 @@ type ReserveProductRequest struct {
 
 func (x *ReserveProductRequest) Reset() {
 	*x = ReserveProductRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[13]
+	mi := &file_product_v1_product_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1025,7 +1102,7 @@ func (x *ReserveProductRequest) String() string {
 func (*ReserveProductRequest) ProtoMessage() {}
 
 func (x *ReserveProductRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[13]
+	mi := &file_product_v1_product_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1038,7 +1115,7 @@ func (x *ReserveProductRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReserveProductRequest.ProtoReflect.Descriptor instead.
 func (*ReserveProductRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{13}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ReserveProductRequest) GetOrderId() int64 {
@@ -1099,7 +1176,7 @@ type GetReservationRequest struct {
 
 func (x *GetReservationRequest) Reset() {
 	*x = GetReservationRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[14]
+	mi := &file_product_v1_product_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +1188,7 @@ func (x *GetReservationRequest) String() string {
 func (*GetReservationRequest) ProtoMessage() {}
 
 func (x *GetReservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[14]
+	mi := &file_product_v1_product_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,7 +1201,7 @@ func (x *GetReservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetReservationRequest.ProtoReflect.Descriptor instead.
 func (*GetReservationRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{14}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetReservationRequest) GetOrderId() int64 {
@@ -1145,7 +1222,7 @@ type ReleaseReservationRequest struct {
 
 func (x *ReleaseReservationRequest) Reset() {
 	*x = ReleaseReservationRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[15]
+	mi := &file_product_v1_product_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1157,7 +1234,7 @@ func (x *ReleaseReservationRequest) String() string {
 func (*ReleaseReservationRequest) ProtoMessage() {}
 
 func (x *ReleaseReservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[15]
+	mi := &file_product_v1_product_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1170,7 +1247,7 @@ func (x *ReleaseReservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseReservationRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseReservationRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{15}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ReleaseReservationRequest) GetOrderId() int64 {
@@ -1198,7 +1275,7 @@ type ConfirmReservationRequest struct {
 
 func (x *ConfirmReservationRequest) Reset() {
 	*x = ConfirmReservationRequest{}
-	mi := &file_product_v1_product_proto_msgTypes[16]
+	mi := &file_product_v1_product_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1210,7 +1287,7 @@ func (x *ConfirmReservationRequest) String() string {
 func (*ConfirmReservationRequest) ProtoMessage() {}
 
 func (x *ConfirmReservationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[16]
+	mi := &file_product_v1_product_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1223,7 +1300,7 @@ func (x *ConfirmReservationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmReservationRequest.ProtoReflect.Descriptor instead.
 func (*ConfirmReservationRequest) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{16}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ConfirmReservationRequest) GetOrderId() int64 {
@@ -1249,7 +1326,7 @@ type ReservationResponse struct {
 
 func (x *ReservationResponse) Reset() {
 	*x = ReservationResponse{}
-	mi := &file_product_v1_product_proto_msgTypes[17]
+	mi := &file_product_v1_product_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1261,7 +1338,7 @@ func (x *ReservationResponse) String() string {
 func (*ReservationResponse) ProtoMessage() {}
 
 func (x *ReservationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_product_v1_product_proto_msgTypes[17]
+	mi := &file_product_v1_product_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1274,7 +1351,7 @@ func (x *ReservationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReservationResponse.ProtoReflect.Descriptor instead.
 func (*ReservationResponse) Descriptor() ([]byte, []int) {
-	return file_product_v1_product_proto_rawDescGZIP(), []int{17}
+	return file_product_v1_product_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ReservationResponse) GetReservation() *Reservation {
@@ -1326,10 +1403,18 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\vcategory_id\x18\x01 \x01(\x03R\n" +
 	"categoryId\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"f\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"s\n" +
+	"\x11ProductStatistics\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x03R\x05total\x12\x17\n" +
+	"\aon_sale\x18\x02 \x01(\x03R\x06onSale\x12\x12\n" +
+	"\x04sold\x18\x03 \x01(\x03R\x04sold\x12\x1b\n" +
+	"\toff_shelf\x18\x04 \x01(\x03R\boffShelf\"\xae\x01\n" +
 	"\x14ListProductsResponse\x128\n" +
 	"\bproducts\x18\x01 \x03(\v2\x1c.remarket.product.v1.ProductR\bproducts\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\x03R\x05total\"\x96\x02\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\x12F\n" +
+	"\n" +
+	"statistics\x18\x03 \x01(\v2&.remarket.product.v1.ProductStatisticsR\n" +
+	"statistics\"\x96\x02\n" +
 	"\x14UpdateProductRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12)\n" +
 	"\x10expected_version\x18\x02 \x01(\x03R\x0fexpectedVersion\x12$\n" +
@@ -1438,7 +1523,7 @@ func file_product_v1_product_proto_rawDescGZIP() []byte {
 }
 
 var file_product_v1_product_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_product_v1_product_proto_goTypes = []any{
 	(ProductStatus)(0),                // 0: remarket.product.v1.ProductStatus
 	(ReservationStatus)(0),            // 1: remarket.product.v1.ReservationStatus
@@ -1447,67 +1532,69 @@ var file_product_v1_product_proto_goTypes = []any{
 	(*CreateProductRequest)(nil),      // 4: remarket.product.v1.CreateProductRequest
 	(*GetProductRequest)(nil),         // 5: remarket.product.v1.GetProductRequest
 	(*ListProductsRequest)(nil),       // 6: remarket.product.v1.ListProductsRequest
-	(*ListProductsResponse)(nil),      // 7: remarket.product.v1.ListProductsResponse
-	(*UpdateProductRequest)(nil),      // 8: remarket.product.v1.UpdateProductRequest
-	(*ChangeProductStateRequest)(nil), // 9: remarket.product.v1.ChangeProductStateRequest
-	(*ProductResponse)(nil),           // 10: remarket.product.v1.ProductResponse
-	(*Category)(nil),                  // 11: remarket.product.v1.Category
-	(*ListCategoriesRequest)(nil),     // 12: remarket.product.v1.ListCategoriesRequest
-	(*ListCategoriesResponse)(nil),    // 13: remarket.product.v1.ListCategoriesResponse
-	(*Reservation)(nil),               // 14: remarket.product.v1.Reservation
-	(*ReserveProductRequest)(nil),     // 15: remarket.product.v1.ReserveProductRequest
-	(*GetReservationRequest)(nil),     // 16: remarket.product.v1.GetReservationRequest
-	(*ReleaseReservationRequest)(nil), // 17: remarket.product.v1.ReleaseReservationRequest
-	(*ConfirmReservationRequest)(nil), // 18: remarket.product.v1.ConfirmReservationRequest
-	(*ReservationResponse)(nil),       // 19: remarket.product.v1.ReservationResponse
-	(*timestamppb.Timestamp)(nil),     // 20: google.protobuf.Timestamp
+	(*ProductStatistics)(nil),         // 7: remarket.product.v1.ProductStatistics
+	(*ListProductsResponse)(nil),      // 8: remarket.product.v1.ListProductsResponse
+	(*UpdateProductRequest)(nil),      // 9: remarket.product.v1.UpdateProductRequest
+	(*ChangeProductStateRequest)(nil), // 10: remarket.product.v1.ChangeProductStateRequest
+	(*ProductResponse)(nil),           // 11: remarket.product.v1.ProductResponse
+	(*Category)(nil),                  // 12: remarket.product.v1.Category
+	(*ListCategoriesRequest)(nil),     // 13: remarket.product.v1.ListCategoriesRequest
+	(*ListCategoriesResponse)(nil),    // 14: remarket.product.v1.ListCategoriesResponse
+	(*Reservation)(nil),               // 15: remarket.product.v1.Reservation
+	(*ReserveProductRequest)(nil),     // 16: remarket.product.v1.ReserveProductRequest
+	(*GetReservationRequest)(nil),     // 17: remarket.product.v1.GetReservationRequest
+	(*ReleaseReservationRequest)(nil), // 18: remarket.product.v1.ReleaseReservationRequest
+	(*ConfirmReservationRequest)(nil), // 19: remarket.product.v1.ConfirmReservationRequest
+	(*ReservationResponse)(nil),       // 20: remarket.product.v1.ReservationResponse
+	(*timestamppb.Timestamp)(nil),     // 21: google.protobuf.Timestamp
 }
 var file_product_v1_product_proto_depIdxs = []int32{
 	0,  // 0: remarket.product.v1.Product.status:type_name -> remarket.product.v1.ProductStatus
-	20, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
-	20, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
-	20, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
+	21, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
+	21, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
 	2,  // 4: remarket.product.v1.Product.images:type_name -> remarket.product.v1.ProductImage
 	3,  // 5: remarket.product.v1.ListProductsResponse.products:type_name -> remarket.product.v1.Product
-	3,  // 6: remarket.product.v1.ProductResponse.product:type_name -> remarket.product.v1.Product
-	11, // 7: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
-	1,  // 8: remarket.product.v1.Reservation.status:type_name -> remarket.product.v1.ReservationStatus
-	20, // 9: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
-	20, // 10: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
-	20, // 11: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
-	20, // 12: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
-	20, // 13: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
-	20, // 14: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
-	14, // 15: remarket.product.v1.ReservationResponse.reservation:type_name -> remarket.product.v1.Reservation
-	4,  // 16: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
-	5,  // 17: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
-	6,  // 18: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
-	6,  // 19: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
-	8,  // 20: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
-	9,  // 21: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	9,  // 22: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	12, // 23: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
-	15, // 24: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
-	16, // 25: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
-	17, // 26: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
-	18, // 27: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
-	10, // 28: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
-	10, // 29: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
-	7,  // 30: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
-	7,  // 31: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
-	10, // 32: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
-	10, // 33: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
-	10, // 34: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
-	13, // 35: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
-	19, // 36: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
-	19, // 37: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
-	19, // 38: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
-	19, // 39: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
-	28, // [28:40] is the sub-list for method output_type
-	16, // [16:28] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	7,  // 6: remarket.product.v1.ListProductsResponse.statistics:type_name -> remarket.product.v1.ProductStatistics
+	3,  // 7: remarket.product.v1.ProductResponse.product:type_name -> remarket.product.v1.Product
+	12, // 8: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
+	1,  // 9: remarket.product.v1.Reservation.status:type_name -> remarket.product.v1.ReservationStatus
+	21, // 10: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
+	21, // 11: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
+	21, // 12: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
+	21, // 13: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
+	21, // 14: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
+	21, // 15: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
+	15, // 16: remarket.product.v1.ReservationResponse.reservation:type_name -> remarket.product.v1.Reservation
+	4,  // 17: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
+	5,  // 18: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
+	6,  // 19: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
+	6,  // 20: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
+	9,  // 21: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
+	10, // 22: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	10, // 23: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	13, // 24: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
+	16, // 25: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
+	17, // 26: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
+	18, // 27: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
+	19, // 28: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
+	11, // 29: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 30: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
+	8,  // 31: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
+	8,  // 32: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
+	11, // 33: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 34: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 35: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
+	14, // 36: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
+	20, // 37: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
+	20, // 38: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
+	20, // 39: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
+	20, // 40: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
+	29, // [29:41] is the sub-list for method output_type
+	17, // [17:29] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_product_v1_product_proto_init() }
@@ -1515,14 +1602,14 @@ func file_product_v1_product_proto_init() {
 	if File_product_v1_product_proto != nil {
 		return
 	}
-	file_product_v1_product_proto_msgTypes[6].OneofWrappers = []any{}
+	file_product_v1_product_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_product_v1_product_proto_rawDesc), len(file_product_v1_product_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   18,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
