@@ -20,6 +20,7 @@ type AdminVerifier interface {
 type QueryService struct {
 	products QueryRepository
 	admins   AdminVerifier
+	cached   *detailLoader
 }
 type ProductDetail struct {
 	Product *model.Product
@@ -79,7 +80,7 @@ func (s *QueryService) ListMine(ctx context.Context, categoryID int64, page, pag
 	return s.products.ListBySeller(ctx, identity.UserID, categoryID, int(offset), int(pageSize))
 }
 
-// GetDetail 在读取图片前校验可见性，无权查看的非在售商品统一返回不存在。
+// GetDetail 查询原始详情后逐请求校验可见性；缓存未配置时保留原查询路径。
 func (s *QueryService) GetDetail(ctx context.Context, id int64) (*ProductDetail, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -87,10 +88,36 @@ func (s *QueryService) GetDetail(ctx context.Context, id int64) (*ProductDetail,
 	if id <= 0 {
 		return nil, &apperror.Error{Kind: apperror.Invalid, Message: "商品 ID 必须为正整数"}
 	}
+	if s.cached != nil {
+		detail, err := s.cached.get(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.visible(ctx, detail.Product); err != nil {
+			return nil, err
+		}
+		return detail, nil
+	}
 	product, err := s.products.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
+	if err := s.visible(ctx, product); err != nil {
+		return nil, err
+	}
+	images, err := s.products.ListImages(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &ProductDetail{Product: product, Images: images}, nil
+}
+
+// visible 对每个调用者独立执行可见性判断，不缓存管理员核实结果。
+func (s *QueryService) visible(ctx context.Context, product *model.Product) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	var err error
 	if product.Status != model.StatusOnSale {
 		identity, ok := auth.IdentityFromContext(ctx)
 		allowed := ok && identity.UserID == product.SellerID
@@ -98,16 +125,12 @@ func (s *QueryService) GetDetail(ctx context.Context, id int64) (*ProductDetail,
 		if !allowed && ok && identity.Role == "ADMIN" && s.admins != nil {
 			allowed, err = s.admins.IsCurrentAdmin(ctx)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
 		if !allowed {
-			return nil, repository.ErrProductNotFound
+			return repository.ErrProductNotFound
 		}
 	}
-	images, err := s.products.ListImages(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return &ProductDetail{Product: product, Images: images}, nil
+	return nil
 }

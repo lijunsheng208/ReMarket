@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"gorm.io/gorm"
 	"remarket/backend/internal/product/model"
 )
@@ -52,4 +53,23 @@ func (r *ProductRepository) ListImages(ctx context.Context, id int64) ([]model.P
 	images := make([]model.ProductImage, 0)
 	err := r.db.WithContext(ctx).Where("product_id = ?", id).Order("sort_order ASC").Order("id ASC").Find(&images).Error
 	return images, err
+}
+
+// GetDetailSnapshot 在同一只读快照加载商品和图片，不承担可见性判断。
+func (r *ProductRepository) GetDetailSnapshot(ctx context.Context, id int64) (*model.Product, []model.ProductImage, error) {
+	var product model.Product
+	images := make([]model.ProductImage, 0)
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("id = ?", id).Take(&product).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrProductNotFound
+			}
+			return err
+		}
+		return tx.Where("product_id = ?", id).Order("sort_order ASC").Order("id ASC").Find(&images).Error
+	}, &sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true})
+	if err != nil {
+		return nil, nil, err
+	}
+	return &product, images, nil
 }
