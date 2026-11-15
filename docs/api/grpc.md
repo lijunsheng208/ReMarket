@@ -48,3 +48,7 @@ Request ID 经校验后在服务端 Context 和响应 metadata 中提供；客�
 业务错误定义在 `pkg/apperror`，不依赖 gRPC。统一映射为 InvalidArgument、NotFound、AlreadyExists、Unauthenticated、PermissionDenied、FailedPrecondition、Unavailable。已存在的 gRPC 错误保留；取消/超时映射对应状态；未知错误和 panic 返回通用 Internal，不向调用方暴露内部信息。HTTP 映射待 Gateway 实现。
 
 `pkg/grpcx` 使用真实 gRPC 协议和 bufconn 测试服务注册、请求及响应 Request ID、认证与 Trace metadata、拒绝隐式传递身份头、Deadline、错误映射与 panic 恢复。运行 `cd backend && go test ./...`。
+
+## Day 4 Search 快照导出增量
+
+Product 新增 `ExportSearchSnapshot` 内部 RPC，仅独立 `SEARCH_PRODUCT_EXPORT_TOKEN` 可调用，且必须处于 `PRODUCT_WRITE_MAINTENANCE=true` 的维护窗口。该入口不接受普通 JWT 或 Order 凭据，不注册 Gateway 路由。维护模式暂停所有商品写 RPC，详细导出及恢复规则见 [搜索重建说明](search.md)。Proto 已生成，代码及模拟测试已完成，真实维护重建未验收。

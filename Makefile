@@ -42,7 +42,7 @@ infra-logs:
 
 .PHONY: proto run-user run-product
 proto:
-	protoc -I api/proto --go_out=backend --go_opt=module=remarket/backend --go-grpc_out=backend --go-grpc_opt=module=remarket/backend api/proto/user/v1/user.proto api/proto/product/v1/product.proto api/proto/order/v1/order.proto
+	protoc -I api/proto --go_out=backend --go_opt=module=remarket/backend --go-grpc_out=backend --go-grpc_opt=module=remarket/backend api/proto/user/v1/user.proto api/proto/product/v1/product.proto api/proto/order/v1/order.proto api/proto/search/v1/search.proto
 run-user:
 	cd backend && go run ./cmd/user
 run-product:
@@ -86,3 +86,11 @@ day3-test-down:
 day3-test:
 	@test -n "$$REMARKET_TEST_MYSQL_DSN" || (echo "Set REMARKET_TEST_MYSQL_DSN to a test database administrator"; exit 1)
 	cd backend && REDIS_INTEGRATION=1 KAFKA_INTEGRATION=1 go test -race ./internal/eventtest ./internal/product/service ./internal/product/cache ./internal/product/repository ./internal/product/handler ./internal/gateway ./pkg/redis ./pkg/ratelimit ./pkg/kafka ./pkg/outbox -count=1
+
+.PHONY: run-search-consumer
+run-search-consumer:
+	cd backend && go run ./cmd/search-consumer
+
+.PHONY: run-search
+run-search:
+	cd backend && go run ./cmd/search

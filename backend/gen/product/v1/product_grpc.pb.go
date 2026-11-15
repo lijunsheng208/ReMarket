@@ -19,24 +19,27 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProductService_CreateProduct_FullMethodName      = "/remarket.product.v1.ProductService/CreateProduct"
-	ProductService_GetProduct_FullMethodName         = "/remarket.product.v1.ProductService/GetProduct"
-	ProductService_ListMyProducts_FullMethodName     = "/remarket.product.v1.ProductService/ListMyProducts"
-	ProductService_ListProducts_FullMethodName       = "/remarket.product.v1.ProductService/ListProducts"
-	ProductService_UpdateProduct_FullMethodName      = "/remarket.product.v1.ProductService/UpdateProduct"
-	ProductService_PublishProduct_FullMethodName     = "/remarket.product.v1.ProductService/PublishProduct"
-	ProductService_OffShelfProduct_FullMethodName    = "/remarket.product.v1.ProductService/OffShelfProduct"
-	ProductService_ListCategories_FullMethodName     = "/remarket.product.v1.ProductService/ListCategories"
-	ProductService_ReserveProduct_FullMethodName     = "/remarket.product.v1.ProductService/ReserveProduct"
-	ProductService_GetReservation_FullMethodName     = "/remarket.product.v1.ProductService/GetReservation"
-	ProductService_ReleaseReservation_FullMethodName = "/remarket.product.v1.ProductService/ReleaseReservation"
-	ProductService_ConfirmReservation_FullMethodName = "/remarket.product.v1.ProductService/ConfirmReservation"
+	ProductService_ExportSearchSnapshot_FullMethodName = "/remarket.product.v1.ProductService/ExportSearchSnapshot"
+	ProductService_CreateProduct_FullMethodName        = "/remarket.product.v1.ProductService/CreateProduct"
+	ProductService_GetProduct_FullMethodName           = "/remarket.product.v1.ProductService/GetProduct"
+	ProductService_ListMyProducts_FullMethodName       = "/remarket.product.v1.ProductService/ListMyProducts"
+	ProductService_ListProducts_FullMethodName         = "/remarket.product.v1.ProductService/ListProducts"
+	ProductService_UpdateProduct_FullMethodName        = "/remarket.product.v1.ProductService/UpdateProduct"
+	ProductService_PublishProduct_FullMethodName       = "/remarket.product.v1.ProductService/PublishProduct"
+	ProductService_OffShelfProduct_FullMethodName      = "/remarket.product.v1.ProductService/OffShelfProduct"
+	ProductService_ListCategories_FullMethodName       = "/remarket.product.v1.ProductService/ListCategories"
+	ProductService_ReserveProduct_FullMethodName       = "/remarket.product.v1.ProductService/ReserveProduct"
+	ProductService_GetReservation_FullMethodName       = "/remarket.product.v1.ProductService/GetReservation"
+	ProductService_ReleaseReservation_FullMethodName   = "/remarket.product.v1.ProductService/ReleaseReservation"
+	ProductService_ConfirmReservation_FullMethodName   = "/remarket.product.v1.ProductService/ConfirmReservation"
 )
 
 // ProductServiceClient is the client API for ProductService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProductServiceClient interface {
+	// 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
+	ExportSearchSnapshot(ctx context.Context, in *ExportSearchSnapshotRequest, opts ...grpc.CallOption) (*ExportSearchSnapshotResponse, error)
 	CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	GetProduct(ctx context.Context, in *GetProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	// 从已验证身份取得卖家 ID，查询当前用户全部状态的商品。
@@ -60,6 +63,16 @@ type productServiceClient struct {
 
 func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
 	return &productServiceClient{cc}
+}
+
+func (c *productServiceClient) ExportSearchSnapshot(ctx context.Context, in *ExportSearchSnapshotRequest, opts ...grpc.CallOption) (*ExportSearchSnapshotResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExportSearchSnapshotResponse)
+	err := c.cc.Invoke(ctx, ProductService_ExportSearchSnapshot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *productServiceClient) CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*ProductResponse, error) {
@@ -186,6 +199,8 @@ func (c *productServiceClient) ConfirmReservation(ctx context.Context, in *Confi
 // All implementations must embed UnimplementedProductServiceServer
 // for forward compatibility.
 type ProductServiceServer interface {
+	// 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
+	ExportSearchSnapshot(context.Context, *ExportSearchSnapshotRequest) (*ExportSearchSnapshotResponse, error)
 	CreateProduct(context.Context, *CreateProductRequest) (*ProductResponse, error)
 	GetProduct(context.Context, *GetProductRequest) (*ProductResponse, error)
 	// 从已验证身份取得卖家 ID，查询当前用户全部状态的商品。
@@ -211,6 +226,9 @@ type ProductServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedProductServiceServer struct{}
 
+func (UnimplementedProductServiceServer) ExportSearchSnapshot(context.Context, *ExportSearchSnapshotRequest) (*ExportSearchSnapshotResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ExportSearchSnapshot not implemented")
+}
 func (UnimplementedProductServiceServer) CreateProduct(context.Context, *CreateProductRequest) (*ProductResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateProduct not implemented")
 }
@@ -266,6 +284,24 @@ func RegisterProductServiceServer(s grpc.ServiceRegistrar, srv ProductServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ProductService_ServiceDesc, srv)
+}
+
+func _ProductService_ExportSearchSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExportSearchSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).ExportSearchSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_ExportSearchSnapshot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).ExportSearchSnapshot(ctx, req.(*ExportSearchSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ProductService_CreateProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -491,6 +527,10 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "remarket.product.v1.ProductService",
 	HandlerType: (*ProductServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ExportSearchSnapshot",
+			Handler:    _ProductService_ExportSearchSnapshot_Handler,
+		},
 		{
 			MethodName: "CreateProduct",
 			Handler:    _ProductService_CreateProduct_Handler,

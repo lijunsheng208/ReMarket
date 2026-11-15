@@ -463,6 +463,250 @@ func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
 	return file_user_v1_user_proto_rawDescGZIP(), []int{7}
 }
 
+type FollowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FollowRequest) Reset() {
+	*x = FollowRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FollowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FollowRequest) ProtoMessage() {}
+
+func (x *FollowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FollowRequest.ProtoReflect.Descriptor instead.
+func (*FollowRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FollowRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type FollowResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FollowResponse) Reset() {
+	*x = FollowResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FollowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FollowResponse) ProtoMessage() {}
+
+func (x *FollowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FollowResponse.ProtoReflect.Descriptor instead.
+func (*FollowResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{9}
+}
+
+type ListFollowsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AfterId       int64                  `protobuf:"varint,2,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFollowsRequest) Reset() {
+	*x = ListFollowsRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFollowsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFollowsRequest) ProtoMessage() {}
+
+func (x *ListFollowsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFollowsRequest.ProtoReflect.Descriptor instead.
+func (*ListFollowsRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListFollowsRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *ListFollowsRequest) GetAfterId() int64 {
+	if x != nil {
+		return x.AfterId
+	}
+	return 0
+}
+
+func (x *ListFollowsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type FollowEntry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	User          *User                  `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FollowEntry) Reset() {
+	*x = FollowEntry{}
+	mi := &file_user_v1_user_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FollowEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FollowEntry) ProtoMessage() {}
+
+func (x *FollowEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FollowEntry.ProtoReflect.Descriptor instead.
+func (*FollowEntry) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *FollowEntry) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *FollowEntry) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
+type ListFollowsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*FollowEntry         `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	NextAfterId   int64                  `protobuf:"varint,2,opt,name=next_after_id,json=nextAfterId,proto3" json:"next_after_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFollowsResponse) Reset() {
+	*x = ListFollowsResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFollowsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFollowsResponse) ProtoMessage() {}
+
+func (x *ListFollowsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFollowsResponse.ProtoReflect.Descriptor instead.
+func (*ListFollowsResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListFollowsResponse) GetItems() []*FollowEntry {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListFollowsResponse) GetNextAfterId() int64 {
+	if x != nil {
+		return x.NextAfterId
+	}
+	return 0
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
@@ -498,8 +742,25 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x12_avatar_object_key\":\n" +
 	"\fUserResponse\x12*\n" +
 	"\x04user\x18\x01 \x01(\v2\x16.remarket.user.v1.UserR\x04user\"\x17\n" +
-	"\x15GetCurrentUserRequest2\xa7\x03\n" +
-	"\vUserService\x12M\n" +
+	"\x15GetCurrentUserRequest\"(\n" +
+	"\rFollowRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\x10\n" +
+	"\x0eFollowResponse\"e\n" +
+	"\x12ListFollowsRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x19\n" +
+	"\bafter_id\x18\x02 \x01(\x03R\aafterId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"I\n" +
+	"\vFollowEntry\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12*\n" +
+	"\x04user\x18\x02 \x01(\v2\x16.remarket.user.v1.UserR\x04user\"n\n" +
+	"\x13ListFollowsResponse\x123\n" +
+	"\x05items\x18\x01 \x03(\v2\x1d.remarket.user.v1.FollowEntryR\x05items\x12\"\n" +
+	"\rnext_after_id\x18\x02 \x01(\x03R\vnextAfterId2\xff\x05\n" +
+	"\vUserService\x12K\n" +
+	"\x06Follow\x12\x1f.remarket.user.v1.FollowRequest\x1a .remarket.user.v1.FollowResponse\x12M\n" +
+	"\bUnfollow\x12\x1f.remarket.user.v1.FollowRequest\x1a .remarket.user.v1.FollowResponse\x12\\\n" +
+	"\rListFollowers\x12$.remarket.user.v1.ListFollowsRequest\x1a%.remarket.user.v1.ListFollowsResponse\x12\\\n" +
+	"\rListFollowing\x12$.remarket.user.v1.ListFollowsRequest\x1a%.remarket.user.v1.ListFollowsResponse\x12M\n" +
 	"\bRegister\x12!.remarket.user.v1.RegisterRequest\x1a\x1e.remarket.user.v1.UserResponse\x12H\n" +
 	"\x05Login\x12\x1e.remarket.user.v1.LoginRequest\x1a\x1f.remarket.user.v1.LoginResponse\x12Y\n" +
 	"\x0eGetCurrentUser\x12'.remarket.user.v1.GetCurrentUserRequest\x1a\x1e.remarket.user.v1.UserResponse\x12K\n" +
@@ -518,7 +779,7 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_user_v1_user_proto_rawDescData
 }
 
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_user_v1_user_proto_goTypes = []any{
 	(*User)(nil),                  // 0: remarket.user.v1.User
 	(*RegisterRequest)(nil),       // 1: remarket.user.v1.RegisterRequest
@@ -528,28 +789,43 @@ var file_user_v1_user_proto_goTypes = []any{
 	(*UpdateProfileRequest)(nil),  // 5: remarket.user.v1.UpdateProfileRequest
 	(*UserResponse)(nil),          // 6: remarket.user.v1.UserResponse
 	(*GetCurrentUserRequest)(nil), // 7: remarket.user.v1.GetCurrentUserRequest
-	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(*FollowRequest)(nil),         // 8: remarket.user.v1.FollowRequest
+	(*FollowResponse)(nil),        // 9: remarket.user.v1.FollowResponse
+	(*ListFollowsRequest)(nil),    // 10: remarket.user.v1.ListFollowsRequest
+	(*FollowEntry)(nil),           // 11: remarket.user.v1.FollowEntry
+	(*ListFollowsResponse)(nil),   // 12: remarket.user.v1.ListFollowsResponse
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_user_v1_user_proto_depIdxs = []int32{
-	8, // 0: remarket.user.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	8, // 1: remarket.user.v1.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
-	0, // 2: remarket.user.v1.LoginResponse.user:type_name -> remarket.user.v1.User
-	0, // 3: remarket.user.v1.UserResponse.user:type_name -> remarket.user.v1.User
-	1, // 4: remarket.user.v1.UserService.Register:input_type -> remarket.user.v1.RegisterRequest
-	2, // 5: remarket.user.v1.UserService.Login:input_type -> remarket.user.v1.LoginRequest
-	7, // 6: remarket.user.v1.UserService.GetCurrentUser:input_type -> remarket.user.v1.GetCurrentUserRequest
-	4, // 7: remarket.user.v1.UserService.GetUser:input_type -> remarket.user.v1.GetUserRequest
-	5, // 8: remarket.user.v1.UserService.UpdateProfile:input_type -> remarket.user.v1.UpdateProfileRequest
-	6, // 9: remarket.user.v1.UserService.Register:output_type -> remarket.user.v1.UserResponse
-	3, // 10: remarket.user.v1.UserService.Login:output_type -> remarket.user.v1.LoginResponse
-	6, // 11: remarket.user.v1.UserService.GetCurrentUser:output_type -> remarket.user.v1.UserResponse
-	6, // 12: remarket.user.v1.UserService.GetUser:output_type -> remarket.user.v1.UserResponse
-	6, // 13: remarket.user.v1.UserService.UpdateProfile:output_type -> remarket.user.v1.UserResponse
-	9, // [9:14] is the sub-list for method output_type
-	4, // [4:9] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	13, // 0: remarket.user.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	13, // 1: remarket.user.v1.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
+	0,  // 2: remarket.user.v1.LoginResponse.user:type_name -> remarket.user.v1.User
+	0,  // 3: remarket.user.v1.UserResponse.user:type_name -> remarket.user.v1.User
+	0,  // 4: remarket.user.v1.FollowEntry.user:type_name -> remarket.user.v1.User
+	11, // 5: remarket.user.v1.ListFollowsResponse.items:type_name -> remarket.user.v1.FollowEntry
+	8,  // 6: remarket.user.v1.UserService.Follow:input_type -> remarket.user.v1.FollowRequest
+	8,  // 7: remarket.user.v1.UserService.Unfollow:input_type -> remarket.user.v1.FollowRequest
+	10, // 8: remarket.user.v1.UserService.ListFollowers:input_type -> remarket.user.v1.ListFollowsRequest
+	10, // 9: remarket.user.v1.UserService.ListFollowing:input_type -> remarket.user.v1.ListFollowsRequest
+	1,  // 10: remarket.user.v1.UserService.Register:input_type -> remarket.user.v1.RegisterRequest
+	2,  // 11: remarket.user.v1.UserService.Login:input_type -> remarket.user.v1.LoginRequest
+	7,  // 12: remarket.user.v1.UserService.GetCurrentUser:input_type -> remarket.user.v1.GetCurrentUserRequest
+	4,  // 13: remarket.user.v1.UserService.GetUser:input_type -> remarket.user.v1.GetUserRequest
+	5,  // 14: remarket.user.v1.UserService.UpdateProfile:input_type -> remarket.user.v1.UpdateProfileRequest
+	9,  // 15: remarket.user.v1.UserService.Follow:output_type -> remarket.user.v1.FollowResponse
+	9,  // 16: remarket.user.v1.UserService.Unfollow:output_type -> remarket.user.v1.FollowResponse
+	12, // 17: remarket.user.v1.UserService.ListFollowers:output_type -> remarket.user.v1.ListFollowsResponse
+	12, // 18: remarket.user.v1.UserService.ListFollowing:output_type -> remarket.user.v1.ListFollowsResponse
+	6,  // 19: remarket.user.v1.UserService.Register:output_type -> remarket.user.v1.UserResponse
+	3,  // 20: remarket.user.v1.UserService.Login:output_type -> remarket.user.v1.LoginResponse
+	6,  // 21: remarket.user.v1.UserService.GetCurrentUser:output_type -> remarket.user.v1.UserResponse
+	6,  // 22: remarket.user.v1.UserService.GetUser:output_type -> remarket.user.v1.UserResponse
+	6,  // 23: remarket.user.v1.UserService.UpdateProfile:output_type -> remarket.user.v1.UserResponse
+	15, // [15:24] is the sub-list for method output_type
+	6,  // [6:15] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -564,7 +840,7 @@ func file_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

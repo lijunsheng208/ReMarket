@@ -22,6 +22,7 @@ type Server struct {
 	categories   CategoryLister
 	reservations ReservationManager
 	ownReader    OwnProductReader
+	exporter     *service.SearchExporter
 }
 
 // New 注入创建草稿业务，其他商品 RPC 保留 Unimplemented。

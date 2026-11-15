@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	orderv1 "remarket/backend/gen/order/v1"
 	productv1 "remarket/backend/gen/product/v1"
+	searchv1 "remarket/backend/gen/search/v1"
 	userv1 "remarket/backend/gen/user/v1"
 	"remarket/backend/internal/gateway"
 	"remarket/backend/pkg/auth"
@@ -82,6 +83,15 @@ func run() error {
 		return err
 	}
 	defer orderConn.Close()
+	searchTarget := os.Getenv("SEARCH_GRPC_TARGET")
+	if searchTarget == "" {
+		searchTarget = "127.0.0.1:50054"
+	}
+	searchConn, err := grpcx.Dial(searchTarget, nil, timeout)
+	if err != nil {
+		return err
+	}
+	defer searchConn.Close()
 	gin.SetMode(gin.ReleaseMode)
 	rateConfig, err := gateway.RateConfigFromEnv()
 	if err != nil {
@@ -107,6 +117,7 @@ func run() error {
 	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
 	gateway.AddProductRoutes(router, productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddOrderRoutes(router, orderv1.NewOrderServiceClient(orderConn), tokens, timeout)
+	gateway.AddSearchRoutes(router, searchv1.NewSearchServiceClient(searchConn), timeout)
 	server := &http.Server{Addr: address, Handler: router, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 35 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
 	listener, err := net.Listen("tcp", address)
 	if err != nil {

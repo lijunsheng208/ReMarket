@@ -1,0 +1,53 @@
+syntax = "proto3";
+package remarket.search.v1;
+option go_package = "remarket/backend/gen/search/v1;searchv1";
+
+import "google/protobuf/timestamp.proto";
+
+// SearchService 查询最终一致的商品视图；商品详情及交易校验仍由 Product 负责。
+service SearchService {
+  // SearchProducts 允许匿名搜索；参数、游标与错误规则见 docs/api/search.md。
+  rpc SearchProducts(SearchProductsRequest) returns (SearchProductsResponse);
+}
+
+// 未指定排序时，有关键词使用相关性，无关键词使用最新发布。
+enum SearchSort {
+  SEARCH_SORT_UNSPECIFIED = 0;
+  SEARCH_SORT_RELEVANCE = 1;
+  SEARCH_SORT_NEWEST = 2;
+  SEARCH_SORT_PRICE_ASC = 3;
+  SEARCH_SORT_PRICE_DESC = 4;
+}
+
+message SearchProductsRequest {
+  // 去除首尾空白后最多 100 个 Unicode 字符；空关键词允许仅筛选。
+  string query = 1;
+  // 未设置表示所有分类；显式设置必须为正数。
+  optional int64 category_id = 2;
+  // 金额单位为分；未设置表示无边界，显式设置必须非负，最小值不得大于最大值。
+  optional int64 min_price_cent = 3;
+  optional int64 max_price_cent = 4;
+  SearchSort sort = 5;
+  // 0 使用默认 20，允许 1～100；负数和超过上限均拒绝。
+  int32 page_size = 6;
+  // 首次留空；后续携带服务端返回的游标，并保持其余规范化查询参数一致。
+  string cursor = 7;
+}
+
+// SearchProduct 是搜索快照，不代表当前可购买承诺；暂不包含未实现的图片字段。
+message SearchProduct {
+  int64 id = 1;
+  int64 seller_id = 2;
+  int64 category_id = 3;
+  string title = 4;
+  string description = 5;
+  int64 price_cent = 6;
+  int64 aggregate_version = 7;
+  google.protobuf.Timestamp first_published_at = 8;
+}
+
+message SearchProductsResponse {
+  repeated SearchProduct products = 1;
+  // 空字符串表示结束；无精确总数，不支持页码跳转。
+  string next_cursor = 2;
+}

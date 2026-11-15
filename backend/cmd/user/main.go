@@ -66,7 +66,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	userv1.RegisterUserServiceServer(server, handler.NewAuthenticated(service.New(users), login, service.NewCurrentUser(users)))
+	userv1.RegisterUserServiceServer(server, handler.NewAuthenticated(service.New(users), login, service.NewCurrentUser(users)).WithFollow(service.NewFollow(users)))
 	slog.Info("用户服务已启动，注册及登录 RPC 已接入", "address", listener.Addr().String())
 	if err := grpcx.Serve(ctx, listener, server); err != nil {
 		return err

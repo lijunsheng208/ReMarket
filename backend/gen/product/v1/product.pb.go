@@ -1361,6 +1361,127 @@ func (x *ReservationResponse) GetReservation() *Reservation {
 	return nil
 }
 
+// upper_id 首次为 0，服务返回固定扫描上界，后续请求必须复用。
+type ExportSearchSnapshotRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AfterId       int64                  `protobuf:"varint,1,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	UpperId       int64                  `protobuf:"varint,2,opt,name=upper_id,json=upperId,proto3" json:"upper_id,omitempty"`
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportSearchSnapshotRequest) Reset() {
+	*x = ExportSearchSnapshotRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportSearchSnapshotRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportSearchSnapshotRequest) ProtoMessage() {}
+
+func (x *ExportSearchSnapshotRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportSearchSnapshotRequest.ProtoReflect.Descriptor instead.
+func (*ExportSearchSnapshotRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ExportSearchSnapshotRequest) GetAfterId() int64 {
+	if x != nil {
+		return x.AfterId
+	}
+	return 0
+}
+
+func (x *ExportSearchSnapshotRequest) GetUpperId() int64 {
+	if x != nil {
+		return x.UpperId
+	}
+	return 0
+}
+
+func (x *ExportSearchSnapshotRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type ExportSearchSnapshotResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Products      []*Product             `protobuf:"bytes,1,rep,name=products,proto3" json:"products,omitempty"`
+	UpperId       int64                  `protobuf:"varint,2,opt,name=upper_id,json=upperId,proto3" json:"upper_id,omitempty"`
+	NextAfterId   int64                  `protobuf:"varint,3,opt,name=next_after_id,json=nextAfterId,proto3" json:"next_after_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportSearchSnapshotResponse) Reset() {
+	*x = ExportSearchSnapshotResponse{}
+	mi := &file_product_v1_product_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportSearchSnapshotResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportSearchSnapshotResponse) ProtoMessage() {}
+
+func (x *ExportSearchSnapshotResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportSearchSnapshotResponse.ProtoReflect.Descriptor instead.
+func (*ExportSearchSnapshotResponse) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ExportSearchSnapshotResponse) GetProducts() []*Product {
+	if x != nil {
+		return x.Products
+	}
+	return nil
+}
+
+func (x *ExportSearchSnapshotResponse) GetUpperId() int64 {
+	if x != nil {
+		return x.UpperId
+	}
+	return 0
+}
+
+func (x *ExportSearchSnapshotResponse) GetNextAfterId() int64 {
+	if x != nil {
+		return x.NextAfterId
+	}
+	return 0
+}
+
 var File_product_v1_product_proto protoreflect.FileDescriptor
 
 const file_product_v1_product_proto_rawDesc = "" +
@@ -1482,7 +1603,15 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\n" +
 	"product_id\x18\x02 \x01(\x03R\tproductId\"Y\n" +
 	"\x13ReservationResponse\x12B\n" +
-	"\vreservation\x18\x01 \x01(\v2 .remarket.product.v1.ReservationR\vreservation*\xb9\x01\n" +
+	"\vreservation\x18\x01 \x01(\v2 .remarket.product.v1.ReservationR\vreservation\"p\n" +
+	"\x1bExportSearchSnapshotRequest\x12\x19\n" +
+	"\bafter_id\x18\x01 \x01(\x03R\aafterId\x12\x19\n" +
+	"\bupper_id\x18\x02 \x01(\x03R\aupperId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\"\x97\x01\n" +
+	"\x1cExportSearchSnapshotResponse\x128\n" +
+	"\bproducts\x18\x01 \x03(\v2\x1c.remarket.product.v1.ProductR\bproducts\x12\x19\n" +
+	"\bupper_id\x18\x02 \x01(\x03R\aupperId\x12\"\n" +
+	"\rnext_after_id\x18\x03 \x01(\x03R\vnextAfterId*\xb9\x01\n" +
 	"\rProductStatus\x12\x1e\n" +
 	"\x1aPRODUCT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PRODUCT_STATUS_DRAFT\x10\x01\x12\x1a\n" +
@@ -1494,8 +1623,10 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x1eRESERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19RESERVATION_STATUS_ACTIVE\x10\x01\x12\x1f\n" +
 	"\x1bRESERVATION_STATUS_RELEASED\x10\x02\x12 \n" +
-	"\x1cRESERVATION_STATUS_CONFIRMED\x10\x032\xe8\t\n" +
-	"\x0eProductService\x12`\n" +
+	"\x1cRESERVATION_STATUS_CONFIRMED\x10\x032\xe5\n" +
+	"\n" +
+	"\x0eProductService\x12{\n" +
+	"\x14ExportSearchSnapshot\x120.remarket.product.v1.ExportSearchSnapshotRequest\x1a1.remarket.product.v1.ExportSearchSnapshotResponse\x12`\n" +
 	"\rCreateProduct\x12).remarket.product.v1.CreateProductRequest\x1a$.remarket.product.v1.ProductResponse\x12Z\n" +
 	"\n" +
 	"GetProduct\x12&.remarket.product.v1.GetProductRequest\x1a$.remarket.product.v1.ProductResponse\x12e\n" +
@@ -1523,78 +1654,83 @@ func file_product_v1_product_proto_rawDescGZIP() []byte {
 }
 
 var file_product_v1_product_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_product_v1_product_proto_goTypes = []any{
-	(ProductStatus)(0),                // 0: remarket.product.v1.ProductStatus
-	(ReservationStatus)(0),            // 1: remarket.product.v1.ReservationStatus
-	(*ProductImage)(nil),              // 2: remarket.product.v1.ProductImage
-	(*Product)(nil),                   // 3: remarket.product.v1.Product
-	(*CreateProductRequest)(nil),      // 4: remarket.product.v1.CreateProductRequest
-	(*GetProductRequest)(nil),         // 5: remarket.product.v1.GetProductRequest
-	(*ListProductsRequest)(nil),       // 6: remarket.product.v1.ListProductsRequest
-	(*ProductStatistics)(nil),         // 7: remarket.product.v1.ProductStatistics
-	(*ListProductsResponse)(nil),      // 8: remarket.product.v1.ListProductsResponse
-	(*UpdateProductRequest)(nil),      // 9: remarket.product.v1.UpdateProductRequest
-	(*ChangeProductStateRequest)(nil), // 10: remarket.product.v1.ChangeProductStateRequest
-	(*ProductResponse)(nil),           // 11: remarket.product.v1.ProductResponse
-	(*Category)(nil),                  // 12: remarket.product.v1.Category
-	(*ListCategoriesRequest)(nil),     // 13: remarket.product.v1.ListCategoriesRequest
-	(*ListCategoriesResponse)(nil),    // 14: remarket.product.v1.ListCategoriesResponse
-	(*Reservation)(nil),               // 15: remarket.product.v1.Reservation
-	(*ReserveProductRequest)(nil),     // 16: remarket.product.v1.ReserveProductRequest
-	(*GetReservationRequest)(nil),     // 17: remarket.product.v1.GetReservationRequest
-	(*ReleaseReservationRequest)(nil), // 18: remarket.product.v1.ReleaseReservationRequest
-	(*ConfirmReservationRequest)(nil), // 19: remarket.product.v1.ConfirmReservationRequest
-	(*ReservationResponse)(nil),       // 20: remarket.product.v1.ReservationResponse
-	(*timestamppb.Timestamp)(nil),     // 21: google.protobuf.Timestamp
+	(ProductStatus)(0),                   // 0: remarket.product.v1.ProductStatus
+	(ReservationStatus)(0),               // 1: remarket.product.v1.ReservationStatus
+	(*ProductImage)(nil),                 // 2: remarket.product.v1.ProductImage
+	(*Product)(nil),                      // 3: remarket.product.v1.Product
+	(*CreateProductRequest)(nil),         // 4: remarket.product.v1.CreateProductRequest
+	(*GetProductRequest)(nil),            // 5: remarket.product.v1.GetProductRequest
+	(*ListProductsRequest)(nil),          // 6: remarket.product.v1.ListProductsRequest
+	(*ProductStatistics)(nil),            // 7: remarket.product.v1.ProductStatistics
+	(*ListProductsResponse)(nil),         // 8: remarket.product.v1.ListProductsResponse
+	(*UpdateProductRequest)(nil),         // 9: remarket.product.v1.UpdateProductRequest
+	(*ChangeProductStateRequest)(nil),    // 10: remarket.product.v1.ChangeProductStateRequest
+	(*ProductResponse)(nil),              // 11: remarket.product.v1.ProductResponse
+	(*Category)(nil),                     // 12: remarket.product.v1.Category
+	(*ListCategoriesRequest)(nil),        // 13: remarket.product.v1.ListCategoriesRequest
+	(*ListCategoriesResponse)(nil),       // 14: remarket.product.v1.ListCategoriesResponse
+	(*Reservation)(nil),                  // 15: remarket.product.v1.Reservation
+	(*ReserveProductRequest)(nil),        // 16: remarket.product.v1.ReserveProductRequest
+	(*GetReservationRequest)(nil),        // 17: remarket.product.v1.GetReservationRequest
+	(*ReleaseReservationRequest)(nil),    // 18: remarket.product.v1.ReleaseReservationRequest
+	(*ConfirmReservationRequest)(nil),    // 19: remarket.product.v1.ConfirmReservationRequest
+	(*ReservationResponse)(nil),          // 20: remarket.product.v1.ReservationResponse
+	(*ExportSearchSnapshotRequest)(nil),  // 21: remarket.product.v1.ExportSearchSnapshotRequest
+	(*ExportSearchSnapshotResponse)(nil), // 22: remarket.product.v1.ExportSearchSnapshotResponse
+	(*timestamppb.Timestamp)(nil),        // 23: google.protobuf.Timestamp
 }
 var file_product_v1_product_proto_depIdxs = []int32{
 	0,  // 0: remarket.product.v1.Product.status:type_name -> remarket.product.v1.ProductStatus
-	21, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
-	21, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
-	21, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
+	23, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
+	23, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
+	23, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
 	2,  // 4: remarket.product.v1.Product.images:type_name -> remarket.product.v1.ProductImage
 	3,  // 5: remarket.product.v1.ListProductsResponse.products:type_name -> remarket.product.v1.Product
 	7,  // 6: remarket.product.v1.ListProductsResponse.statistics:type_name -> remarket.product.v1.ProductStatistics
 	3,  // 7: remarket.product.v1.ProductResponse.product:type_name -> remarket.product.v1.Product
 	12, // 8: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
 	1,  // 9: remarket.product.v1.Reservation.status:type_name -> remarket.product.v1.ReservationStatus
-	21, // 10: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
-	21, // 11: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
-	21, // 12: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
-	21, // 13: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
-	21, // 14: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
-	21, // 15: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
+	23, // 10: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
+	23, // 11: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
+	23, // 12: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
+	23, // 13: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
+	23, // 14: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
+	23, // 15: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
 	15, // 16: remarket.product.v1.ReservationResponse.reservation:type_name -> remarket.product.v1.Reservation
-	4,  // 17: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
-	5,  // 18: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
-	6,  // 19: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
-	6,  // 20: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
-	9,  // 21: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
-	10, // 22: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	10, // 23: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	13, // 24: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
-	16, // 25: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
-	17, // 26: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
-	18, // 27: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
-	19, // 28: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
-	11, // 29: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
-	11, // 30: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
-	8,  // 31: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
-	8,  // 32: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
-	11, // 33: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
-	11, // 34: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
-	11, // 35: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
-	14, // 36: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
-	20, // 37: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
-	20, // 38: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
-	20, // 39: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
-	20, // 40: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
-	29, // [29:41] is the sub-list for method output_type
-	17, // [17:29] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	3,  // 17: remarket.product.v1.ExportSearchSnapshotResponse.products:type_name -> remarket.product.v1.Product
+	21, // 18: remarket.product.v1.ProductService.ExportSearchSnapshot:input_type -> remarket.product.v1.ExportSearchSnapshotRequest
+	4,  // 19: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
+	5,  // 20: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
+	6,  // 21: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
+	6,  // 22: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
+	9,  // 23: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
+	10, // 24: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	10, // 25: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	13, // 26: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
+	16, // 27: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
+	17, // 28: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
+	18, // 29: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
+	19, // 30: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
+	22, // 31: remarket.product.v1.ProductService.ExportSearchSnapshot:output_type -> remarket.product.v1.ExportSearchSnapshotResponse
+	11, // 32: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 33: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
+	8,  // 34: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
+	8,  // 35: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
+	11, // 36: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 37: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 38: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
+	14, // 39: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
+	20, // 40: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
+	20, // 41: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
+	20, // 42: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
+	20, // 43: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
+	31, // [31:44] is the sub-list for method output_type
+	18, // [18:31] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_product_v1_product_proto_init() }
@@ -1609,7 +1745,7 @@ func file_product_v1_product_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_product_v1_product_proto_rawDesc), len(file_product_v1_product_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -3,6 +3,10 @@ package remarket.user.v1;
 option go_package = "remarket/backend/gen/user/v1;userv1";
 import "google/protobuf/timestamp.proto";
 service UserService {
+  rpc Follow(FollowRequest) returns (FollowResponse);
+  rpc Unfollow(FollowRequest) returns (FollowResponse);
+  rpc ListFollowers(ListFollowsRequest) returns (ListFollowsResponse);
+  rpc ListFollowing(ListFollowsRequest) returns (ListFollowsResponse);
   rpc Register(RegisterRequest) returns (UserResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   // 从已验证身份获取当前用户，不接受用户 ID。
@@ -28,3 +32,9 @@ message UpdateProfileRequest { optional string nickname = 1; optional string ava
 message UserResponse { User user = 1; }
 
 message GetCurrentUserRequest {}
+
+message FollowRequest { int64 user_id = 1; }
+message FollowResponse {}
+message ListFollowsRequest { int64 user_id = 1; int64 after_id = 2; int32 page_size = 3; }
+message FollowEntry { int64 id = 1; User user = 2; }
+message ListFollowsResponse { repeated FollowEntry items = 1; int64 next_after_id = 2; }

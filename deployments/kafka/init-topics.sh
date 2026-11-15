@@ -11,4 +11,13 @@ for aggregate in product order; do
       --config "retention.ms=$retention" --config cleanup.policy=delete
   done
 done
+# Search 使用独立重试和死信 Topic，不与测试消费者共享失败链路。
+for lane in retry dlt; do
+  retention="$KAFKA_RETENTION_MS"
+  if [[ "$lane" == dlt ]]; then retention="$KAFKA_DLT_RETENTION_MS"; fi
+  /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 \
+    --create --if-not-exists --topic "remarket.search.product.$lane.v1" \
+    --partitions "$KAFKA_TOPIC_PARTITIONS" --replication-factor 1 \
+    --config "retention.ms=$retention" --config cleanup.policy=delete
+done
 /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --describe

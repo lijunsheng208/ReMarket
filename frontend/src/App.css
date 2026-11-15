@@ -125,3 +125,30 @@ dialog .publish-field>span{line-height:20px}
 .management-panel .status-badge{font-size:var(--text-caption);font-weight:400}
 .management-panel .table-action,.management-panel .pagination,.management-panel .pagination button,.management-panel .pagination-total{font-size:var(--text-caption);font-weight:400}
 @media(max-width:760px){.product-manage-main .intro h1{font-size:21px}.product-manage-main .management-stats>div>div>span{font-size:var(--text-caption)}.product-manage-main .management-stats strong{font-size:22px}}
+
+/* 双层搜索面板以浅蓝底色区分搜索入口与筛选，继承现有商城字体和主色。 */
+.market-main .search-panel{display:block;margin:0 0 25px;padding:5px;border:1px solid #dce6ff;border-radius:18px;background:linear-gradient(120deg,#f4f8ff,#f8faff 52%,#f0f5ff);box-shadow:0 3px 14px #2257de12,0 1px 3px #2257de12;color:#142343}
+.search-panel-top{display:flex;align-items:center;gap:30px;padding:17px 20px;border-radius:14px;background:linear-gradient(110deg,#eaf2ffb8,#f4f7ff70,#e8f0ffb8)}
+.search-panel-intro{display:flex;align-items:center;gap:14px;flex:none}
+.search-panel-symbol{display:grid;place-items:center;width:60px;height:60px;flex:none;color:#377dff;filter:drop-shadow(0 4px 5px #377dff26)}
+.search-panel-intro h2{margin:0;font-size:22px;line-height:1.5;font-weight:750;letter-spacing:0;color:#10203f}
+.search-panel-intro p{margin-top:2px;font-size:13px;font-weight:400;color:#425575;white-space:nowrap}
+.search-panel-query{display:flex;align-items:center;gap:12px;flex:1;min-width:0;height:48px;padding:0 0 0 16px;border:1px solid #dce5ff;border-radius:16px;background:#fff;box-shadow:0 2px 5px #2d61d51a;overflow:hidden}
+.search-panel-query>svg{flex:none}
+.search-panel-query input{height:46px;min-width:0;flex:1;width:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:14px;font-weight:400}
+.search-panel-query:focus-within{border-color:#76a0ff;box-shadow:0 0 0 3px #3478ff16}
+.search-panel-query input::placeholder{color:#7e8ca6;font-weight:400}
+.search-panel-query button{align-self:stretch;flex:none;width:98px;margin:-1px;border-radius:15px;background:linear-gradient(130deg,#2681ff,#064bff);border-color:#1765ff;font-size:15px;font-weight:500;box-shadow:0 2px 5px #1260ff20}
+.search-panel-filters{display:flex;align-items:center;gap:22px;padding:15px 20px 13px}
+.search-panel-filters label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;color:#142343;min-width:0;flex:1}
+.search-panel-filters label>span{flex:none;white-space:nowrap}
+.search-panel-price{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;white-space:nowrap;padding-right:24px;border-right:1px solid #d7e1f7}
+.search-panel-filters input,.search-panel-filters select{height:38px;min-height:0;padding:0 12px;border:1px solid #dce3f2;border-radius:12px;background:#ffffffb8;box-shadow:0 2px 4px #233d7210;font-size:13px;font-weight:400;color:#172844}
+.search-panel-price input{width:86px;min-width:0}
+.search-panel-price input::placeholder{color:#8c9bb6}
+.search-panel-price .price-separator{color:#647a9d}
+.search-panel-filters select{min-width:0;width:100%;appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23243758' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 9 5-5 5 5M7 15l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.search-panel-reset{display:flex;align-items:center;justify-content:center;gap:7px;height:38px;flex:none;margin:0;padding:0 16px;border:1px solid #dce3f2;border-radius:12px;background:#ffffffb8;box-shadow:0 2px 4px #233d7210;font-size:13px;color:#172844}
+.search-panel+.section-label .muted{font-size:12px}
+@media(max-width:1050px){.search-panel-top{gap:18px;padding:16px}.search-panel-intro{gap:8px}.search-panel-symbol{width:44px}.search-panel-intro h2{font-size:20px}.search-panel-intro p{font-size:12px}.search-panel-filters{gap:14px;flex-wrap:wrap;padding:14px 16px}.search-panel-price{padding-right:14px}.search-panel-filters label{min-width:165px}.search-panel-query input{font-size:13px}.search-panel-query button{width:75px}}
+@media(max-width:650px){.search-panel-top{flex-direction:column;align-items:stretch;gap:13px;padding:14px}.search-panel-intro p{font-size:12px}.search-panel-symbol{height:44px}.search-panel-query{flex:none;height:44px;padding-left:12px;gap:8px;border-radius:12px}.search-panel-query input{height:42px;font-size:12px}.search-panel-query button{border-radius:11px;font-size:14px;width:65px}.search-panel-filters{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}.search-panel-price{grid-column:1/-1;border:0;padding:0;gap:8px}.search-panel-price input{flex:1;width:0}.search-panel-filters label{min-width:0;flex-direction:column;align-items:stretch;gap:6px}.search-panel-reset{grid-column:1/-1;justify-self:end}.search-panel+.section-label{align-items:flex-start;flex-direction:column;gap:4px}.search-panel+.section-label .muted{font-size:11px}}

@@ -49,6 +49,17 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	paused := false
+	if raw := os.Getenv("PRODUCT_WRITE_MAINTENANCE"); raw != "" {
+		paused, err = strconv.ParseBool(raw)
+		if err != nil {
+			return fmt.Errorf("商品维护开关无效")
+		}
+	}
+	productAuth, err = handler.NewSearchMaintenance(os.Getenv("SEARCH_PRODUCT_EXPORT_TOKEN"), config.Secret, os.Getenv("ORDER_PRODUCT_SERVICE_TOKEN"), paused, productAuth)
+	if err != nil {
+		return err
+	}
 	dbCtx, dbCancel := context.WithTimeout(ctx, 5*time.Second)
 	db, pool, err := database.OpenMySQL(dbCtx, database.MySQLConfig{Address: os.Getenv("PRODUCT_MYSQL_ADDR"), Username: os.Getenv("PRODUCT_MYSQL_USERNAME"), Password: os.Getenv("MYSQL_PRODUCT_PASSWORD"), Database: os.Getenv("PRODUCT_MYSQL_DATABASE")})
 	dbCancel()
@@ -139,7 +150,7 @@ func run() error {
 		}
 	}
 
-	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)))
+	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)).WithSearchExport(service.NewSearchExporter(products, paused)))
 	slog.Info("商品服务已启动", "address", listener.Addr().String(), "detail_cache_enabled", cacheEnabled, "invalidation_enabled", enabled)
 	return grpcx.Serve(ctx, listener, server)
 }

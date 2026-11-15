@@ -1,0 +1,17 @@
+{
+  "settings": {"number_of_shards": 1, "number_of_replicas": 0},
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "product_id": {"type": "long"},
+      "seller_id": {"type": "long"},
+      "category_id": {"type": "long"},
+      "title": {"type": "text", "analyzer": "standard"},
+      "description": {"type": "text", "analyzer": "standard"},
+      "price_cent": {"type": "long"},
+      "aggregate_version": {"type": "long"},
+      "status": {"type": "keyword"},
+      "first_published_at": {"type": "date_nanos"}
+    }
+  }
+}
