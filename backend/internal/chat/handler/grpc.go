@@ -20,7 +20,7 @@ func New(s *service.Service) *Server { return &Server{service: s} }
 
 // conversation 转换领域会话，可空字段保留未发送消息语义。
 func conversation(c *model.Conversation) *chatv1.Conversation {
-	out := &chatv1.Conversation{Id: c.ID, ProductId: c.ProductID, BuyerId: c.BuyerID, SellerId: c.SellerID, LastSeq: c.LastSeq, LastReadSeq: c.LastReadSeq, UnreadCount: c.UnreadCount, CreatedAt: timestamppb.New(c.CreatedAt)}
+	out := &chatv1.Conversation{Id: c.ID, ProductId: c.ProductID, BuyerId: c.BuyerID, SellerId: c.SellerID, LastSeq: c.LastSeq, LastReadSeq: c.LastReadSeq, UnreadCount: c.UnreadCount, LastMessageContent: c.LastMessageContent, CreatedAt: timestamppb.New(c.CreatedAt)}
 	if c.LastMessageID != nil {
 		out.LastMessageId = *c.LastMessageID
 	}

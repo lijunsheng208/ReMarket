@@ -152,7 +152,7 @@ func TestChatReadHTTPMySQL(t *testing.T) {
 	}
 	var list chatv1.ListConversationsResponse
 	request("GET", "/api/v1/conversations", "", 2, 200, &list)
-	if len(list.Conversations) != 1 || list.Conversations[0].UnreadCount != 2 || list.Conversations[0].LastReadSeq != 0 {
+	if len(list.Conversations) != 1 || list.Conversations[0].UnreadCount != 2 || list.Conversations[0].LastReadSeq != 0 || list.Conversations[0].LastMessageContent != "hello" {
 		t.Fatal("列表未读统计错误", list.String())
 	}
 	var first chatv1.ListMessagesResponse

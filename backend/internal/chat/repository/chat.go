@@ -14,7 +14,7 @@ import (
 type Repository struct{ db *gorm.DB }
 
 // conversationFields 在同一次快照查询内计算当前成员的未读数，排除本人发送的消息。
-const conversationFields = "conversations.*, m.last_read_seq, (SELECT COUNT(*) FROM chat_messages cm WHERE cm.conversation_id = conversations.id AND cm.seq > m.last_read_seq AND cm.sender_id <> m.user_id) AS unread_count"
+const conversationFields = "conversations.*, m.last_read_seq, COALESCE(lm.content, '') AS last_message_content, (SELECT COUNT(*) FROM chat_messages cm WHERE cm.conversation_id = conversations.id AND cm.seq > m.last_read_seq AND cm.sender_id <> m.user_id) AS unread_count"
 
 type Position struct {
 	At time.Time
@@ -27,7 +27,7 @@ func New(db *gorm.DB) *Repository { return &Repository{db: db} }
 // FindExisting 按买家和商品复用既有会话，不依赖商品当前可见性。
 func (r *Repository) FindExisting(ctx context.Context, buyer, product int64) (*model.Conversation, error) {
 	var c model.Conversation
-	err := r.db.WithContext(ctx).Model(&model.Conversation{}).Select(conversationFields).Joins("JOIN conversation_members m ON m.conversation_id = conversations.id AND m.user_id = ?", buyer).Where("buyer_id = ? AND product_id = ?", buyer, product).Take(&c).Error
+	err := r.db.WithContext(ctx).Model(&model.Conversation{}).Select(conversationFields).Joins("LEFT JOIN chat_messages lm ON lm.id = conversations.last_message_id").Joins("JOIN conversation_members m ON m.conversation_id = conversations.id AND m.user_id = ?", buyer).Where("buyer_id = ? AND product_id = ?", buyer, product).Take(&c).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -58,6 +58,7 @@ func (r *Repository) Create(ctx context.Context, product, buyer, seller int64) (
 func (r *Repository) List(ctx context.Context, user int64, p *Position, limit int) ([]model.Conversation, error) {
 	var rows []model.Conversation
 	q := r.db.WithContext(ctx).Model(&model.Conversation{}).Select(conversationFields).
+		Joins("LEFT JOIN chat_messages lm ON lm.id = conversations.last_message_id").
 		Joins("JOIN conversation_members m ON m.conversation_id = conversations.id AND m.user_id = ?", user)
 	if p != nil {
 		q = q.Where("(COALESCE(last_message_at, conversations.created_at) < ?) OR (COALESCE(last_message_at, conversations.created_at) = ? AND conversations.id < ?)", p.At, p.At, p.ID)

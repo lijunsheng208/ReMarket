@@ -16,7 +16,7 @@ message Conversation {
   int64 last_seq = 5; int64 last_message_id = 6;
   google.protobuf.Timestamp last_message_at = 7;
   google.protobuf.Timestamp created_at = 8;
-  int64 last_read_seq = 9; int64 unread_count = 10;
+  int64 last_read_seq = 9; int64 unread_count = 10; string last_message_content = 11;
 }
 message Message {
   int64 id = 1; int64 conversation_id = 2; int64 sender_id = 3;

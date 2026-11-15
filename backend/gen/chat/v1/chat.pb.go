@@ -23,19 +23,20 @@ const (
 )
 
 type Conversation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProductId     int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
-	BuyerId       int64                  `protobuf:"varint,3,opt,name=buyer_id,json=buyerId,proto3" json:"buyer_id,omitempty"`
-	SellerId      int64                  `protobuf:"varint,4,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
-	LastSeq       int64                  `protobuf:"varint,5,opt,name=last_seq,json=lastSeq,proto3" json:"last_seq,omitempty"`
-	LastMessageId int64                  `protobuf:"varint,6,opt,name=last_message_id,json=lastMessageId,proto3" json:"last_message_id,omitempty"`
-	LastMessageAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_message_at,json=lastMessageAt,proto3" json:"last_message_at,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastReadSeq   int64                  `protobuf:"varint,9,opt,name=last_read_seq,json=lastReadSeq,proto3" json:"last_read_seq,omitempty"`
-	UnreadCount   int64                  `protobuf:"varint,10,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Id                 int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProductId          int64                  `protobuf:"varint,2,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	BuyerId            int64                  `protobuf:"varint,3,opt,name=buyer_id,json=buyerId,proto3" json:"buyer_id,omitempty"`
+	SellerId           int64                  `protobuf:"varint,4,opt,name=seller_id,json=sellerId,proto3" json:"seller_id,omitempty"`
+	LastSeq            int64                  `protobuf:"varint,5,opt,name=last_seq,json=lastSeq,proto3" json:"last_seq,omitempty"`
+	LastMessageId      int64                  `protobuf:"varint,6,opt,name=last_message_id,json=lastMessageId,proto3" json:"last_message_id,omitempty"`
+	LastMessageAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_message_at,json=lastMessageAt,proto3" json:"last_message_at,omitempty"`
+	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastReadSeq        int64                  `protobuf:"varint,9,opt,name=last_read_seq,json=lastReadSeq,proto3" json:"last_read_seq,omitempty"`
+	UnreadCount        int64                  `protobuf:"varint,10,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
+	LastMessageContent string                 `protobuf:"bytes,11,opt,name=last_message_content,json=lastMessageContent,proto3" json:"last_message_content,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Conversation) Reset() {
@@ -136,6 +137,13 @@ func (x *Conversation) GetUnreadCount() int64 {
 		return x.UnreadCount
 	}
 	return 0
+}
+
+func (x *Conversation) GetLastMessageContent() string {
+	if x != nil {
+		return x.LastMessageContent
+	}
+	return ""
 }
 
 type Message struct {
@@ -829,7 +837,7 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\x10remarket.chat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfe\x02\n" +
+	"\x12chat/v1/chat.proto\x12\x10remarket.chat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb0\x03\n" +
 	"\fConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
 	"\n" +
@@ -843,7 +851,8 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\"\n" +
 	"\rlast_read_seq\x18\t \x01(\x03R\vlastReadSeq\x12!\n" +
 	"\funread_count\x18\n" +
-	" \x01(\x03R\vunreadCount\"\x8d\x02\n" +
+	" \x01(\x03R\vunreadCount\x120\n" +
+	"\x14last_message_content\x18\v \x01(\tR\x12lastMessageContent\"\x8d\x02\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\x03R\x0econversationId\x12\x1b\n" +
