@@ -64,3 +64,13 @@ func (s *Server) ListMessages(ctx context.Context, r *chatv1.ListMessagesRequest
 	}
 	return out, nil
 }
+
+// SendMessage 返回已持久化结果；传输断开后客户端可使用同一幂等键重试。
+func (s *Server) SendMessage(ctx context.Context, r *chatv1.SendMessageRequest) (*chatv1.SendMessageResponse, error) {
+	result, err := s.service.Send(ctx, r.GetConversationId(), r.GetClientMsgId(), r.GetContent())
+	if err != nil {
+		return nil, err
+	}
+	m := result.Message
+	return &chatv1.SendMessageResponse{Message: &chatv1.Message{Id: m.ID, ConversationId: m.ConversationID, SenderId: m.SenderID, ClientMsgId: m.ClientMsgID, Seq: m.Seq, Content: m.Content, MessageType: m.MessageType, CreatedAt: timestamppb.New(m.CreatedAt)}, ParticipantIds: result.Participants}, nil
+}

@@ -500,6 +500,118 @@ func (x *ListMessagesResponse) GetNextSeq() int64 {
 	return 0
 }
 
+type SendMessageRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	ClientMsgId    string                 `protobuf:"bytes,2,opt,name=client_msg_id,json=clientMsgId,proto3" json:"client_msg_id,omitempty"`
+	Content        string                 `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SendMessageRequest) Reset() {
+	*x = SendMessageRequest{}
+	mi := &file_chat_v1_chat_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendMessageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendMessageRequest) ProtoMessage() {}
+
+func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendMessageRequest.ProtoReflect.Descriptor instead.
+func (*SendMessageRequest) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SendMessageRequest) GetConversationId() int64 {
+	if x != nil {
+		return x.ConversationId
+	}
+	return 0
+}
+
+func (x *SendMessageRequest) GetClientMsgId() string {
+	if x != nil {
+		return x.ClientMsgId
+	}
+	return ""
+}
+
+func (x *SendMessageRequest) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+type SendMessageResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Message        *Message               `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	ParticipantIds []int64                `protobuf:"varint,2,rep,packed,name=participant_ids,json=participantIds,proto3" json:"participant_ids,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SendMessageResponse) Reset() {
+	*x = SendMessageResponse{}
+	mi := &file_chat_v1_chat_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendMessageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendMessageResponse) ProtoMessage() {}
+
+func (x *SendMessageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendMessageResponse.ProtoReflect.Descriptor instead.
+func (*SendMessageResponse) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SendMessageResponse) GetMessage() *Message {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
+func (x *SendMessageResponse) GetParticipantIds() []int64 {
+	if x != nil {
+		return x.ParticipantIds
+	}
+	return nil
+}
+
 var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
@@ -545,8 +657,16 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x14ListMessagesResponse\x125\n" +
 	"\bmessages\x18\x01 \x03(\v2\x19.remarket.chat.v1.MessageR\bmessages\x12\x19\n" +
 	"\bhas_more\x18\x02 \x01(\bR\ahasMore\x12\x19\n" +
-	"\bnext_seq\x18\x03 \x01(\x03R\anextSeq2\xbd\x02\n" +
-	"\vChatService\x12a\n" +
+	"\bnext_seq\x18\x03 \x01(\x03R\anextSeq\"{\n" +
+	"\x12SendMessageRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\"\n" +
+	"\rclient_msg_id\x18\x02 \x01(\tR\vclientMsgId\x12\x18\n" +
+	"\acontent\x18\x03 \x01(\tR\acontent\"s\n" +
+	"\x13SendMessageResponse\x123\n" +
+	"\amessage\x18\x01 \x01(\v2\x19.remarket.chat.v1.MessageR\amessage\x12'\n" +
+	"\x0fparticipant_ids\x18\x02 \x03(\x03R\x0eparticipantIds2\x99\x03\n" +
+	"\vChatService\x12Z\n" +
+	"\vSendMessage\x12$.remarket.chat.v1.SendMessageRequest\x1a%.remarket.chat.v1.SendMessageResponse\x12a\n" +
 	"\x12CreateConversation\x12+.remarket.chat.v1.CreateConversationRequest\x1a\x1e.remarket.chat.v1.Conversation\x12l\n" +
 	"\x11ListConversations\x12*.remarket.chat.v1.ListConversationsRequest\x1a+.remarket.chat.v1.ListConversationsResponse\x12]\n" +
 	"\fListMessages\x12%.remarket.chat.v1.ListMessagesRequest\x1a&.remarket.chat.v1.ListMessagesResponseB%Z#remarket/backend/gen/chat/v1;chatv1b\x06proto3"
@@ -563,7 +683,7 @@ func file_chat_v1_chat_proto_rawDescGZIP() []byte {
 	return file_chat_v1_chat_proto_rawDescData
 }
 
-var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_chat_v1_chat_proto_goTypes = []any{
 	(*Conversation)(nil),              // 0: remarket.chat.v1.Conversation
 	(*Message)(nil),                   // 1: remarket.chat.v1.Message
@@ -572,25 +692,30 @@ var file_chat_v1_chat_proto_goTypes = []any{
 	(*ListConversationsResponse)(nil), // 4: remarket.chat.v1.ListConversationsResponse
 	(*ListMessagesRequest)(nil),       // 5: remarket.chat.v1.ListMessagesRequest
 	(*ListMessagesResponse)(nil),      // 6: remarket.chat.v1.ListMessagesResponse
-	(*timestamppb.Timestamp)(nil),     // 7: google.protobuf.Timestamp
+	(*SendMessageRequest)(nil),        // 7: remarket.chat.v1.SendMessageRequest
+	(*SendMessageResponse)(nil),       // 8: remarket.chat.v1.SendMessageResponse
+	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
 }
 var file_chat_v1_chat_proto_depIdxs = []int32{
-	7, // 0: remarket.chat.v1.Conversation.last_message_at:type_name -> google.protobuf.Timestamp
-	7, // 1: remarket.chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
-	7, // 2: remarket.chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
-	0, // 3: remarket.chat.v1.ListConversationsResponse.conversations:type_name -> remarket.chat.v1.Conversation
-	1, // 4: remarket.chat.v1.ListMessagesResponse.messages:type_name -> remarket.chat.v1.Message
-	2, // 5: remarket.chat.v1.ChatService.CreateConversation:input_type -> remarket.chat.v1.CreateConversationRequest
-	3, // 6: remarket.chat.v1.ChatService.ListConversations:input_type -> remarket.chat.v1.ListConversationsRequest
-	5, // 7: remarket.chat.v1.ChatService.ListMessages:input_type -> remarket.chat.v1.ListMessagesRequest
-	0, // 8: remarket.chat.v1.ChatService.CreateConversation:output_type -> remarket.chat.v1.Conversation
-	4, // 9: remarket.chat.v1.ChatService.ListConversations:output_type -> remarket.chat.v1.ListConversationsResponse
-	6, // 10: remarket.chat.v1.ChatService.ListMessages:output_type -> remarket.chat.v1.ListMessagesResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	9,  // 0: remarket.chat.v1.Conversation.last_message_at:type_name -> google.protobuf.Timestamp
+	9,  // 1: remarket.chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
+	9,  // 2: remarket.chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 3: remarket.chat.v1.ListConversationsResponse.conversations:type_name -> remarket.chat.v1.Conversation
+	1,  // 4: remarket.chat.v1.ListMessagesResponse.messages:type_name -> remarket.chat.v1.Message
+	1,  // 5: remarket.chat.v1.SendMessageResponse.message:type_name -> remarket.chat.v1.Message
+	7,  // 6: remarket.chat.v1.ChatService.SendMessage:input_type -> remarket.chat.v1.SendMessageRequest
+	2,  // 7: remarket.chat.v1.ChatService.CreateConversation:input_type -> remarket.chat.v1.CreateConversationRequest
+	3,  // 8: remarket.chat.v1.ChatService.ListConversations:input_type -> remarket.chat.v1.ListConversationsRequest
+	5,  // 9: remarket.chat.v1.ChatService.ListMessages:input_type -> remarket.chat.v1.ListMessagesRequest
+	8,  // 10: remarket.chat.v1.ChatService.SendMessage:output_type -> remarket.chat.v1.SendMessageResponse
+	0,  // 11: remarket.chat.v1.ChatService.CreateConversation:output_type -> remarket.chat.v1.Conversation
+	4,  // 12: remarket.chat.v1.ChatService.ListConversations:output_type -> remarket.chat.v1.ListConversationsResponse
+	6,  // 13: remarket.chat.v1.ChatService.ListMessages:output_type -> remarket.chat.v1.ListMessagesResponse
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_chat_v1_chat_proto_init() }
@@ -604,7 +729,7 @@ func file_chat_v1_chat_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_chat_proto_rawDesc), len(file_chat_v1_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -129,6 +129,97 @@ func TestChatMySQL(t *testing.T) {
 	if !errors.As(e, &app) || app.Kind != apperror.Forbidden {
 		t.Fatal("非成员未拒绝", e)
 	}
+
+	// 新会话用于发送测试，不使用上面的手工历史数据。
+	sentConversation, err := r.Create(ctx, 20, 1, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sendWG sync.WaitGroup
+	sendErrors := make(chan error, 20)
+	for i := 0; i < 20; i++ {
+		sendWG.Add(1)
+		go func() {
+			defer sendWG.Done()
+			_, e := r.Send(ctx, 1, sentConversation.ID, "retry-key", "same content")
+			sendErrors <- e
+		}()
+	}
+	sendWG.Wait()
+	close(sendErrors)
+	for e := range sendErrors {
+		if e != nil {
+			t.Fatal("同键并发发送失败", e)
+		}
+	}
+	first, err := r.Send(ctx, 1, sentConversation.ID, "retry-key", "same content")
+	if err != nil || first.Message.Seq != 1 {
+		t.Fatal("幂等未返回原序号", err)
+	}
+	if _, err := r.Send(ctx, 1, sentConversation.ID, "retry-key", "changed"); err == nil {
+		t.Fatal("同键不同正文被接受")
+	}
+	if _, err := r.Send(ctx, 3, sentConversation.ID, "intruder", "hello"); err == nil {
+		t.Fatal("非成员可以发送")
+	}
+	// 不同键竞争同一会话须得到无重复、无空洞的递增序号。
+	results := make(chan error, 12)
+	for i := 0; i < 12; i++ {
+		sendWG.Add(1)
+		go func(i int) {
+			defer sendWG.Done()
+			_, e := r.Send(ctx, 2, sentConversation.ID, fmt.Sprintf("ordered-%d", i), "next")
+			results <- e
+		}(i)
+	}
+	sendWG.Wait()
+	close(results)
+	for e := range results {
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
+	var saved model.Conversation
+	if e := db.First(&saved, sentConversation.ID).Error; e != nil || saved.LastSeq != 13 {
+		t.Fatal("序号未连续分配", e, saved.LastSeq)
+	}
+	var actual []model.Message
+	if e := db.Where("conversation_id = ?", saved.ID).Order("seq ASC").Find(&actual).Error; e != nil {
+		t.Fatal(e)
+	}
+	for i, m := range actual {
+		if m.Seq != int64(i+1) {
+			t.Fatal("序号存在空洞")
+		}
+	}
+	if len(actual) != 13 || saved.LastMessageID == nil || *saved.LastMessageID != actual[12].ID {
+		t.Fatal("消息元数据不一致")
+	}
+	// 元数据更新失败时插入消息与序号必须一并回滚。
+	if _, e := pool.ExecContext(ctx, "CREATE TRIGGER reject_chat_update BEFORE UPDATE ON conversations FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'test failure'"); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := r.Send(ctx, 1, saved.ID, "rollback-key", "rollback"); e == nil {
+		t.Fatal("故障未传播")
+	}
+	var failed int64
+	if e := db.Model(&model.Message{}).Where("client_msg_id = ?", "rollback-key").Count(&failed).Error; e != nil || failed != 0 {
+		t.Fatal("消息未回滚", e)
+	}
+	if _, e := pool.ExecContext(ctx, "DROP TRIGGER reject_chat_update"); e != nil {
+		t.Fatal(e)
+	}
+	recovered, e := r.Send(ctx, 1, saved.ID, "rollback-key", "rollback")
+	if e != nil || recovered.Message.Seq != 14 {
+		t.Fatal("回滚消耗序号", e)
+	}
+	other, e := r.Create(ctx, 21, 1, 2)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e := r.Send(ctx, 1, other.ID, "retry-key", "same content"); e == nil {
+		t.Fatal("跨会话复用键被接受")
+	}
 	// 第二成员插入失败时，会话与第一成员均不得残留。
 	if e := pool.QueryRowContext(ctx, "SELECT COUNT(*) FROM conversations").Scan(&members); e != nil {
 		t.Fatal(e)

@@ -121,3 +121,20 @@ func TestInvalidPagination(t *testing.T) {
 		t.Fatal("接受互斥游标")
 	}
 }
+
+// TestSendValidation 验证消息限制在调用账号与数据库依赖前拒绝无效参数。
+func TestSendValidation(t *testing.T) {
+	s := New(nil, nil, nil)
+	for _, tc := range []struct {
+		id           int64
+		key, content string
+	}{
+		{0, "key", "hello"}, {1, "", "hello"}, {1, "含中文键", "hello"},
+		{1, "key", "  "}, {1, "key", strings.Repeat("好", 2001)},
+		{1, "key", string([]byte{0xff})}, {1, strings.Repeat("a", 65), "hello"},
+	} {
+		if _, e := s.Send(context.Background(), tc.id, tc.key, tc.content); e == nil {
+			t.Fatal("非法消息进入业务依赖")
+		}
+	}
+}

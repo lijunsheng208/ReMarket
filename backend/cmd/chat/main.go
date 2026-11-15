@@ -1,4 +1,4 @@
-// feed 提供独立的首页与关注商品流查询进程。
+// chat 提供独立鉴权的聊天会话查询及消息持久化 RPC。
 package main
 
 import (

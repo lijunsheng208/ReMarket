@@ -17,6 +17,7 @@ import (
 )
 
 type Store interface {
+	Send(context.Context, int64, int64, string, string) (*repository.SendResult, error)
 	FindExisting(context.Context, int64, int64) (*model.Conversation, error)
 	Create(context.Context, int64, int64, int64) (*model.Conversation, error)
 	List(context.Context, int64, *repository.Position, int) ([]model.Conversation, error)

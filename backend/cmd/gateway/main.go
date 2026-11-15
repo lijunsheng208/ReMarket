@@ -21,6 +21,7 @@ import (
 	"remarket/backend/pkg/grpcx"
 	rl "remarket/backend/pkg/ratelimit"
 	rx "remarket/backend/pkg/redis"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -137,6 +138,10 @@ func run() error {
 	}
 	defer chatConn.Close()
 	gateway.AddChatRoutes(router, chatv1.NewChatServiceClient(chatConn), tokens, timeout)
+	// HTTP Shutdown 不负责已升级连接，显式关闭并等待 WebSocket 协程退出。
+	chatNode := gateway.AddChatRealtimeRoutes(router, chatv1.NewChatServiceClient(chatConn), userv1.NewUserServiceClient(conn), tokens, strings.Split(os.Getenv("CHAT_ALLOWED_ORIGINS"), ","), timeout)
+	defer chatNode.Close()
+
 	gateway.AddFeedRoutes(router, feedv1.NewFeedServiceClient(feedConn), tokens, timeout)
 	gateway.AddProfileRoutes(router, userv1.NewUserServiceClient(conn), productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddFollowRoutes(router, userv1.NewUserServiceClient(conn), tokens, timeout)

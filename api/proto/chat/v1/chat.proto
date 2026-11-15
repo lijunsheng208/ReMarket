@@ -3,6 +3,8 @@ package remarket.chat.v1;
 option go_package = "remarket/backend/gen/chat/v1;chatv1";
 import "google/protobuf/timestamp.proto";
 service ChatService {
+  // ACK 仅表示持久化成功，参与者由服务器返回用于在线通知。
+  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
   rpc CreateConversation(CreateConversationRequest) returns (Conversation);
   rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
   rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
@@ -25,3 +27,6 @@ message ListConversationsResponse { repeated Conversation conversations = 1; str
 // before_seq 倒序历史、after_seq 正序补拉互斥；两者为零表示最新历史。
 message ListMessagesRequest { int64 conversation_id = 1; int64 before_seq = 2; int64 after_seq = 3; int32 page_size = 4; }
 message ListMessagesResponse { repeated Message messages = 1; bool has_more = 2; int64 next_seq = 3; }
+
+message SendMessageRequest { int64 conversation_id = 1; string client_msg_id = 2; string content = 3; }
+message SendMessageResponse { Message message = 1; repeated int64 participant_ids = 2; }
