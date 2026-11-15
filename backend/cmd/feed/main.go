@@ -15,6 +15,7 @@ import (
 	"remarket/backend/internal/feed/timeline"
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	"syscall"
 	"time"
 )
@@ -39,6 +40,10 @@ func env(key, value string) string {
 func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	monitor, err := metrics.FromEnv("feed")
+	if err != nil {
+		return err
+	}
 	config, err := auth.JWTConfigFromEnv()
 	if err != nil {
 		return err
@@ -62,7 +67,7 @@ func run() error {
 		return err
 	}
 	defer listener.Close()
-	server := grpcx.NewServer(slog.Default(), grpcx.OptionalAuthInterceptor(tokens, []string{feedv1.FeedService_Home_FullMethodName}, "/grpc.health.v1.Health/Check"))
+	server := grpcx.NewServer(slog.Default(), monitor.UnaryServerInterceptor(grpcx.Error), grpcx.OptionalAuthInterceptor(tokens, []string{feedv1.FeedService_Home_FullMethodName}, "/grpc.health.v1.Health/Check"))
 	query := service.New(userv1.NewUserServiceClient(users), productv1.NewProductServiceClient(products))
 	cacheConfig, err := timeline.LoadConfig()
 	if err != nil {
@@ -77,5 +82,10 @@ func run() error {
 		query.WithTimeline(store)
 	}
 	feedv1.RegisterFeedServiceServer(server, handler.New(query))
+	stopMetrics, err := metrics.Start(ctx, monitor)
+	if err != nil {
+		return err
+	}
+	defer stopMetrics()
 	return grpcx.Serve(ctx, listener, server)
 }

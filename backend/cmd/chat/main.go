@@ -16,6 +16,7 @@ import (
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	"syscall"
 	"time"
 )
@@ -40,6 +41,10 @@ func env(key, value string) string {
 func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	monitor, err := metrics.FromEnv("chat")
+	if err != nil {
+		return err
+	}
 	config, err := auth.JWTConfigFromEnv()
 	if err != nil {
 		return err
@@ -63,7 +68,7 @@ func run() error {
 		return err
 	}
 	defer listener.Close()
-	server := grpcx.NewServer(slog.Default(), grpcx.AuthInterceptor(tokens, "/grpc.health.v1.Health/Check"))
+	server := grpcx.NewServer(slog.Default(), monitor.UnaryServerInterceptor(grpcx.Error), grpcx.AuthInterceptor(tokens, "/grpc.health.v1.Health/Check"))
 	dbCtx, dbCancel := context.WithTimeout(ctx, 5*time.Second)
 	db, pool, err := database.OpenMySQL(dbCtx, database.MySQLConfig{Address: os.Getenv("CHAT_MYSQL_ADDR"), Username: os.Getenv("CHAT_MYSQL_USERNAME"), Password: os.Getenv("MYSQL_CHAT_PASSWORD"), Database: os.Getenv("CHAT_MYSQL_DATABASE")})
 	dbCancel()
@@ -73,5 +78,10 @@ func run() error {
 	defer pool.Close()
 	query := service.New(repository.New(db), userv1.NewUserServiceClient(users), productv1.NewProductServiceClient(products))
 	chatv1.RegisterChatServiceServer(server, handler.New(query))
+	stopMetrics, err := metrics.Start(ctx, monitor)
+	if err != nil {
+		return err
+	}
+	defer stopMetrics()
 	return grpcx.Serve(ctx, listener, server)
 }

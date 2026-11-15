@@ -14,6 +14,7 @@ import (
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	"syscall"
 	"time"
 )
@@ -31,6 +32,10 @@ func run() error {
 	// Ctrl+C 或 SIGTERM 触发根上下文取消，通知服务停止。
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	monitor, err := metrics.FromEnv("user")
+	if err != nil {
+		return err
+	}
 	// JWT 配置无效时启动失败，禁止使用默认密钥签发令牌。
 	jwtConfig, err := auth.JWTConfigFromEnv()
 	if err != nil {
@@ -64,7 +69,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	server := grpcx.NewServer(slog.Default(), userAuth)
+	server := grpcx.NewServer(slog.Default(), monitor.UnaryServerInterceptor(grpcx.Error), userAuth)
 	users := repository.NewUserRepository(db)
 	login, err := service.NewLogin(users, tokens)
 	if err != nil {
@@ -72,6 +77,11 @@ func run() error {
 	}
 	userv1.RegisterUserServiceServer(server, handler.NewAuthenticated(service.New(users), login, service.NewCurrentUser(users)).WithFollow(service.NewFollow(users)).WithProfile(service.NewProfile(users)))
 	slog.Info("用户服务已启动，注册及登录 RPC 已接入", "address", listener.Addr().String())
+	stopMetrics, err := metrics.Start(ctx, monitor)
+	if err != nil {
+		return err
+	}
+	defer stopMetrics()
 	if err := grpcx.Serve(ctx, listener, server); err != nil {
 		return err
 	}

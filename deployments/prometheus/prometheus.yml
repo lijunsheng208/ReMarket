@@ -1,0 +1,31 @@
+# 业务服务仍运行于宿主机。job 标识服务类型，instance 标识实例，避免覆盖 exporter 的 service 常量标签。
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 3s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: gateway
+    static_configs:
+      - targets: ["host.docker.internal:8080", "host.docker.internal:8081"]
+  - job_name: user
+    static_configs:
+      - targets: ["host.docker.internal:9101"]
+  - job_name: product
+    static_configs:
+      - targets: ["host.docker.internal:9102"]
+  - job_name: order
+    static_configs:
+      - targets: ["host.docker.internal:9103"]
+  - job_name: search
+    static_configs:
+      - targets: ["host.docker.internal:9104"]
+  - job_name: feed
+    static_configs:
+      - targets: ["host.docker.internal:9105"]
+  - job_name: chat
+    static_configs:
+      - targets: ["host.docker.internal:9106"]

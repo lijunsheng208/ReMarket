@@ -12,6 +12,7 @@ import (
 	"remarket/backend/internal/search/repository"
 	"remarket/backend/internal/search/service"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	"syscall"
 	"time"
 )
@@ -28,6 +29,10 @@ func main() {
 func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	monitor, err := metrics.FromEnv("search")
+	if err != nil {
+		return err
+	}
 	endpoint := os.Getenv("ELASTICSEARCH_URL")
 	if endpoint == "" {
 		port := os.Getenv("ELASTICSEARCH_PORT")
@@ -61,7 +66,12 @@ func run() error {
 		return err
 	}
 	defer listener.Close()
-	server := grpcx.NewServer(slog.Default())
+	server := grpcx.NewServer(slog.Default(), monitor.UnaryServerInterceptor(grpcx.Error))
 	searchv1.RegisterSearchServiceServer(server, handler.New(query))
+	stopMetrics, err := metrics.Start(ctx, monitor)
+	if err != nil {
+		return err
+	}
+	defer stopMetrics()
 	return grpcx.Serve(ctx, listener, server)
 }

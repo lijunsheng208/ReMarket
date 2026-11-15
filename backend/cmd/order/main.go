@@ -16,6 +16,7 @@ import (
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	"remarket/backend/pkg/outbox"
 	"syscall"
 	"time"
@@ -33,6 +34,10 @@ func main() {
 func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	monitor, err := metrics.FromEnv("order")
+	if err != nil {
+		return err
+	}
 	config, err := auth.JWTConfigFromEnv()
 	if err != nil {
 		return err
@@ -63,7 +68,7 @@ func run() error {
 		return err
 	}
 	defer listener.Close()
-	server := grpcx.NewServer(slog.Default(), grpcx.AuthInterceptor(tokens, "/grpc.health.v1.Health/Check"))
+	server := grpcx.NewServer(slog.Default(), monitor.UnaryServerInterceptor(grpcx.Error), grpcx.AuthInterceptor(tokens, "/grpc.health.v1.Health/Check"))
 	target := os.Getenv("PRODUCT_GRPC_TARGET")
 	if target == "" {
 		target = "127.0.0.1:50052"
@@ -89,5 +94,10 @@ func run() error {
 	// 先取消并等待工作者退出，再关闭 gRPC Client 与数据库连接池。
 	defer func() { stopWorker(); <-done; <-expiryDone }()
 	slog.Info("订单查询及预占恢复服务已启动", "address", listener.Addr().String())
+	stopMetrics, err := metrics.Start(ctx, monitor)
+	if err != nil {
+		return err
+	}
+	defer stopMetrics()
 	return grpcx.Serve(ctx, listener, server)
 }

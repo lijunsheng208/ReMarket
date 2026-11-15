@@ -13,11 +13,11 @@ import (
 )
 
 // AddChatRealtimeRoutes 注册票据和 WebSocket；调用方退出时必须关闭返回的 Node。
-func AddChatRealtimeRoutes(router *gin.Engine, chats chatv1.ChatServiceClient, users CurrentUserClient, verifier auth.TokenVerifier, origins []string, timeout time.Duration) *node.Node {
+func AddChatRealtimeRoutes(router *gin.Engine, chats chatv1.ChatServiceClient, users CurrentUserClient, verifier auth.TokenVerifier, origins []string, timeout time.Duration, observers ...node.Observer) *node.Node {
 	if timeout <= 0 {
 		timeout = 3 * time.Second
 	}
-	hub := node.New(chats, users, verifier, origins)
+	hub := node.New(chats, users, verifier, origins, observers...)
 	router.POST("/api/v1/chat/tickets", bearerAuth(verifier), func(c *gin.Context) {
 		c.Header("Cache-Control", "no-store")
 		if !hub.OriginAllowed(c.Request) {

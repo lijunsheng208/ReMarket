@@ -19,6 +19,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -43,8 +44,15 @@ type SessionChecker interface {
 	GetCurrentUser(context.Context, *userv1.GetCurrentUserRequest, ...grpc.CallOption) (*userv1.UserResponse, error)
 }
 
+// Observer 只接收固定结果和时长，不接收用户、会话、正文或认证凭据。
+type Observer interface {
+	HandshakeFinished(bool, time.Duration)
+	ConnectionOpened() func()
+	SendFinished(codes.Code)
+}
 type Node struct {
 	users        SessionChecker
+	observer     Observer
 	relay        *redisRelay
 	mu           sync.Mutex
 	tickets      map[[32]byte]ticket
@@ -67,8 +75,11 @@ type frame struct {
 var requestID = regexp.MustCompile(`^[a-zA-Z0-9_.-]{1,128}$`)
 
 // New 建立本地连接管理器，允许来源须为完整 scheme://host，不信任转发 Host 头。
-func New(chats chatv1.ChatServiceClient, users SessionChecker, verifier auth.TokenVerifier, origins []string) *Node {
+func New(chats chatv1.ChatServiceClient, users SessionChecker, verifier auth.TokenVerifier, origins []string, observers ...Observer) *Node {
 	n := &Node{users: users, tickets: make(map[[32]byte]ticket), peers: make(map[int64]map[*peer]struct{}), chats: chats, verifier: verifier, origins: make(map[string]bool), pingInterval: 20 * time.Second, pongWait: 60 * time.Second, writeWait: 5 * time.Second}
+	if len(observers) > 0 {
+		n.observer = observers[0]
+	}
 	for _, origin := range origins {
 		if origin = strings.TrimSpace(origin); origin != "" {
 			n.origins[origin] = true
@@ -142,6 +153,14 @@ func (n *Node) take(value string) (ticket, bool) {
 
 // ServeHTTP 消费票据后重新验签，连接不能超过 JWT 到期时间。
 func (n *Node) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	accepted := false
+	defer func() {
+		if !accepted && n.observer != nil {
+			n.observer.HandshakeFinished(false, time.Since(start))
+		}
+	}()
+
 	if !n.OriginAllowed(r) {
 		http.Error(w, "来源不允许", http.StatusForbidden)
 		return
@@ -180,6 +199,10 @@ func (n *Node) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	accepted = true
+	if n.observer != nil {
+		n.observer.HandshakeFinished(true, time.Since(start))
+	}
 	p := &peer{ws: ws, queue: make(chan []byte, 64), user: user, raw: t.raw, expires: claims.ExpiresAt.Time}
 	n.mu.Lock()
 	if n.closed {
@@ -200,6 +223,10 @@ func (n *Node) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	n.mu.Unlock()
 	n.signalRoutes()
 	defer n.wg.Done()
+	if n.observer != nil {
+		finishConnection := n.observer.ConnectionOpened()
+		defer finishConnection()
+	}
 	// 关闭网络连接解除读写阻塞，等待写循环退出后才释放 peer。
 	ctx, cancel := context.WithCancel(r.Context())
 	writerDone := make(chan struct{})
@@ -332,12 +359,21 @@ func (n *Node) receive(parent context.Context, p *peer, data []byte) {
 	result, err := n.chats.SendMessage(ctx, &chatv1.SendMessageRequest{ConversationId: conversation, ClientMsgId: input.ClientMsgID, Content: input.Content})
 	if err != nil {
 		st := status.Convert(grpcx.Error(err))
+		if n.observer != nil {
+			n.observer.SendFinished(st.Code())
+		}
 		n.failure(p, f.RequestID, st.Code().String(), st.Message())
 		return
 	}
 	if result.GetMessage() == nil {
+		if n.observer != nil {
+			n.observer.SendFinished(codes.Internal)
+		}
 		n.failure(p, f.RequestID, "Internal", "服务内部错误")
 		return
+	}
+	if n.observer != nil {
+		n.observer.SendFinished(codes.OK)
 	}
 	m := result.Message
 	n.emit(p, "chat.ack", f.RequestID, map[string]string{"message_id": strconv.FormatInt(m.Id, 10), "conversation_id": strconv.FormatInt(m.ConversationId, 10), "seq": strconv.FormatInt(m.Seq, 10), "client_msg_id": m.ClientMsgId})

@@ -20,6 +20,7 @@ import (
 	"remarket/backend/internal/gateway"
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	rl "remarket/backend/pkg/ratelimit"
 	rx "remarket/backend/pkg/redis"
 	"strings"
@@ -39,6 +40,10 @@ func main() {
 func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	monitor, err := metrics.FromEnv("gateway")
+	if err != nil {
+		return err
+	}
 	address := os.Getenv("GATEWAY_HTTP_ADDR")
 	if address == "" {
 		address = "127.0.0.1:8080"
@@ -111,7 +116,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	var middleware []gin.HandlerFunc
+	middleware := []gin.HandlerFunc{monitor.HTTPMiddleware()}
 	if rateConfig.Enabled {
 		cfg, err := rx.LoadConfig()
 		if err != nil {
@@ -129,6 +134,9 @@ func run() error {
 		middleware = append(middleware, limiter.Middleware())
 	}
 	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
+	if monitor != nil {
+		router.GET("/metrics", gin.WrapH(monitor.Handler()))
+	}
 	chatTarget := os.Getenv("CHAT_GRPC_TARGET")
 	if chatTarget == "" {
 		chatTarget = "127.0.0.1:50056"
@@ -139,7 +147,11 @@ func run() error {
 	}
 	defer chatConn.Close()
 	// HTTP Shutdown 不负责已升级连接，显式关闭并等待 WebSocket 协程退出。
-	chatNode := gateway.AddChatRealtimeRoutes(router, chatv1.NewChatServiceClient(chatConn), userv1.NewUserServiceClient(conn), tokens, strings.Split(os.Getenv("CHAT_ALLOWED_ORIGINS"), ","), timeout)
+	var observers []chatnode.Observer
+	if monitor != nil {
+		observers = append(observers, monitor)
+	}
+	chatNode := gateway.AddChatRealtimeRoutes(router, chatv1.NewChatServiceClient(chatConn), userv1.NewUserServiceClient(conn), tokens, strings.Split(os.Getenv("CHAT_ALLOWED_ORIGINS"), ","), timeout, observers...)
 	enabled, chatRedisConfig, err := chatnode.LoadRedisConfig()
 	if err != nil {
 		return err

@@ -106,3 +106,32 @@ run-feed-consumer:
 .PHONY: run-chat
 run-chat:
 	cd backend && go run ./cmd/chat
+
+# Day 6 统一入口与基础设施使用不同项目名，避免误关闭数据库或消息组件。
+EDGE_COMPOSE = docker compose --env-file .env -p remarket-edge -f deployments/docker-compose.edge.yml
+.PHONY: edge-config edge-check edge-up edge-down edge-logs
+edge-config:
+	$(EDGE_COMPOSE) config --quiet
+edge-check:
+	$(EDGE_COMPOSE) run --rm --no-deps nginx nginx -t
+edge-up:
+	npm --prefix frontend run build
+	$(EDGE_COMPOSE) up -d --wait --wait-timeout 60
+edge-down:
+	$(EDGE_COMPOSE) down
+edge-logs:
+	$(EDGE_COMPOSE) logs --tail=100 -f nginx
+
+# 监控与入口/业务基础设施分离；down 不删除持久化指标卷。
+OBS_COMPOSE = docker compose --env-file .env -p remarket-observability -f deployments/docker-compose.observability.yml
+.PHONY: observability-config prometheus-check prometheus-up prometheus-down prometheus-logs
+observability-config:
+	$(OBS_COMPOSE) config --quiet
+prometheus-check:
+	$(OBS_COMPOSE) run --rm --no-deps --entrypoint /bin/promtool prometheus check config /etc/prometheus/prometheus.yml
+prometheus-up:
+	$(OBS_COMPOSE) up -d --wait --wait-timeout 90 prometheus
+prometheus-down:
+	$(OBS_COMPOSE) down
+prometheus-logs:
+	$(OBS_COMPOSE) logs --tail=100 -f prometheus

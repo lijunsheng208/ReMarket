@@ -19,6 +19,7 @@ import (
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
+	"remarket/backend/pkg/observability/metrics"
 	"remarket/backend/pkg/outbox"
 	redisx "remarket/backend/pkg/redis"
 	"strconv"
@@ -38,6 +39,10 @@ func main() {
 func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+	monitor, err := metrics.FromEnv("product")
+	if err != nil {
+		return err
+	}
 	config, err := auth.JWTConfigFromEnv()
 	if err != nil {
 		return err
@@ -85,7 +90,7 @@ func run() error {
 	defer listener.Close()
 	// 预占方法使用独立服务凭据；其他方法保留用户鉴权和公开读取规则。
 	// 图片确认包含云端读取和重新编码；普通 HTTP 操作仍由 Gateway 的短超时约束。
-	server := grpcx.NewServerWithTimeout(slog.Default(), 30*time.Second, productAuth)
+	server := grpcx.NewServerWithTimeout(slog.Default(), 30*time.Second, monitor.UnaryServerInterceptor(grpcx.Error), productAuth)
 	products := repository.NewProductRepository(db)
 	target := os.Getenv("USER_GRPC_TARGET")
 	if target == "" {
@@ -162,5 +167,10 @@ func run() error {
 	}
 	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)).WithSearchExport(service.NewSearchExporter(products, paused)).WithFeed(service.NewFeedQuery(products)).WithImages(images))
 	slog.Info("商品服务已启动", "address", listener.Addr().String(), "detail_cache_enabled", cacheEnabled, "invalidation_enabled", enabled)
+	stopMetrics, err := metrics.Start(ctx, monitor)
+	if err != nil {
+		return err
+	}
+	defer stopMetrics()
 	return grpcx.Serve(ctx, listener, server)
 }

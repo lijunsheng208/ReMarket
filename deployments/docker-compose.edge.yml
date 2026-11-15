@@ -1,0 +1,39 @@
+# 与现有基础设施分开启动；Gateway 运行于宿主机的两个独立端口。
+services:
+  nginx:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${EDGE_HTTP_PORT:-8088}:80"
+    environment:
+      EDGE_GATEWAY_HOST: ${EDGE_GATEWAY_HOST:-host.docker.internal}
+      EDGE_GATEWAY_PRIMARY_PORT: ${EDGE_GATEWAY_PRIMARY_PORT:-8080}
+      EDGE_GATEWAY_SECONDARY_PORT: ${EDGE_GATEWAY_SECONDARY_PORT:-8081}
+      NGINX_ENVSUBST_FILTER: "^EDGE_"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./nginx/19-resolve-gateway.envsh:/docker-entrypoint.d/19-resolve-gateway.envsh:ro
+      - ./nginx/remarket.conf.template:/etc/nginx/templates/remarket.conf.template:ro
+      - ./nginx/remarket-proxy.conf:/etc/nginx/snippets/remarket-proxy.conf:ro
+      - type: bind
+        source: ../frontend/dist
+        target: /usr/share/nginx/html
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs:
+      - /etc/nginx/conf.d
+      - /var/cache/nginx
+      - /var/run
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/edge-healthz"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

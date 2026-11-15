@@ -1,0 +1,70 @@
+# 完整来源 IP 的一致性哈希维持本地票据亲和性；不信任客户端伪造的转发头。
+upstream remarket_gateway {
+    hash $remote_addr consistent;
+    server ${EDGE_GATEWAY_HOST}:${EDGE_GATEWAY_PRIMARY_PORT} max_fails=1 fail_timeout=5s;
+    server ${EDGE_GATEWAY_HOST}:${EDGE_GATEWAY_SECONDARY_PORT} max_fails=1 fail_timeout=5s;
+    keepalive 32;
+}
+
+map $http_upgrade $remarket_connection {
+    default upgrade;
+    '' close;
+}
+
+# 只记录路径，不记录 query、Authorization、Cookie 或请求正文，避免泄露握手票据。
+log_format remarket_json escape=json
+    '{"time":"$time_iso8601","service":"nginx","request_id":"$request_id",'
+    '"method":"$request_method","path":"$uri","status":$status,'
+    '"duration_seconds":$request_time,"upstream":"$upstream_addr",'
+    '"upstream_status":"$upstream_status","upstream_seconds":"$upstream_response_time"}';
+
+server {
+    listen 80;
+    server_name _;
+    server_tokens off;
+    root /usr/share/nginx/html;
+    index index.html;
+    client_max_body_size 64k;
+    client_header_timeout 10s;
+    client_body_timeout 10s;
+    send_timeout 15s;
+    proxy_read_timeout 15s;
+    proxy_send_timeout 15s;
+    access_log /dev/stdout remarket_json;
+    error_log /dev/stderr warn;
+
+    # 本端点只表示入口进程存活，不声称所有业务服务均可用。
+    location = /edge-healthz {
+        access_log off;
+        return 204;
+    }
+
+    location = /healthz {
+        include /etc/nginx/snippets/remarket-proxy.conf;
+        proxy_pass http://remarket_gateway;
+    }
+
+    location = /api/v1/chat/ws {
+        include /etc/nginx/snippets/remarket-proxy.conf;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $remarket_connection;
+        proxy_buffering off;
+        proxy_read_timeout 75s;
+        proxy_send_timeout 15s;
+        # Nginx 原生错误日志无法逐字段脱敏，WS 依赖结构化访问日志排障。
+        error_log /dev/null;
+        proxy_pass http://remarket_gateway;
+    }
+
+    location /api/ {
+        include /etc/nginx/snippets/remarket-proxy.conf;
+        proxy_set_header Connection "";
+        proxy_pass http://remarket_gateway;
+    }
+
+    # 后续 metrics 使用独立内网采集入口，不随统一业务入口公开。
+    location = /metrics { return 404; }
+    location ~ (^|/)\. { return 404; }
+    location /assets/ { try_files $uri =404; expires 7d; }
+    location / { try_files $uri $uri/ /index.html; }
+}

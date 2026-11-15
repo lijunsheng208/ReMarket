@@ -1,0 +1,10 @@
+#!/bin/sh
+# Docker Desktop 可返回无法访问的 AAAA；本地 Gateway 监听 IPv4，生成配置前固定一个 IPv4。
+# 由官方入口在 envsubst 前 source，导出结果只影响当前容器，不修改宿主机配置。
+edge_gateway_ipv4="$(getent ahostsv4 "${EDGE_GATEWAY_HOST:-host.docker.internal}" | awk 'NR == 1 { print $1 }')"
+if [ -z "$edge_gateway_ipv4" ]; then
+    echo "Cannot resolve Gateway IPv4; check EDGE_GATEWAY_HOST." >&2
+    exit 1
+fi
+export EDGE_GATEWAY_HOST="$edge_gateway_ipv4"
+unset edge_gateway_ipv4
