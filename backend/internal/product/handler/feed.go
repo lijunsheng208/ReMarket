@@ -14,7 +14,7 @@ func (s *Server) ListFeedProducts(ctx context.Context, r *productv1.ListFeedProd
 	if s.feed == nil {
 		return s.UnimplementedProductServiceServer.ListFeedProducts(ctx, r)
 	}
-	rows, next, err := s.feed.List(ctx, r.GetCursor(), int(r.GetPageSize()), r.GetSellerIds())
+	rows, next, err := s.feed.List(ctx, r.GetCursor(), int(r.GetPageSize()), r.GetSellerIds(), r.GetCandidateIds()...)
 	if err != nil {
 		return nil, err
 	}

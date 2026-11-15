@@ -19,21 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_Follow_FullMethodName         = "/remarket.user.v1.UserService/Follow"
-	UserService_Unfollow_FullMethodName       = "/remarket.user.v1.UserService/Unfollow"
-	UserService_ListFollowers_FullMethodName  = "/remarket.user.v1.UserService/ListFollowers"
-	UserService_ListFollowing_FullMethodName  = "/remarket.user.v1.UserService/ListFollowing"
-	UserService_Register_FullMethodName       = "/remarket.user.v1.UserService/Register"
-	UserService_Login_FullMethodName          = "/remarket.user.v1.UserService/Login"
-	UserService_GetCurrentUser_FullMethodName = "/remarket.user.v1.UserService/GetCurrentUser"
-	UserService_GetUser_FullMethodName        = "/remarket.user.v1.UserService/GetUser"
-	UserService_UpdateProfile_FullMethodName  = "/remarket.user.v1.UserService/UpdateProfile"
+	UserService_ListFeedFollowers_FullMethodName = "/remarket.user.v1.UserService/ListFeedFollowers"
+	UserService_Follow_FullMethodName            = "/remarket.user.v1.UserService/Follow"
+	UserService_Unfollow_FullMethodName          = "/remarket.user.v1.UserService/Unfollow"
+	UserService_ListFollowers_FullMethodName     = "/remarket.user.v1.UserService/ListFollowers"
+	UserService_ListFollowing_FullMethodName     = "/remarket.user.v1.UserService/ListFollowing"
+	UserService_Register_FullMethodName          = "/remarket.user.v1.UserService/Register"
+	UserService_Login_FullMethodName             = "/remarket.user.v1.UserService/Login"
+	UserService_GetCurrentUser_FullMethodName    = "/remarket.user.v1.UserService/GetCurrentUser"
+	UserService_GetUser_FullMethodName           = "/remarket.user.v1.UserService/GetUser"
+	UserService_UpdateProfile_FullMethodName     = "/remarket.user.v1.UserService/UpdateProfile"
 )
 
 // UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	// 仅供独立 Feed 服务凭据读取粉丝 ID，不返回用户资料。
+	ListFeedFollowers(ctx context.Context, in *ListFeedFollowersRequest, opts ...grpc.CallOption) (*ListFeedFollowersResponse, error)
 	Follow(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error)
 	Unfollow(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error)
 	ListFollowers(ctx context.Context, in *ListFollowsRequest, opts ...grpc.CallOption) (*ListFollowsResponse, error)
@@ -52,6 +55,16 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) ListFeedFollowers(ctx context.Context, in *ListFeedFollowersRequest, opts ...grpc.CallOption) (*ListFeedFollowersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFeedFollowersResponse)
+	err := c.cc.Invoke(ctx, UserService_ListFeedFollowers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *userServiceClient) Follow(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error) {
@@ -148,6 +161,8 @@ func (c *userServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfile
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
+	// 仅供独立 Feed 服务凭据读取粉丝 ID，不返回用户资料。
+	ListFeedFollowers(context.Context, *ListFeedFollowersRequest) (*ListFeedFollowersResponse, error)
 	Follow(context.Context, *FollowRequest) (*FollowResponse, error)
 	Unfollow(context.Context, *FollowRequest) (*FollowResponse, error)
 	ListFollowers(context.Context, *ListFollowsRequest) (*ListFollowsResponse, error)
@@ -168,6 +183,9 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
+func (UnimplementedUserServiceServer) ListFeedFollowers(context.Context, *ListFeedFollowersRequest) (*ListFeedFollowersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFeedFollowers not implemented")
+}
 func (UnimplementedUserServiceServer) Follow(context.Context, *FollowRequest) (*FollowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Follow not implemented")
 }
@@ -214,6 +232,24 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UserService_ServiceDesc, srv)
+}
+
+func _UserService_ListFeedFollowers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFeedFollowersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListFeedFollowers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListFeedFollowers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListFeedFollowers(ctx, req.(*ListFeedFollowersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_Follow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -385,6 +421,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "remarket.user.v1.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListFeedFollowers",
+			Handler:    _UserService_ListFeedFollowers_Handler,
+		},
 		{
 			MethodName: "Follow",
 			Handler:    _UserService_Follow_Handler,

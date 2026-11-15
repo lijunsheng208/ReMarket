@@ -1487,6 +1487,7 @@ type ListFeedProductsRequest struct {
 	Cursor        string                 `protobuf:"bytes,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	SellerIds     []int64                `protobuf:"varint,3,rep,packed,name=seller_ids,json=sellerIds,proto3" json:"seller_ids,omitempty"`
+	CandidateIds  []int64                `protobuf:"varint,4,rep,packed,name=candidate_ids,json=candidateIds,proto3" json:"candidate_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1538,6 +1539,13 @@ func (x *ListFeedProductsRequest) GetPageSize() int32 {
 func (x *ListFeedProductsRequest) GetSellerIds() []int64 {
 	if x != nil {
 		return x.SellerIds
+	}
+	return nil
+}
+
+func (x *ListFeedProductsRequest) GetCandidateIds() []int64 {
+	if x != nil {
+		return x.CandidateIds
 	}
 	return nil
 }
@@ -1723,12 +1731,13 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x1cExportSearchSnapshotResponse\x128\n" +
 	"\bproducts\x18\x01 \x03(\v2\x1c.remarket.product.v1.ProductR\bproducts\x12\x19\n" +
 	"\bupper_id\x18\x02 \x01(\x03R\aupperId\x12\"\n" +
-	"\rnext_after_id\x18\x03 \x01(\x03R\vnextAfterId\"m\n" +
+	"\rnext_after_id\x18\x03 \x01(\x03R\vnextAfterId\"\x92\x01\n" +
 	"\x17ListFeedProductsRequest\x12\x16\n" +
 	"\x06cursor\x18\x01 \x01(\tR\x06cursor\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"seller_ids\x18\x03 \x03(\x03R\tsellerIds\"u\n" +
+	"seller_ids\x18\x03 \x03(\x03R\tsellerIds\x12#\n" +
+	"\rcandidate_ids\x18\x04 \x03(\x03R\fcandidateIds\"u\n" +
 	"\x18ListFeedProductsResponse\x128\n" +
 	"\bproducts\x18\x01 \x03(\v2\x1c.remarket.product.v1.ProductR\bproducts\x12\x1f\n" +
 	"\vnext_cursor\x18\x02 \x01(\tR\n" +

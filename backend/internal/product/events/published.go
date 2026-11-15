@@ -18,6 +18,7 @@ var ErrInvalidPublishedProduct = errors.New("首次发布商品快照无效")
 
 // PublishedData 是首次上架快照；大整数通过 JSON 字符串避免消费者精度丢失。
 type PublishedData struct {
+	CreatedAt        time.Time           `json:"created_at"`
 	ProductID        int64               `json:"product_id,string"`
 	SellerID         int64               `json:"seller_id,string"`
 	CategoryID       int64               `json:"category_id,string"`
@@ -84,7 +85,7 @@ func newVisibleOutbox(product model.Product, occurredAt time.Time, eventType str
 	}
 	// 统一 UTC 微秒精度，与数据库 DATETIME(6) 对齐。
 	occurredAt = occurredAt.UTC().Truncate(time.Microsecond)
-	data := PublishedData{ProductID: product.ID, SellerID: product.SellerID, CategoryID: product.CategoryID, Title: product.Title, Description: product.Description, PriceCent: product.PriceCent, Status: product.Status, FirstPublishedAt: product.FirstPublishedAt.UTC().Truncate(time.Microsecond)}
+	data := PublishedData{CreatedAt: product.CreatedAt.UTC().Truncate(time.Microsecond), ProductID: product.ID, SellerID: product.SellerID, CategoryID: product.CategoryID, Title: product.Title, Description: product.Description, PriceCent: product.PriceCent, Status: product.Status, FirstPublishedAt: product.FirstPublishedAt.UTC().Truncate(time.Microsecond)}
 	payload, err := json.Marshal(data)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"google.golang.org/grpc/metadata"
 	feedv1 "remarket/backend/gen/feed/v1"
 	productv1 "remarket/backend/gen/product/v1"
@@ -16,6 +17,7 @@ import (
 type Service struct {
 	users    userv1.UserServiceClient
 	products productv1.ProductServiceClient
+	cache    Timeline
 }
 
 // New 注入 User 与 Product RPC 客户端，基础版不依赖 Redis 或 Kafka。
@@ -47,11 +49,15 @@ func (s *Service) List(ctx context.Context, r *feedv1.ListFeedRequest, following
 	defer cancel()
 	ctx = downstream(ctx)
 	var sellers []int64
+	var userID int64
+	var relations []string
+	fingerprint := ""
 	if following {
 		identity, ok := auth.IdentityFromContext(ctx)
 		if !ok {
 			return nil, &apperror.Error{Kind: apperror.Unauthenticated, Message: "请先登录"}
 		}
+		userID = identity.UserID
 		if _, err := s.users.GetCurrentUser(ctx, &userv1.GetCurrentUserRequest{}); err != nil {
 			return nil, err
 		}
@@ -69,6 +75,7 @@ func (s *Service) List(ctx context.Context, r *feedv1.ListFeedRequest, following
 					return nil, errors.New("关注数据无效")
 				}
 				sellers = append(sellers, item.User.Id)
+				relations = append(relations, fmt.Sprintf("%d:%d", item.Id, item.User.Id))
 			}
 			// 基础版限制单次 IN 查询规模；超过限制明确失败，不能截断关注集合造成漏数据。
 			if len(sellers) > 10000 {
@@ -85,10 +92,32 @@ func (s *Service) List(ctx context.Context, r *feedv1.ListFeedRequest, following
 		if len(sellers) == 0 {
 			return &feedv1.ListFeedResponse{}, nil
 		}
+		fingerprint = relationFingerprint(relations)
+		if s.cache != nil {
+			if result, ok := s.followingCache(ctx, userID, sellers, fingerprint, r); ok {
+				return result, nil
+			}
+		}
 	}
 	result, err := s.products.ListFeedProducts(ctx, &productv1.ListFeedProductsRequest{Cursor: r.Cursor, PageSize: r.PageSize, SellerIds: sellers})
 	if err != nil {
 		return nil, err
+	}
+	if following && s.cache != nil && r.Cursor == "" {
+		// 只对第一页回填至多 100 条权威记录，深页始终允许 MySQL 回退。
+		seed := result.Products
+		if r.PageSize != 100 {
+			page, e := s.products.ListFeedProducts(ctx, &productv1.ListFeedProductsRequest{PageSize: 100, SellerIds: sellers})
+			if e == nil {
+				seed = page.Products
+			}
+		}
+		if ctx.Err() == nil {
+			warm, cancelWarm := context.WithTimeout(ctx, 200*time.Millisecond)
+			_ = s.cache.EnsureModes(warm, sellers)
+			_ = s.cache.Seed(warm, userID, fingerprint, seed)
+			cancelWarm()
+		}
 	}
 	return &feedv1.ListFeedResponse{Products: result.Products, NextCursor: result.NextCursor}, nil
 }

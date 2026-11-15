@@ -1,6 +1,6 @@
 # Feed 基础功能
 
-独立 Feed 服务提供 MySQL 权威查询版本。Gateway → Feed → User / Product，Feed 不连接其他服务数据库。Redis 时间线与 Kafka 推拉结合留待下一阶段。
+独立 Feed 服务提供 MySQL 权威查询版本。Gateway → Feed → User / Product，Feed 不连接其他服务数据库。Redis 时间线与 Kafka 推拉结合已通过显式开关接入，详见 [阶段 3](feed-hybrid.md)。
 
 ## 接口
 
@@ -29,4 +29,4 @@ Gateway、Feed、User 独立验证 JWT。Feed 仅转发原始凭据，Product �
 
 前端已接入：首页无筛选时请求 `/feed/home`；提交关键词、分类、价格或非默认排序后请求 ES `/search/products`；“关注动态”请求 `/feed/following`，未登录时打开登录框。切换来源、分类或账号会重置游标，旧请求通过 AbortController 取消。重置搜索返回最新商品。关注动态隐藏全站搜索栏与外层分类栏，仅提供动态列表和分页；返回“最新商品”后恢复搜索入口。前端 lint 与 build 通过；当前环境未安装 Playwright，浏览器交互及常驻服务端到端验收待完成。
 
-Kafka 消费、Redis 时间线、热门卖家合并与重建尚未实现。
+Kafka 消费、Redis 时间线、热门卖家合并及按需窗口回填已实现，详见 [阶段 3](feed-hybrid.md)；离线全量时间线重建任务尚未实现。

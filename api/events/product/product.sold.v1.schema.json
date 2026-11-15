@@ -71,6 +71,11 @@
         "first_published_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "商品创建时间；Feed 稳定排序使用，历史事件可缺省。"
         }
       },
       "required": [

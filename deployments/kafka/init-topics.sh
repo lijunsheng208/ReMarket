@@ -20,4 +20,10 @@ for lane in retry dlt; do
     --partitions "$KAFKA_TOPIC_PARTITIONS" --replication-factor 1 \
     --config "retention.ms=$retention" --config cleanup.policy=delete
 done
+# Feed 独立死信；临时故障保留原 Offset 重试，不与 Search 共享失败队列。
+/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 \
+  --create --if-not-exists --topic remarket.feed.product.dlt.v1 \
+  --partitions "$KAFKA_TOPIC_PARTITIONS" --replication-factor 1 \
+  --config "retention.ms=$KAFKA_DLT_RETENTION_MS" --config cleanup.policy=delete
+
 /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --describe

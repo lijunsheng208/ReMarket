@@ -98,3 +98,7 @@ run-search:
 # Feed 基础查询进程。
 run-feed:
 	cd backend && go run ./cmd/feed
+
+.PHONY: run-feed-consumer
+run-feed-consumer:
+	cd backend && go run ./cmd/feed-consumer

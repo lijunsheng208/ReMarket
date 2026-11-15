@@ -18,6 +18,7 @@ import (
 	userv1 "remarket/backend/gen/user/v1"
 	fh "remarket/backend/internal/feed/handler"
 	fs "remarket/backend/internal/feed/service"
+	"remarket/backend/internal/feed/timeline"
 	ph "remarket/backend/internal/product/handler"
 	pr "remarket/backend/internal/product/repository"
 	ps "remarket/backend/internal/product/service"
@@ -28,6 +29,7 @@ import (
 	"remarket/backend/pkg/database"
 	"remarket/backend/pkg/grpcx"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -146,11 +148,52 @@ func TestFeedHTTPMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	productServer := grpcx.NewServer(nil, productAuth)
+	var candidateCalls atomic.Int64
+	productServer := grpcx.NewServer(nil, productAuth, func(ctx context.Context, req any, info *grpc.UnaryServerInfo, h grpc.UnaryHandler) (any, error) {
+		if r, ok := req.(*productv1.ListFeedProductsRequest); ok && len(r.CandidateIds) > 0 {
+			candidateCalls.Add(1)
+		}
+		return h(ctx, req)
+	})
 	productv1.RegisterProductServiceServer(productServer, ph.New(nil).WithFeed(ps.NewFeedQuery(pr.NewProductRepository(productGorm))))
 	pc := productv1.NewProductServiceClient(connect(productServer))
 	feedServer := grpcx.NewServer(nil, grpcx.OptionalAuthInterceptor(tokens, []string{feedv1.FeedService_Home_FullMethodName}))
-	feedv1.RegisterFeedServiceServer(feedServer, fh.New(fs.New(uc, pc)))
+	query := fs.New(uc, pc)
+	var cacheStore *timeline.Store
+	var breakCache func()
+	if os.Getenv("FEED_INTEGRATION") == "1" {
+		cfg, e := timeline.LoadConfig()
+		if e != nil {
+			t.Fatal(e)
+		}
+		cfg.Prefix = fmt.Sprintf("feed:test:http:%d:", time.Now().UnixNano())
+		store, client, e := timeline.OpenLazy(cfg)
+		if e != nil {
+			t.Fatal(e)
+		}
+		t.Cleanup(func() {
+			keys, e := client.Keys(context.Background(), cfg.Prefix+"*").Result()
+			if e != nil {
+				t.Error(e)
+			} else if len(keys) > 0 {
+				if e := client.Del(context.Background(), keys...).Err(); e != nil {
+					t.Error(e)
+				}
+			}
+			client.Close()
+		})
+		cacheStore = store
+		breakCache = func() {
+			dead, closedClient, e := timeline.OpenLazy(cfg)
+			if e != nil {
+				t.Fatal(e)
+			}
+			closedClient.Close()
+			query.WithTimeline(dead)
+		}
+		query.WithTimeline(store)
+	}
+	feedv1.RegisterFeedServiceServer(feedServer, fh.New(query))
 	fc := feedv1.NewFeedServiceClient(connect(feedServer))
 	router := NewRouter(uc, time.Second)
 	AddFeedRoutes(router, fc, tokens, 3*time.Second)
@@ -200,6 +243,20 @@ func TestFeedHTTPMySQL(t *testing.T) {
 	followPath := fmt.Sprintf("/api/v1/users/%d/follow", ids[1])
 	call("POST", followPath, raw, 200)
 	first := call("GET", "/api/v1/feed/following?page_size=1", raw, 200)
+	if os.Getenv("FEED_INTEGRATION") == "1" {
+		warm := call("GET", "/api/v1/feed/following?page_size=1", raw, 200)
+		if len(warm["products"].([]any)) != 1 || candidateCalls.Load() == 0 {
+			t.Fatal("未进入 Redis 候选复核路径")
+		}
+	}
+	if breakCache != nil {
+		breakCache()
+		fallback := call("GET", "/api/v1/feed/following?page_size=1", raw, 200)
+		if fallback["products"].([]any)[0].(map[string]any)["id"] != first["products"].([]any)[0].(map[string]any)["id"] {
+			t.Fatal("Redis 不可用回退结果错误")
+		}
+		query.WithTimeline(cacheStore)
+	}
 	cursor := first["next_cursor"].(string)
 	second := call("GET", "/api/v1/feed/following?page_size=1&cursor="+url.QueryEscape(cursor), raw, 200)
 	a := first["products"].([]any)[0].(map[string]any)

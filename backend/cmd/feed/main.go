@@ -12,6 +12,7 @@ import (
 	userv1 "remarket/backend/gen/user/v1"
 	"remarket/backend/internal/feed/handler"
 	"remarket/backend/internal/feed/service"
+	"remarket/backend/internal/feed/timeline"
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/grpcx"
 	"syscall"
@@ -62,6 +63,19 @@ func run() error {
 	}
 	defer listener.Close()
 	server := grpcx.NewServer(slog.Default(), grpcx.OptionalAuthInterceptor(tokens, []string{feedv1.FeedService_Home_FullMethodName}, "/grpc.health.v1.Health/Check"))
-	feedv1.RegisterFeedServiceServer(server, handler.New(service.New(userv1.NewUserServiceClient(users), productv1.NewProductServiceClient(products))))
+	query := service.New(userv1.NewUserServiceClient(users), productv1.NewProductServiceClient(products))
+	cacheConfig, err := timeline.LoadConfig()
+	if err != nil {
+		return err
+	}
+	if cacheConfig.Enabled {
+		store, client, e := timeline.OpenLazy(cacheConfig)
+		if e != nil {
+			return e
+		}
+		defer client.Close()
+		query.WithTimeline(store)
+	}
+	feedv1.RegisterFeedServiceServer(server, handler.New(query))
 	return grpcx.Serve(ctx, listener, server)
 }

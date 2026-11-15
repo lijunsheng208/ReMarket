@@ -58,9 +58,13 @@ func run() error {
 	}
 	defer listener.Close()
 	// 依赖方向为 Handler → Service → Repository，接入 Register 和 Login 方法。
-	server := grpcx.NewServer(slog.Default(), grpcx.AuthInterceptor(tokens,
+	userAuth, err := handler.NewFeedAuth(os.Getenv("FEED_USER_SERVICE_TOKEN"), jwtConfig.Secret, grpcx.AuthInterceptor(tokens,
 		userv1.UserService_Register_FullMethodName, userv1.UserService_Login_FullMethodName,
 		"/grpc.health.v1.Health/Check"))
+	if err != nil {
+		return err
+	}
+	server := grpcx.NewServer(slog.Default(), userAuth)
 	users := repository.NewUserRepository(db)
 	login, err := service.NewLogin(users, tokens)
 	if err != nil {

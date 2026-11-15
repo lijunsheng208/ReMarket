@@ -8,6 +8,11 @@ import (
 
 // ListFeed 按不可变创建时间和主键降序查询公开商品，卖家过滤只访问本服务数据。
 func (r *ProductRepository) ListFeed(ctx context.Context, before time.Time, id int64, size int, sellers []int64) ([]model.Product, error) {
+	return r.ListFeedCandidates(ctx, before, id, size, sellers, nil)
+}
+
+// ListFeedCandidates 对缓存候选再次执行 MySQL 在售状态和卖家过滤，不信任 Redis 授权。
+func (r *ProductRepository) ListFeedCandidates(ctx context.Context, before time.Time, id int64, size int, sellers, candidates []int64) ([]model.Product, error) {
 	rows := make([]model.Product, 0)
 	q := r.db.WithContext(ctx).Where("status = ?", model.StatusOnSale)
 	if id > 0 {
@@ -15,6 +20,9 @@ func (r *ProductRepository) ListFeed(ctx context.Context, before time.Time, id i
 	}
 	if len(sellers) > 0 {
 		q = q.Where("seller_id IN ?", sellers)
+	}
+	if len(candidates) > 0 {
+		q = q.Where("id IN ?", candidates)
 	}
 	err := q.Order("created_at DESC").Order("id DESC").Limit(size).Find(&rows).Error
 	return rows, err
