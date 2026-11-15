@@ -827,6 +827,98 @@ func (x *ListFeedFollowersResponse) GetTotal() int64 {
 	return 0
 }
 
+type PublicProfile struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Nickname       string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	FollowerCount  int64                  `protobuf:"varint,3,opt,name=follower_count,json=followerCount,proto3" json:"follower_count,omitempty"`
+	FollowingCount int64                  `protobuf:"varint,4,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
+	IsFollowing    bool                   `protobuf:"varint,5,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
+	IsSelf         bool                   `protobuf:"varint,6,opt,name=is_self,json=isSelf,proto3" json:"is_self,omitempty"`
+	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *PublicProfile) Reset() {
+	*x = PublicProfile{}
+	mi := &file_user_v1_user_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PublicProfile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublicProfile) ProtoMessage() {}
+
+func (x *PublicProfile) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublicProfile.ProtoReflect.Descriptor instead.
+func (*PublicProfile) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *PublicProfile) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *PublicProfile) GetNickname() string {
+	if x != nil {
+		return x.Nickname
+	}
+	return ""
+}
+
+func (x *PublicProfile) GetFollowerCount() int64 {
+	if x != nil {
+		return x.FollowerCount
+	}
+	return 0
+}
+
+func (x *PublicProfile) GetFollowingCount() int64 {
+	if x != nil {
+		return x.FollowingCount
+	}
+	return 0
+}
+
+func (x *PublicProfile) GetIsFollowing() bool {
+	if x != nil {
+		return x.IsFollowing
+	}
+	return false
+}
+
+func (x *PublicProfile) GetIsSelf() bool {
+	if x != nil {
+		return x.IsSelf
+	}
+	return false
+}
+
+func (x *PublicProfile) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
@@ -883,8 +975,18 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x19ListFeedFollowersResponse\x12\x19\n" +
 	"\buser_ids\x18\x01 \x03(\x03R\auserIds\x12\"\n" +
 	"\rnext_after_id\x18\x02 \x01(\x03R\vnextAfterId\x12\x14\n" +
-	"\x05total\x18\x03 \x01(\x03R\x05total2\xed\x06\n" +
-	"\vUserService\x12l\n" +
+	"\x05total\x18\x03 \x01(\x03R\x05total\"\x82\x02\n" +
+	"\rPublicProfile\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
+	"\bnickname\x18\x02 \x01(\tR\bnickname\x12%\n" +
+	"\x0efollower_count\x18\x03 \x01(\x03R\rfollowerCount\x12'\n" +
+	"\x0ffollowing_count\x18\x04 \x01(\x03R\x0efollowingCount\x12!\n" +
+	"\fis_following\x18\x05 \x01(\bR\visFollowing\x12\x17\n" +
+	"\ais_self\x18\x06 \x01(\bR\x06isSelf\x129\n" +
+	"\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt2\xc4\a\n" +
+	"\vUserService\x12U\n" +
+	"\x10GetPublicProfile\x12 .remarket.user.v1.GetUserRequest\x1a\x1f.remarket.user.v1.PublicProfile\x12l\n" +
 	"\x11ListFeedFollowers\x12*.remarket.user.v1.ListFeedFollowersRequest\x1a+.remarket.user.v1.ListFeedFollowersResponse\x12K\n" +
 	"\x06Follow\x12\x1f.remarket.user.v1.FollowRequest\x1a .remarket.user.v1.FollowResponse\x12M\n" +
 	"\bUnfollow\x12\x1f.remarket.user.v1.FollowRequest\x1a .remarket.user.v1.FollowResponse\x12\\\n" +
@@ -908,7 +1010,7 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_user_v1_user_proto_rawDescData
 }
 
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_user_v1_user_proto_goTypes = []any{
 	(*User)(nil),                      // 0: remarket.user.v1.User
 	(*RegisterRequest)(nil),           // 1: remarket.user.v1.RegisterRequest
@@ -925,40 +1027,44 @@ var file_user_v1_user_proto_goTypes = []any{
 	(*ListFollowsResponse)(nil),       // 12: remarket.user.v1.ListFollowsResponse
 	(*ListFeedFollowersRequest)(nil),  // 13: remarket.user.v1.ListFeedFollowersRequest
 	(*ListFeedFollowersResponse)(nil), // 14: remarket.user.v1.ListFeedFollowersResponse
-	(*timestamppb.Timestamp)(nil),     // 15: google.protobuf.Timestamp
+	(*PublicProfile)(nil),             // 15: remarket.user.v1.PublicProfile
+	(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
 }
 var file_user_v1_user_proto_depIdxs = []int32{
-	15, // 0: remarket.user.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	15, // 1: remarket.user.v1.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
+	16, // 0: remarket.user.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	16, // 1: remarket.user.v1.LoginResponse.expires_at:type_name -> google.protobuf.Timestamp
 	0,  // 2: remarket.user.v1.LoginResponse.user:type_name -> remarket.user.v1.User
 	0,  // 3: remarket.user.v1.UserResponse.user:type_name -> remarket.user.v1.User
 	0,  // 4: remarket.user.v1.FollowEntry.user:type_name -> remarket.user.v1.User
 	11, // 5: remarket.user.v1.ListFollowsResponse.items:type_name -> remarket.user.v1.FollowEntry
-	13, // 6: remarket.user.v1.UserService.ListFeedFollowers:input_type -> remarket.user.v1.ListFeedFollowersRequest
-	8,  // 7: remarket.user.v1.UserService.Follow:input_type -> remarket.user.v1.FollowRequest
-	8,  // 8: remarket.user.v1.UserService.Unfollow:input_type -> remarket.user.v1.FollowRequest
-	10, // 9: remarket.user.v1.UserService.ListFollowers:input_type -> remarket.user.v1.ListFollowsRequest
-	10, // 10: remarket.user.v1.UserService.ListFollowing:input_type -> remarket.user.v1.ListFollowsRequest
-	1,  // 11: remarket.user.v1.UserService.Register:input_type -> remarket.user.v1.RegisterRequest
-	2,  // 12: remarket.user.v1.UserService.Login:input_type -> remarket.user.v1.LoginRequest
-	7,  // 13: remarket.user.v1.UserService.GetCurrentUser:input_type -> remarket.user.v1.GetCurrentUserRequest
-	4,  // 14: remarket.user.v1.UserService.GetUser:input_type -> remarket.user.v1.GetUserRequest
-	5,  // 15: remarket.user.v1.UserService.UpdateProfile:input_type -> remarket.user.v1.UpdateProfileRequest
-	14, // 16: remarket.user.v1.UserService.ListFeedFollowers:output_type -> remarket.user.v1.ListFeedFollowersResponse
-	9,  // 17: remarket.user.v1.UserService.Follow:output_type -> remarket.user.v1.FollowResponse
-	9,  // 18: remarket.user.v1.UserService.Unfollow:output_type -> remarket.user.v1.FollowResponse
-	12, // 19: remarket.user.v1.UserService.ListFollowers:output_type -> remarket.user.v1.ListFollowsResponse
-	12, // 20: remarket.user.v1.UserService.ListFollowing:output_type -> remarket.user.v1.ListFollowsResponse
-	6,  // 21: remarket.user.v1.UserService.Register:output_type -> remarket.user.v1.UserResponse
-	3,  // 22: remarket.user.v1.UserService.Login:output_type -> remarket.user.v1.LoginResponse
-	6,  // 23: remarket.user.v1.UserService.GetCurrentUser:output_type -> remarket.user.v1.UserResponse
-	6,  // 24: remarket.user.v1.UserService.GetUser:output_type -> remarket.user.v1.UserResponse
-	6,  // 25: remarket.user.v1.UserService.UpdateProfile:output_type -> remarket.user.v1.UserResponse
-	16, // [16:26] is the sub-list for method output_type
-	6,  // [6:16] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	16, // 6: remarket.user.v1.PublicProfile.created_at:type_name -> google.protobuf.Timestamp
+	4,  // 7: remarket.user.v1.UserService.GetPublicProfile:input_type -> remarket.user.v1.GetUserRequest
+	13, // 8: remarket.user.v1.UserService.ListFeedFollowers:input_type -> remarket.user.v1.ListFeedFollowersRequest
+	8,  // 9: remarket.user.v1.UserService.Follow:input_type -> remarket.user.v1.FollowRequest
+	8,  // 10: remarket.user.v1.UserService.Unfollow:input_type -> remarket.user.v1.FollowRequest
+	10, // 11: remarket.user.v1.UserService.ListFollowers:input_type -> remarket.user.v1.ListFollowsRequest
+	10, // 12: remarket.user.v1.UserService.ListFollowing:input_type -> remarket.user.v1.ListFollowsRequest
+	1,  // 13: remarket.user.v1.UserService.Register:input_type -> remarket.user.v1.RegisterRequest
+	2,  // 14: remarket.user.v1.UserService.Login:input_type -> remarket.user.v1.LoginRequest
+	7,  // 15: remarket.user.v1.UserService.GetCurrentUser:input_type -> remarket.user.v1.GetCurrentUserRequest
+	4,  // 16: remarket.user.v1.UserService.GetUser:input_type -> remarket.user.v1.GetUserRequest
+	5,  // 17: remarket.user.v1.UserService.UpdateProfile:input_type -> remarket.user.v1.UpdateProfileRequest
+	15, // 18: remarket.user.v1.UserService.GetPublicProfile:output_type -> remarket.user.v1.PublicProfile
+	14, // 19: remarket.user.v1.UserService.ListFeedFollowers:output_type -> remarket.user.v1.ListFeedFollowersResponse
+	9,  // 20: remarket.user.v1.UserService.Follow:output_type -> remarket.user.v1.FollowResponse
+	9,  // 21: remarket.user.v1.UserService.Unfollow:output_type -> remarket.user.v1.FollowResponse
+	12, // 22: remarket.user.v1.UserService.ListFollowers:output_type -> remarket.user.v1.ListFollowsResponse
+	12, // 23: remarket.user.v1.UserService.ListFollowing:output_type -> remarket.user.v1.ListFollowsResponse
+	6,  // 24: remarket.user.v1.UserService.Register:output_type -> remarket.user.v1.UserResponse
+	3,  // 25: remarket.user.v1.UserService.Login:output_type -> remarket.user.v1.LoginResponse
+	6,  // 26: remarket.user.v1.UserService.GetCurrentUser:output_type -> remarket.user.v1.UserResponse
+	6,  // 27: remarket.user.v1.UserService.GetUser:output_type -> remarket.user.v1.UserResponse
+	6,  // 28: remarket.user.v1.UserService.UpdateProfile:output_type -> remarket.user.v1.UserResponse
+	18, // [18:29] is the sub-list for method output_type
+	7,  // [7:18] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -973,7 +1079,7 @@ func file_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

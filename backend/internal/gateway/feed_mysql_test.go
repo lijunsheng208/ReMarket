@@ -141,8 +141,8 @@ func TestFeedHTTPMySQL(t *testing.T) {
 		}
 		ids[i] = u.ID
 	}
-	userServer := grpcx.NewServer(nil, grpcx.AuthInterceptor(tokens))
-	userv1.RegisterUserServiceServer(userServer, uh.NewAuthenticated(nil, nil, us.NewCurrentUser(users)).WithFollow(us.NewFollow(users)))
+	userServer := grpcx.NewServer(nil, grpcx.OptionalAuthInterceptor(tokens, []string{userv1.UserService_GetPublicProfile_FullMethodName}))
+	userv1.RegisterUserServiceServer(userServer, uh.NewAuthenticated(nil, nil, us.NewCurrentUser(users)).WithFollow(us.NewFollow(users)).WithProfile(us.NewProfile(users)))
 	uc := userv1.NewUserServiceClient(connect(userServer))
 	productAuth, err := ph.NewAuthInterceptor(tokens, "", strings.Repeat("s", 32))
 	if err != nil {
@@ -198,6 +198,7 @@ func TestFeedHTTPMySQL(t *testing.T) {
 	router := NewRouter(uc, time.Second)
 	AddFeedRoutes(router, fc, tokens, 3*time.Second)
 	AddFollowRoutes(router, uc, tokens, time.Second)
+	AddProfileRoutes(router, uc, pc, tokens, time.Second)
 	raw, _, err := tokens.IssueAccessToken(ids[0], "USER")
 	if err != nil {
 		t.Fatal(err)
@@ -242,6 +243,23 @@ func TestFeedHTTPMySQL(t *testing.T) {
 	}
 	followPath := fmt.Sprintf("/api/v1/users/%d/follow", ids[1])
 	call("POST", followPath, raw, 200)
+	anonymous := call("GET", fmt.Sprintf("/api/v1/users/%d/profile", ids[1]), "", 200)
+	if anonymous["follower_count"] != "1" || anonymous["is_following"] == true || anonymous["username"] != nil {
+		t.Fatal("公开资料或匿名关系错误")
+	}
+	followed := call("GET", fmt.Sprintf("/api/v1/users/%d/follow", ids[1]), raw, 200)
+	if followed["is_following"] != true {
+		t.Fatal("关注状态未同步")
+	}
+	sellerPage := call("GET", fmt.Sprintf("/api/v1/users/%d/products", ids[1]), "", 200)
+	if len(sellerPage["products"].([]any)) != 2 {
+		t.Fatal("卖家公开商品范围错误")
+	}
+	for _, item := range sellerPage["products"].([]any) {
+		if item.(map[string]any)["seller_id"] != fmt.Sprint(ids[1]) {
+			t.Fatal("卖家主页混入他人商品")
+		}
+	}
 	first := call("GET", "/api/v1/feed/following?page_size=1", raw, 200)
 	if os.Getenv("FEED_INTEGRATION") == "1" {
 		warm := call("GET", "/api/v1/feed/following?page_size=1", raw, 200)
@@ -267,6 +285,11 @@ func TestFeedHTTPMySQL(t *testing.T) {
 	call("GET", "/api/v1/feed/home?cursor=invalid", "", 400)
 	call("GET", "/api/v1/feed/home?page_size=101", "", 400)
 	call("DELETE", followPath, raw, 200)
+	unfollowed := call("GET", fmt.Sprintf("/api/v1/users/%d/follow", ids[1]), raw, 200)
+	if unfollowed["is_following"] == true || unfollowed["follower_count"] != nil {
+		t.Fatal("取消后的状态或粉丝数错误")
+	}
+
 	empty = call("GET", "/api/v1/feed/following", raw, 200)
 	if len(empty) != 0 {
 		t.Fatal("取消后仍显示")

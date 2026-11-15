@@ -127,6 +127,7 @@ func run() error {
 	}
 	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
 	gateway.AddFeedRoutes(router, feedv1.NewFeedServiceClient(feedConn), tokens, timeout)
+	gateway.AddProfileRoutes(router, userv1.NewUserServiceClient(conn), productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddFollowRoutes(router, userv1.NewUserServiceClient(conn), tokens, timeout)
 	gateway.AddProductRoutes(router, productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddOrderRoutes(router, orderv1.NewOrderServiceClient(orderConn), tokens, timeout)

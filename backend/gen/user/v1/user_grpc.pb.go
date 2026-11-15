@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	UserService_GetPublicProfile_FullMethodName  = "/remarket.user.v1.UserService/GetPublicProfile"
 	UserService_ListFeedFollowers_FullMethodName = "/remarket.user.v1.UserService/ListFeedFollowers"
 	UserService_Follow_FullMethodName            = "/remarket.user.v1.UserService/Follow"
 	UserService_Unfollow_FullMethodName          = "/remarket.user.v1.UserService/Unfollow"
@@ -35,6 +36,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	// 公开资料与统计，关注状态仅基于已验证的调用者身份。
+	GetPublicProfile(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*PublicProfile, error)
 	// 仅供独立 Feed 服务凭据读取粉丝 ID，不返回用户资料。
 	ListFeedFollowers(ctx context.Context, in *ListFeedFollowersRequest, opts ...grpc.CallOption) (*ListFeedFollowersResponse, error)
 	Follow(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error)
@@ -55,6 +58,16 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) GetPublicProfile(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*PublicProfile, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PublicProfile)
+	err := c.cc.Invoke(ctx, UserService_GetPublicProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *userServiceClient) ListFeedFollowers(ctx context.Context, in *ListFeedFollowersRequest, opts ...grpc.CallOption) (*ListFeedFollowersResponse, error) {
@@ -161,6 +174,8 @@ func (c *userServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfile
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
+	// 公开资料与统计，关注状态仅基于已验证的调用者身份。
+	GetPublicProfile(context.Context, *GetUserRequest) (*PublicProfile, error)
 	// 仅供独立 Feed 服务凭据读取粉丝 ID，不返回用户资料。
 	ListFeedFollowers(context.Context, *ListFeedFollowersRequest) (*ListFeedFollowersResponse, error)
 	Follow(context.Context, *FollowRequest) (*FollowResponse, error)
@@ -183,6 +198,9 @@ type UserServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedUserServiceServer struct{}
 
+func (UnimplementedUserServiceServer) GetPublicProfile(context.Context, *GetUserRequest) (*PublicProfile, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPublicProfile not implemented")
+}
 func (UnimplementedUserServiceServer) ListFeedFollowers(context.Context, *ListFeedFollowersRequest) (*ListFeedFollowersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListFeedFollowers not implemented")
 }
@@ -232,6 +250,24 @@ func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&UserService_ServiceDesc, srv)
+}
+
+func _UserService_GetPublicProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetPublicProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetPublicProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetPublicProfile(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_ListFeedFollowers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -421,6 +457,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "remarket.user.v1.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPublicProfile",
+			Handler:    _UserService_GetPublicProfile_Handler,
+		},
 		{
 			MethodName: "ListFeedFollowers",
 			Handler:    _UserService_ListFeedFollowers_Handler,

@@ -3,6 +3,8 @@ package remarket.user.v1;
 option go_package = "remarket/backend/gen/user/v1;userv1";
 import "google/protobuf/timestamp.proto";
 service UserService {
+  // 公开资料与统计，关注状态仅基于已验证的调用者身份。
+  rpc GetPublicProfile(GetUserRequest) returns (PublicProfile);
   // 仅供独立 Feed 服务凭据读取粉丝 ID，不返回用户资料。
   rpc ListFeedFollowers(ListFeedFollowersRequest) returns (ListFeedFollowersResponse);
   rpc Follow(FollowRequest) returns (FollowResponse);
@@ -43,3 +45,5 @@ message ListFollowsResponse { repeated FollowEntry items = 1; int64 next_after_i
 
 message ListFeedFollowersRequest { int64 seller_id = 1; int64 after_id = 2; int32 page_size = 3; }
 message ListFeedFollowersResponse { repeated int64 user_ids = 1; int64 next_after_id = 2; int64 total = 3; }
+
+message PublicProfile { int64 id = 1; string nickname = 2; int64 follower_count = 3; int64 following_count = 4; bool is_following = 5; bool is_self = 6; google.protobuf.Timestamp created_at = 7; }
