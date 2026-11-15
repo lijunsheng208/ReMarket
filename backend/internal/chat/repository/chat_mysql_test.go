@@ -220,6 +220,129 @@ func TestChatMySQL(t *testing.T) {
 	if _, e := r.Send(ctx, 1, other.ID, "retry-key", "same content"); e == nil {
 		t.Fatal("跨会话复用键被接受")
 	}
+
+	// 未读只统计对方消息：序号中包含自己发送的消息，不能直接相减。
+	buyerRows, e := r.List(ctx, 1, nil, 100)
+	if e != nil {
+		t.Fatal(e)
+	}
+	found := false
+	for _, row := range buyerRows {
+		if row.ID == saved.ID {
+			found = true
+			if row.UnreadCount != 12 || row.LastReadSeq != 0 {
+				t.Fatal("未读包含本人消息", row)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("列表缺少会话")
+	}
+	state, e := r.Read(ctx, 1, saved.ID, 8)
+	if e != nil || state.State.LastReadSeq != 8 || state.State.UnreadCount != 5 {
+		t.Fatal("已读统计错误", e, state)
+	}
+	staleRead, e := r.Read(ctx, 1, saved.ID, 4)
+	if e != nil || staleRead.State.LastReadSeq != 8 {
+		t.Fatal("旧请求回退游标", e)
+	}
+	if _, e := r.Read(ctx, 1, saved.ID, 15); e == nil {
+		t.Fatal("接受未来游标")
+	}
+	if _, e := r.Read(ctx, 3, saved.ID, 0); e == nil {
+		t.Fatal("非成员修改已读")
+	}
+	empty, e := r.Read(ctx, 1, other.ID, 0)
+	if e != nil || empty.State.LastSeq != 0 || empty.State.UnreadCount != 0 {
+		t.Fatal("空会话已读错误", e)
+	}
+	page, e := r.Sync(ctx, 1, saved.ID, 0, 0, 3)
+	if e != nil || len(page.Messages) != 3 || page.Messages[0].Seq != 1 || page.Until != 14 {
+		t.Fatal("从零补拉错误", e)
+	}
+	// 多设备乱序请求最终取最大游标；另一成员的已读位置不受影响。
+	readErrors := make(chan error, 6)
+	for _, seq := range []int64{9, 13, 11, 14, 2, 0} {
+		sendWG.Add(1)
+		go func(seq int64) { defer sendWG.Done(); _, e := r.Read(ctx, 1, saved.ID, seq); readErrors <- e }(seq)
+	}
+	sendWG.Wait()
+	close(readErrors)
+	for e := range readErrors {
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
+	finalRead, e := r.Read(ctx, 1, saved.ID, 0)
+	if e != nil || finalRead.State.LastReadSeq != 14 || finalRead.State.UnreadCount != 0 {
+		t.Fatal("并发已读未单调", e)
+	}
+	sellerRead, e := r.Read(ctx, 2, saved.ID, 0)
+	if e != nil || sellerRead.State.LastReadSeq != 0 || sellerRead.State.UnreadCount != 2 {
+		t.Fatal("污染另一成员状态", e)
+	}
+	// 新消息和旧已读位置竞争时，不得把新到消息误标为已读。
+	concurrent := make(chan error, 20)
+	for i := 0; i < 10; i++ {
+		sendWG.Add(2)
+		go func(i int) {
+			defer sendWG.Done()
+			_, e := r.Send(ctx, 2, saved.ID, fmt.Sprintf("new-unread-%d", i), "new")
+			concurrent <- e
+		}(i)
+		go func() { defer sendWG.Done(); _, e := r.Read(ctx, 1, saved.ID, 14); concurrent <- e }()
+	}
+	sendWG.Wait()
+	close(concurrent)
+	for e := range concurrent {
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
+	finalRead, e = r.Read(ctx, 1, saved.ID, 14)
+	if e != nil || finalRead.State.UnreadCount != 10 || finalRead.State.LastSeq != 24 {
+		t.Fatal("新消息被误标为已读", e)
+	}
+	// 固定上界补拉必须结束于旧上界，新提交的消息留给下一轮。
+	after := int64(3)
+	for after < page.Until {
+		next, e := r.Sync(ctx, 1, saved.ID, after, page.Until, 3)
+		if e != nil || len(next.Messages) == 0 {
+			t.Fatal("分页补拉中断", e)
+		}
+		for _, m := range next.Messages {
+			if m.Seq != after+1 {
+				t.Fatal("补拉遗漏或重复")
+			}
+			after = m.Seq
+		}
+	}
+	if after != 14 {
+		t.Fatal("补拉越过固定上界")
+	}
+	latest, e := r.Sync(ctx, 1, saved.ID, after, 0, 100)
+	if e != nil || len(latest.Messages) != 10 || latest.Until != 24 {
+		t.Fatal("下一轮补拉未恢复新消息", e)
+	}
+	if _, e := r.Sync(ctx, 3, saved.ID, 0, 0, 20); e == nil {
+		t.Fatal("非成员补拉")
+	}
+	if _, e := r.Sync(ctx, 1, saved.ID, 25, 0, 20); e == nil {
+		t.Fatal("接受越界补拉")
+	}
+	if _, e := pool.ExecContext(ctx, "CREATE TRIGGER reject_read BEFORE UPDATE ON conversation_members FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'test read failure'"); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := r.Read(ctx, 1, saved.ID, 24); e == nil {
+		t.Fatal("已读更新故障未传播")
+	}
+	var member model.Member
+	if e := db.Where("conversation_id = ? AND user_id = ?", saved.ID, 1).Take(&member).Error; e != nil || member.LastReadSeq != 14 {
+		t.Fatal("失败事务改变游标", e)
+	}
+	if _, e := pool.ExecContext(ctx, "DROP TRIGGER reject_read"); e != nil {
+		t.Fatal(e)
+	}
 	// 第二成员插入失败时，会话与第一成员均不得残留。
 	if e := pool.QueryRowContext(ctx, "SELECT COUNT(*) FROM conversations").Scan(&members); e != nil {
 		t.Fatal(e)

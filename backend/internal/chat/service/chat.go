@@ -17,6 +17,8 @@ import (
 )
 
 type Store interface {
+	Read(context.Context, int64, int64, int64) (*repository.ReadResult, error)
+	Sync(context.Context, int64, int64, int64, int64, int) (*repository.SyncPage, error)
 	Send(context.Context, int64, int64, string, string) (*repository.SendResult, error)
 	FindExisting(context.Context, int64, int64) (*model.Conversation, error)
 	Create(context.Context, int64, int64, int64) (*model.Conversation, error)

@@ -138,3 +138,29 @@ func TestSendValidation(t *testing.T) {
 		}
 	}
 }
+
+// TestReadAndSyncValidation 验证负值、反向上界和非法页大小在访问依赖前拒绝。
+func TestReadAndSyncValidation(t *testing.T) {
+	s := New(nil, nil, nil)
+	for _, tc := range []struct{ id, seq int64 }{{0, 0}, {1, -1}} {
+		if _, e := s.Read(context.Background(), tc.id, tc.seq); e == nil {
+			t.Fatal("接受非法已读参数")
+		}
+	}
+	for _, tc := range []struct {
+		id, after, until int64
+		size             int
+	}{
+		{0, 0, 0, 20}, {1, -1, 0, 20}, {1, 2, 1, 20}, {1, 0, -1, 20}, {1, 0, 0, 101},
+	} {
+		if _, _, e := s.Sync(context.Background(), tc.id, tc.after, tc.until, tc.size); e == nil {
+			t.Fatal("接受非法补拉参数")
+		}
+	}
+	if _, e := s.Read(context.Background(), 1, 0); e == nil {
+		t.Fatal("匿名更新已读")
+	}
+	if _, _, e := s.Sync(context.Background(), 1, 0, 0, 20); e == nil {
+		t.Fatal("匿名补拉")
+	}
+}

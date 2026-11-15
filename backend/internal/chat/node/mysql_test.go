@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/test/bufconn"
 	"net"
 	"net/http/httptest"
@@ -98,8 +99,30 @@ func TestWebSocketMySQL(t *testing.T) {
 	server := httptest.NewServer(n)
 	defer server.Close()
 	defer n.Close()
+	receiverNode, receiverURL := n, server.URL
+	var redisFailure *redisFaultHook
+	if os.Getenv("CHAT_REDIS_INTEGRATION") == "1" {
+		client, redisCfg := testRedis(t)
+		redisFailure = &redisFaultHook{}
+		client.AddHook(redisFailure)
+		defer redisFailure.fail.Store(false)
+		if err := n.EnableRedis(ctx, client, redisCfg); err != nil {
+			t.Fatal(err)
+		}
+		remote := New(chatv1.NewChatServiceClient(conn), testUsers{}, tokens, nil)
+		if err := remote.EnableRedis(ctx, client, redisCfg); err != nil {
+			t.Fatal(err)
+		}
+		remoteServer := httptest.NewServer(remote)
+		defer remoteServer.Close()
+		defer remote.Close()
+		receiverNode, receiverURL = remote, remoteServer.URL
+	}
+	receiver, _ := dialPeer(t, receiverNode, receiverURL, tokens, 2)
+	if n.relay != nil {
+		eventually(t, func() bool { return len(routeNodes(t, n.relay, 2)) == 1 })
+	}
 	sender, _ := dialPeer(t, n, server.URL, tokens, 1)
-	receiver, _ := dialPeer(t, n, server.URL, tokens, 2)
 	intruder, _ := dialPeer(t, n, server.URL, tokens, 3)
 	// send 发送固定幂等键，重连时仍复用原键和正文。
 	send := func(c *websocket.Conn, key, content string) {
@@ -121,6 +144,42 @@ func TestWebSocketMySQL(t *testing.T) {
 	if e := db.Model(&model.Message{}).Count(&count).Error; e != nil || count != 1 {
 		t.Fatal("ACK 前未持久化", e, count)
 	}
+
+	// 已读 ACK 使用持久化结果，并跨 Node 通知对方与同用户其他标签页。
+	otherDevice, _ := dialPeer(t, receiverNode, receiverURL, tokens, 2)
+	read := func(c *websocket.Conn, seq string) {
+		t.Helper()
+		if e := c.WriteJSON(map[string]any{"type": "chat.read", "request_id": "read-1", "data": map[string]string{"conversation_id": fmt.Sprint(conversation.ID), "last_read_seq": seq}}); e != nil {
+			t.Fatal(e)
+		}
+	}
+	read(receiver, "1")
+	if f := readFrame(t, receiver); f.Type != "chat.read.ack" || !strings.Contains(string(f.Data), `"last_read_seq":"1"`) {
+		t.Fatal("已读 ACK 错误", f)
+	}
+	for _, c := range []*websocket.Conn{sender, otherDevice} {
+		if f := readFrame(t, c); f.Type != "chat.read" || !strings.Contains(string(f.Data), `"user_id":"2"`) {
+			t.Fatal("已读通知未送达", f)
+		}
+	}
+	read(receiver, "0")
+	if f := readFrame(t, receiver); f.Type != "chat.read.ack" || !strings.Contains(string(f.Data), `"last_read_seq":"1"`) {
+		t.Fatal("旧已读请求回退", f)
+	}
+	for _, c := range []*websocket.Conn{sender, otherDevice} {
+		if f := readFrame(t, c); f.Type != "chat.read" {
+			t.Fatal("缺少已读同步", f)
+		}
+	}
+	read(receiver, "2")
+	if f := readFrame(t, receiver); f.Type != "chat.error" || !strings.Contains(string(f.Data), "InvalidArgument") {
+		t.Fatal("未来已读未拒绝", f)
+	}
+	read(intruder, "0")
+	if f := readFrame(t, intruder); f.Type != "chat.error" || !strings.Contains(string(f.Data), "PermissionDenied") {
+		t.Fatal("非成员更新已读", f)
+	}
+	otherDevice.Close()
 	sender.Close()
 	sender, _ = dialPeer(t, n, server.URL, tokens, 1)
 	send(sender, "persistent-key", "hello")
@@ -170,6 +229,82 @@ func TestWebSocketMySQL(t *testing.T) {
 	}
 	if e := db.Model(&model.Message{}).Count(&count).Error; e != nil || count != 3 {
 		t.Fatal("失败消息未回滚", e, count)
+	}
+
+	if redisFailure != nil {
+		if _, e := pool.ExecContext(ctx, "DROP TRIGGER reject_ws_update"); e != nil {
+			t.Fatal(e)
+		}
+		redisFailure.fail.Store(true)
+		send(sender, "redis-failed", "saved during redis failure")
+		if f := readFrame(t, sender); f.Type != "chat.ack" || !strings.Contains(string(f.Data), `"seq":"4"`) {
+			t.Fatal("Redis 故障影响 ACK", f)
+		}
+		persisted, e := store.Messages(ctx, 2, conversation.ID, 0, 3, 20)
+		if e != nil || len(persisted) != 1 {
+			t.Fatal("Redis 故障消息不可查询", e)
+		}
+		redisFailure.fail.Store(false)
+		reconnected, _ := dialPeer(t, receiverNode, receiverURL, tokens, 2)
+		eventually(t, func() bool { return len(routeNodes(t, n.relay, 2)) == 1 })
+		send(sender, "redis-recovered", "realtime recovered")
+		if f := readFrame(t, sender); f.Type != "chat.ack" {
+			t.Fatal("恢复后无 ACK")
+		}
+		if f := readFrame(t, reconnected); f.Type != "chat.message" || !strings.Contains(string(f.Data), `"seq":"5"`) {
+			t.Fatal("恢复后实时通知失败", f)
+		}
+	}
+
+	// 重连后按连续序号分批补拉，包括没有收到 Pub/Sub 通知的消息；补拉本身不标记已读。
+	readerToken, _, e := tokens.IssueAccessToken(2, "USER")
+	if e != nil {
+		t.Fatal(e)
+	}
+	readerCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", "Bearer "+readerToken))
+	after, until := int64(0), int64(0)
+	for {
+		page, e := chatv1.NewChatServiceClient(conn).ListMessages(readerCtx, &chatv1.ListMessagesRequest{ConversationId: conversation.ID, AfterSeq: &after, SyncUntilSeq: until, PageSize: 2})
+		if e != nil {
+			t.Fatal(e)
+		}
+		if until == 0 {
+			until = page.SyncUntilSeq
+		}
+		if page.SyncUntilSeq != until {
+			t.Fatal("补拉上界漂移")
+		}
+		for _, m := range page.Messages {
+			if m.Seq != after+1 {
+				t.Fatal("重连补拉有遗漏或重复")
+			}
+			after = m.Seq
+		}
+		if page.NextSeq != after {
+			t.Fatal("补拉游标错误")
+		}
+		if !page.HasMore {
+			break
+		}
+	}
+	expected := int64(3)
+	if redisFailure != nil {
+		expected = 5
+	}
+	if after != expected {
+		t.Fatal("未恢复全部持久化消息", after, expected)
+	}
+	readState, e := store.Read(ctx, 2, conversation.ID, 0)
+	if e != nil || readState.State.LastReadSeq != 1 || readState.State.UnreadCount != expected-1 {
+		t.Fatal("补拉误标已读或未读错误", e)
+	}
+	resumed, _ := dialPeer(t, receiverNode, receiverURL, tokens, 2)
+	read(resumed, fmt.Sprint(expected))
+	if f := readFrame(t, resumed); f.Type != "chat.read.ack" || !strings.Contains(string(f.Data), `"unread_count":"0"`) {
+		t.Fatal("恢复后已读未清零", f)
+	}
+	if f := readFrame(t, sender); f.Type != "chat.read" {
+		t.Fatal("恢复后已读通知缺失", f)
 	}
 
 }

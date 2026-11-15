@@ -23,6 +23,7 @@ const (
 	ChatService_CreateConversation_FullMethodName = "/remarket.chat.v1.ChatService/CreateConversation"
 	ChatService_ListConversations_FullMethodName  = "/remarket.chat.v1.ChatService/ListConversations"
 	ChatService_ListMessages_FullMethodName       = "/remarket.chat.v1.ChatService/ListMessages"
+	ChatService_ReadConversation_FullMethodName   = "/remarket.chat.v1.ChatService/ReadConversation"
 )
 
 // ChatServiceClient is the client API for ChatService service.
@@ -34,6 +35,8 @@ type ChatServiceClient interface {
 	CreateConversation(ctx context.Context, in *CreateConversationRequest, opts ...grpc.CallOption) (*Conversation, error)
 	ListConversations(ctx context.Context, in *ListConversationsRequest, opts ...grpc.CallOption) (*ListConversationsResponse, error)
 	ListMessages(ctx context.Context, in *ListMessagesRequest, opts ...grpc.CallOption) (*ListMessagesResponse, error)
+	// 游标只增不减，不得超过当前已持久化序号。
+	ReadConversation(ctx context.Context, in *ReadConversationRequest, opts ...grpc.CallOption) (*ReadConversationResponse, error)
 }
 
 type chatServiceClient struct {
@@ -84,6 +87,16 @@ func (c *chatServiceClient) ListMessages(ctx context.Context, in *ListMessagesRe
 	return out, nil
 }
 
+func (c *chatServiceClient) ReadConversation(ctx context.Context, in *ReadConversationRequest, opts ...grpc.CallOption) (*ReadConversationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadConversationResponse)
+	err := c.cc.Invoke(ctx, ChatService_ReadConversation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility.
@@ -93,6 +106,8 @@ type ChatServiceServer interface {
 	CreateConversation(context.Context, *CreateConversationRequest) (*Conversation, error)
 	ListConversations(context.Context, *ListConversationsRequest) (*ListConversationsResponse, error)
 	ListMessages(context.Context, *ListMessagesRequest) (*ListMessagesResponse, error)
+	// 游标只增不减，不得超过当前已持久化序号。
+	ReadConversation(context.Context, *ReadConversationRequest) (*ReadConversationResponse, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -114,6 +129,9 @@ func (UnimplementedChatServiceServer) ListConversations(context.Context, *ListCo
 }
 func (UnimplementedChatServiceServer) ListMessages(context.Context, *ListMessagesRequest) (*ListMessagesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMessages not implemented")
+}
+func (UnimplementedChatServiceServer) ReadConversation(context.Context, *ReadConversationRequest) (*ReadConversationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReadConversation not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 func (UnimplementedChatServiceServer) testEmbeddedByValue()                     {}
@@ -208,6 +226,24 @@ func _ChatService_ListMessages_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatService_ReadConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadConversationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).ReadConversation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_ReadConversation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).ReadConversation(ctx, req.(*ReadConversationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -230,6 +266,10 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMessages",
 			Handler:    _ChatService_ListMessages_Handler,
+		},
+		{
+			MethodName: "ReadConversation",
+			Handler:    _ChatService_ReadConversation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

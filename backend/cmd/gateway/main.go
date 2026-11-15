@@ -16,6 +16,7 @@ import (
 	productv1 "remarket/backend/gen/product/v1"
 	searchv1 "remarket/backend/gen/search/v1"
 	userv1 "remarket/backend/gen/user/v1"
+	chatnode "remarket/backend/internal/chat/node"
 	"remarket/backend/internal/gateway"
 	"remarket/backend/pkg/auth"
 	"remarket/backend/pkg/grpcx"
@@ -137,10 +138,29 @@ func run() error {
 		return err
 	}
 	defer chatConn.Close()
-	gateway.AddChatRoutes(router, chatv1.NewChatServiceClient(chatConn), tokens, timeout)
 	// HTTP Shutdown 不负责已升级连接，显式关闭并等待 WebSocket 协程退出。
 	chatNode := gateway.AddChatRealtimeRoutes(router, chatv1.NewChatServiceClient(chatConn), userv1.NewUserServiceClient(conn), tokens, strings.Split(os.Getenv("CHAT_ALLOWED_ORIGINS"), ","), timeout)
+	enabled, chatRedisConfig, err := chatnode.LoadRedisConfig()
+	if err != nil {
+		return err
+	}
+	if enabled {
+		redisConfig, err := rx.LoadConfig()
+		if err != nil {
+			return err
+		}
+		chatRedis, err := rx.Open(ctx, redisConfig)
+		if err != nil {
+			return err
+		}
+		// 先停止 Node 的订阅/续期和连接，再关闭它依赖的 Redis 连接池。
+		defer chatRedis.Close()
+		if err := chatNode.EnableRedis(ctx, chatRedis, chatRedisConfig); err != nil {
+			return err
+		}
+	}
 	defer chatNode.Close()
+	gateway.AddChatRoutes(router, chatv1.NewChatServiceClient(chatConn), tokens, timeout, chatNode)
 
 	gateway.AddFeedRoutes(router, feedv1.NewFeedServiceClient(feedConn), tokens, timeout)
 	gateway.AddProfileRoutes(router, userv1.NewUserServiceClient(conn), productv1.NewProductServiceClient(productConn), tokens, timeout)

@@ -45,6 +45,7 @@ type SessionChecker interface {
 
 type Node struct {
 	users        SessionChecker
+	relay        *redisRelay
 	mu           sync.Mutex
 	tickets      map[[32]byte]ticket
 	peers        map[int64]map[*peer]struct{}
@@ -197,6 +198,7 @@ func (n *Node) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	n.peers[user][p] = struct{}{}
 	n.wg.Add(1)
 	n.mu.Unlock()
+	n.signalRoutes()
 	defer n.wg.Done()
 	// 关闭网络连接解除读写阻塞，等待写循环退出后才释放 peer。
 	ctx, cancel := context.WithCancel(r.Context())
@@ -212,6 +214,7 @@ func (n *Node) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			delete(n.peers, user)
 		}
 		n.mu.Unlock()
+		n.signalRoutes()
 	}()
 	ws.SetReadLimit(16 << 10)
 	_ = ws.SetReadDeadline(time.Now().Add(n.pongWait))
@@ -295,6 +298,10 @@ func (n *Node) receive(parent context.Context, p *peer, data []byte) {
 		n.emit(p, "pong", f.RequestID, struct{}{})
 		return
 	}
+	if f.Type == "chat.read" {
+		n.read(parent, p, f)
+		return
+	}
 	if f.Type != "chat.send" {
 		n.failure(p, f.RequestID, "InvalidArgument", "未知消息类型")
 		return
@@ -347,15 +354,7 @@ func (n *Node) receive(parent context.Context, p *peer, data []byte) {
 	delete(payload, "id")
 	encodedBody, _ := json.Marshal(payload)
 	event, _ := json.Marshal(frame{Type: "chat.message", Data: encodedBody})
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	for _, user := range result.ParticipantIds {
-		for target := range n.peers[user] {
-			if target != p {
-				n.enqueue(target, event)
-			}
-		}
-	}
+	n.notify(parent, result.ParticipantIds, event, p)
 }
 
 // strictJSON 拒绝未知字段、尾随内容及空载荷。
@@ -384,4 +383,10 @@ func (n *Node) Close() {
 	}
 	n.mu.Unlock()
 	n.wg.Wait()
+	n.mu.Lock()
+	relay := n.relay
+	n.mu.Unlock()
+	if relay != nil {
+		relay.close()
+	}
 }

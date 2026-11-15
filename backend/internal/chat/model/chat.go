@@ -5,6 +5,9 @@ import "time"
 
 // Conversation 保存商品咨询双方及事务内分配的最后序号。
 type Conversation struct {
+	// 查询派生字段，只读，不写入会话表；用户身份由成员关联决定。
+	LastReadSeq   int64 `gorm:"->;-:migration"`
+	UnreadCount   int64 `gorm:"->;-:migration"`
 	ID            int64 `gorm:"primaryKey;autoIncrement"`
 	ProductID     int64
 	BuyerID       int64

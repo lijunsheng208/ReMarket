@@ -32,6 +32,8 @@ type Conversation struct {
 	LastMessageId int64                  `protobuf:"varint,6,opt,name=last_message_id,json=lastMessageId,proto3" json:"last_message_id,omitempty"`
 	LastMessageAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_message_at,json=lastMessageAt,proto3" json:"last_message_at,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastReadSeq   int64                  `protobuf:"varint,9,opt,name=last_read_seq,json=lastReadSeq,proto3" json:"last_read_seq,omitempty"`
+	UnreadCount   int64                  `protobuf:"varint,10,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -120,6 +122,20 @@ func (x *Conversation) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *Conversation) GetLastReadSeq() int64 {
+	if x != nil {
+		return x.LastReadSeq
+	}
+	return 0
+}
+
+func (x *Conversation) GetUnreadCount() int64 {
+	if x != nil {
+		return x.UnreadCount
+	}
+	return 0
 }
 
 type Message struct {
@@ -371,13 +387,15 @@ func (x *ListConversationsResponse) GetNextCursor() string {
 	return ""
 }
 
-// before_seq 倒序历史、after_seq 正序补拉互斥；两者为零表示最新历史。
+// after_seq 存在时（包括零）正序补拉，与 before_seq 互斥；未传则查询最新历史。
+// 首次 sync_until_seq=0 由服务捕获上界，后续页复用返回值。
 type ListMessagesRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	BeforeSeq      int64                  `protobuf:"varint,2,opt,name=before_seq,json=beforeSeq,proto3" json:"before_seq,omitempty"`
-	AfterSeq       int64                  `protobuf:"varint,3,opt,name=after_seq,json=afterSeq,proto3" json:"after_seq,omitempty"`
+	AfterSeq       *int64                 `protobuf:"varint,3,opt,name=after_seq,json=afterSeq,proto3,oneof" json:"after_seq,omitempty"`
 	PageSize       int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	SyncUntilSeq   int64                  `protobuf:"varint,5,opt,name=sync_until_seq,json=syncUntilSeq,proto3" json:"sync_until_seq,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -427,8 +445,8 @@ func (x *ListMessagesRequest) GetBeforeSeq() int64 {
 }
 
 func (x *ListMessagesRequest) GetAfterSeq() int64 {
-	if x != nil {
-		return x.AfterSeq
+	if x != nil && x.AfterSeq != nil {
+		return *x.AfterSeq
 	}
 	return 0
 }
@@ -440,11 +458,19 @@ func (x *ListMessagesRequest) GetPageSize() int32 {
 	return 0
 }
 
+func (x *ListMessagesRequest) GetSyncUntilSeq() int64 {
+	if x != nil {
+		return x.SyncUntilSeq
+	}
+	return 0
+}
+
 type ListMessagesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
 	HasMore       bool                   `protobuf:"varint,2,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
 	NextSeq       int64                  `protobuf:"varint,3,opt,name=next_seq,json=nextSeq,proto3" json:"next_seq,omitempty"`
+	SyncUntilSeq  int64                  `protobuf:"varint,4,opt,name=sync_until_seq,json=syncUntilSeq,proto3" json:"sync_until_seq,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -496,6 +522,13 @@ func (x *ListMessagesResponse) GetHasMore() bool {
 func (x *ListMessagesResponse) GetNextSeq() int64 {
 	if x != nil {
 		return x.NextSeq
+	}
+	return 0
+}
+
+func (x *ListMessagesResponse) GetSyncUntilSeq() int64 {
+	if x != nil {
+		return x.SyncUntilSeq
 	}
 	return 0
 }
@@ -612,11 +645,191 @@ func (x *SendMessageResponse) GetParticipantIds() []int64 {
 	return nil
 }
 
+type ReadConversationRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	LastReadSeq    int64                  `protobuf:"varint,2,opt,name=last_read_seq,json=lastReadSeq,proto3" json:"last_read_seq,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ReadConversationRequest) Reset() {
+	*x = ReadConversationRequest{}
+	mi := &file_chat_v1_chat_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReadConversationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReadConversationRequest) ProtoMessage() {}
+
+func (x *ReadConversationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReadConversationRequest.ProtoReflect.Descriptor instead.
+func (*ReadConversationRequest) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ReadConversationRequest) GetConversationId() int64 {
+	if x != nil {
+		return x.ConversationId
+	}
+	return 0
+}
+
+func (x *ReadConversationRequest) GetLastReadSeq() int64 {
+	if x != nil {
+		return x.LastReadSeq
+	}
+	return 0
+}
+
+type ReadState struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	UserId         int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	LastReadSeq    int64                  `protobuf:"varint,3,opt,name=last_read_seq,json=lastReadSeq,proto3" json:"last_read_seq,omitempty"`
+	UnreadCount    int64                  `protobuf:"varint,4,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
+	LastSeq        int64                  `protobuf:"varint,5,opt,name=last_seq,json=lastSeq,proto3" json:"last_seq,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ReadState) Reset() {
+	*x = ReadState{}
+	mi := &file_chat_v1_chat_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReadState) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReadState) ProtoMessage() {}
+
+func (x *ReadState) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReadState.ProtoReflect.Descriptor instead.
+func (*ReadState) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ReadState) GetConversationId() int64 {
+	if x != nil {
+		return x.ConversationId
+	}
+	return 0
+}
+
+func (x *ReadState) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *ReadState) GetLastReadSeq() int64 {
+	if x != nil {
+		return x.LastReadSeq
+	}
+	return 0
+}
+
+func (x *ReadState) GetUnreadCount() int64 {
+	if x != nil {
+		return x.UnreadCount
+	}
+	return 0
+}
+
+func (x *ReadState) GetLastSeq() int64 {
+	if x != nil {
+		return x.LastSeq
+	}
+	return 0
+}
+
+type ReadConversationResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	State          *ReadState             `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
+	ParticipantIds []int64                `protobuf:"varint,2,rep,packed,name=participant_ids,json=participantIds,proto3" json:"participant_ids,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ReadConversationResponse) Reset() {
+	*x = ReadConversationResponse{}
+	mi := &file_chat_v1_chat_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReadConversationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReadConversationResponse) ProtoMessage() {}
+
+func (x *ReadConversationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_chat_v1_chat_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReadConversationResponse.ProtoReflect.Descriptor instead.
+func (*ReadConversationResponse) Descriptor() ([]byte, []int) {
+	return file_chat_v1_chat_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ReadConversationResponse) GetState() *ReadState {
+	if x != nil {
+		return x.State
+	}
+	return nil
+}
+
+func (x *ReadConversationResponse) GetParticipantIds() []int64 {
+	if x != nil {
+		return x.ParticipantIds
+	}
+	return nil
+}
+
 var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\x10remarket.chat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb7\x02\n" +
+	"\x12chat/v1/chat.proto\x12\x10remarket.chat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xfe\x02\n" +
 	"\fConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
 	"\n" +
@@ -627,7 +840,10 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x0flast_message_id\x18\x06 \x01(\x03R\rlastMessageId\x12B\n" +
 	"\x0flast_message_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\rlastMessageAt\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x8d\x02\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\"\n" +
+	"\rlast_read_seq\x18\t \x01(\x03R\vlastReadSeq\x12!\n" +
+	"\funread_count\x18\n" +
+	" \x01(\x03R\vunreadCount\"\x8d\x02\n" +
 	"\aMessage\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12'\n" +
 	"\x0fconversation_id\x18\x02 \x01(\x03R\x0econversationId\x12\x1b\n" +
@@ -647,29 +863,46 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x19ListConversationsResponse\x12D\n" +
 	"\rconversations\x18\x01 \x03(\v2\x1e.remarket.chat.v1.ConversationR\rconversations\x12\x1f\n" +
 	"\vnext_cursor\x18\x02 \x01(\tR\n" +
-	"nextCursor\"\x97\x01\n" +
+	"nextCursor\"\xd0\x01\n" +
 	"\x13ListMessagesRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\x1d\n" +
 	"\n" +
-	"before_seq\x18\x02 \x01(\x03R\tbeforeSeq\x12\x1b\n" +
-	"\tafter_seq\x18\x03 \x01(\x03R\bafterSeq\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"\x83\x01\n" +
+	"before_seq\x18\x02 \x01(\x03R\tbeforeSeq\x12 \n" +
+	"\tafter_seq\x18\x03 \x01(\x03H\x00R\bafterSeq\x88\x01\x01\x12\x1b\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12$\n" +
+	"\x0esync_until_seq\x18\x05 \x01(\x03R\fsyncUntilSeqB\f\n" +
+	"\n" +
+	"_after_seq\"\xa9\x01\n" +
 	"\x14ListMessagesResponse\x125\n" +
 	"\bmessages\x18\x01 \x03(\v2\x19.remarket.chat.v1.MessageR\bmessages\x12\x19\n" +
 	"\bhas_more\x18\x02 \x01(\bR\ahasMore\x12\x19\n" +
-	"\bnext_seq\x18\x03 \x01(\x03R\anextSeq\"{\n" +
+	"\bnext_seq\x18\x03 \x01(\x03R\anextSeq\x12$\n" +
+	"\x0esync_until_seq\x18\x04 \x01(\x03R\fsyncUntilSeq\"{\n" +
 	"\x12SendMessageRequest\x12'\n" +
 	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\"\n" +
 	"\rclient_msg_id\x18\x02 \x01(\tR\vclientMsgId\x12\x18\n" +
 	"\acontent\x18\x03 \x01(\tR\acontent\"s\n" +
 	"\x13SendMessageResponse\x123\n" +
 	"\amessage\x18\x01 \x01(\v2\x19.remarket.chat.v1.MessageR\amessage\x12'\n" +
-	"\x0fparticipant_ids\x18\x02 \x03(\x03R\x0eparticipantIds2\x99\x03\n" +
+	"\x0fparticipant_ids\x18\x02 \x03(\x03R\x0eparticipantIds\"f\n" +
+	"\x17ReadConversationRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\"\n" +
+	"\rlast_read_seq\x18\x02 \x01(\x03R\vlastReadSeq\"\xaf\x01\n" +
+	"\tReadState\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\"\n" +
+	"\rlast_read_seq\x18\x03 \x01(\x03R\vlastReadSeq\x12!\n" +
+	"\funread_count\x18\x04 \x01(\x03R\vunreadCount\x12\x19\n" +
+	"\blast_seq\x18\x05 \x01(\x03R\alastSeq\"v\n" +
+	"\x18ReadConversationResponse\x121\n" +
+	"\x05state\x18\x01 \x01(\v2\x1b.remarket.chat.v1.ReadStateR\x05state\x12'\n" +
+	"\x0fparticipant_ids\x18\x02 \x03(\x03R\x0eparticipantIds2\x84\x04\n" +
 	"\vChatService\x12Z\n" +
 	"\vSendMessage\x12$.remarket.chat.v1.SendMessageRequest\x1a%.remarket.chat.v1.SendMessageResponse\x12a\n" +
 	"\x12CreateConversation\x12+.remarket.chat.v1.CreateConversationRequest\x1a\x1e.remarket.chat.v1.Conversation\x12l\n" +
 	"\x11ListConversations\x12*.remarket.chat.v1.ListConversationsRequest\x1a+.remarket.chat.v1.ListConversationsResponse\x12]\n" +
-	"\fListMessages\x12%.remarket.chat.v1.ListMessagesRequest\x1a&.remarket.chat.v1.ListMessagesResponseB%Z#remarket/backend/gen/chat/v1;chatv1b\x06proto3"
+	"\fListMessages\x12%.remarket.chat.v1.ListMessagesRequest\x1a&.remarket.chat.v1.ListMessagesResponse\x12i\n" +
+	"\x10ReadConversation\x12).remarket.chat.v1.ReadConversationRequest\x1a*.remarket.chat.v1.ReadConversationResponseB%Z#remarket/backend/gen/chat/v1;chatv1b\x06proto3"
 
 var (
 	file_chat_v1_chat_proto_rawDescOnce sync.Once
@@ -683,7 +916,7 @@ func file_chat_v1_chat_proto_rawDescGZIP() []byte {
 	return file_chat_v1_chat_proto_rawDescData
 }
 
-var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_chat_v1_chat_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_chat_v1_chat_proto_goTypes = []any{
 	(*Conversation)(nil),              // 0: remarket.chat.v1.Conversation
 	(*Message)(nil),                   // 1: remarket.chat.v1.Message
@@ -694,28 +927,34 @@ var file_chat_v1_chat_proto_goTypes = []any{
 	(*ListMessagesResponse)(nil),      // 6: remarket.chat.v1.ListMessagesResponse
 	(*SendMessageRequest)(nil),        // 7: remarket.chat.v1.SendMessageRequest
 	(*SendMessageResponse)(nil),       // 8: remarket.chat.v1.SendMessageResponse
-	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
+	(*ReadConversationRequest)(nil),   // 9: remarket.chat.v1.ReadConversationRequest
+	(*ReadState)(nil),                 // 10: remarket.chat.v1.ReadState
+	(*ReadConversationResponse)(nil),  // 11: remarket.chat.v1.ReadConversationResponse
+	(*timestamppb.Timestamp)(nil),     // 12: google.protobuf.Timestamp
 }
 var file_chat_v1_chat_proto_depIdxs = []int32{
-	9,  // 0: remarket.chat.v1.Conversation.last_message_at:type_name -> google.protobuf.Timestamp
-	9,  // 1: remarket.chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 2: remarket.chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
+	12, // 0: remarket.chat.v1.Conversation.last_message_at:type_name -> google.protobuf.Timestamp
+	12, // 1: remarket.chat.v1.Conversation.created_at:type_name -> google.protobuf.Timestamp
+	12, // 2: remarket.chat.v1.Message.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 3: remarket.chat.v1.ListConversationsResponse.conversations:type_name -> remarket.chat.v1.Conversation
 	1,  // 4: remarket.chat.v1.ListMessagesResponse.messages:type_name -> remarket.chat.v1.Message
 	1,  // 5: remarket.chat.v1.SendMessageResponse.message:type_name -> remarket.chat.v1.Message
-	7,  // 6: remarket.chat.v1.ChatService.SendMessage:input_type -> remarket.chat.v1.SendMessageRequest
-	2,  // 7: remarket.chat.v1.ChatService.CreateConversation:input_type -> remarket.chat.v1.CreateConversationRequest
-	3,  // 8: remarket.chat.v1.ChatService.ListConversations:input_type -> remarket.chat.v1.ListConversationsRequest
-	5,  // 9: remarket.chat.v1.ChatService.ListMessages:input_type -> remarket.chat.v1.ListMessagesRequest
-	8,  // 10: remarket.chat.v1.ChatService.SendMessage:output_type -> remarket.chat.v1.SendMessageResponse
-	0,  // 11: remarket.chat.v1.ChatService.CreateConversation:output_type -> remarket.chat.v1.Conversation
-	4,  // 12: remarket.chat.v1.ChatService.ListConversations:output_type -> remarket.chat.v1.ListConversationsResponse
-	6,  // 13: remarket.chat.v1.ChatService.ListMessages:output_type -> remarket.chat.v1.ListMessagesResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	10, // 6: remarket.chat.v1.ReadConversationResponse.state:type_name -> remarket.chat.v1.ReadState
+	7,  // 7: remarket.chat.v1.ChatService.SendMessage:input_type -> remarket.chat.v1.SendMessageRequest
+	2,  // 8: remarket.chat.v1.ChatService.CreateConversation:input_type -> remarket.chat.v1.CreateConversationRequest
+	3,  // 9: remarket.chat.v1.ChatService.ListConversations:input_type -> remarket.chat.v1.ListConversationsRequest
+	5,  // 10: remarket.chat.v1.ChatService.ListMessages:input_type -> remarket.chat.v1.ListMessagesRequest
+	9,  // 11: remarket.chat.v1.ChatService.ReadConversation:input_type -> remarket.chat.v1.ReadConversationRequest
+	8,  // 12: remarket.chat.v1.ChatService.SendMessage:output_type -> remarket.chat.v1.SendMessageResponse
+	0,  // 13: remarket.chat.v1.ChatService.CreateConversation:output_type -> remarket.chat.v1.Conversation
+	4,  // 14: remarket.chat.v1.ChatService.ListConversations:output_type -> remarket.chat.v1.ListConversationsResponse
+	6,  // 15: remarket.chat.v1.ChatService.ListMessages:output_type -> remarket.chat.v1.ListMessagesResponse
+	11, // 16: remarket.chat.v1.ChatService.ReadConversation:output_type -> remarket.chat.v1.ReadConversationResponse
+	12, // [12:17] is the sub-list for method output_type
+	7,  // [7:12] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_chat_v1_chat_proto_init() }
@@ -723,13 +962,14 @@ func file_chat_v1_chat_proto_init() {
 	if File_chat_v1_chat_proto != nil {
 		return
 	}
+	file_chat_v1_chat_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_chat_v1_chat_proto_rawDesc), len(file_chat_v1_chat_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
