@@ -14,7 +14,7 @@ type Registrar interface {
 	Register(context.Context, service.RegisterInput) (*model.User, error)
 }
 type Server struct {
- follow *service.FollowService
+	follow *service.FollowService
 	userv1.UnimplementedUserServiceServer
 	users   Registrar
 	login   LoginProvider

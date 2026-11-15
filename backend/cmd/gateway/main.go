@@ -115,6 +115,7 @@ func run() error {
 		middleware = append(middleware, limiter.Middleware())
 	}
 	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
+	gateway.AddFollowRoutes(router, userv1.NewUserServiceClient(conn), tokens, timeout)
 	gateway.AddProductRoutes(router, productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddOrderRoutes(router, orderv1.NewOrderServiceClient(orderConn), tokens, timeout)
 	gateway.AddSearchRoutes(router, searchv1.NewSearchServiceClient(searchConn), timeout)
