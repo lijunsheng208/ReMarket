@@ -42,7 +42,7 @@ infra-logs:
 
 .PHONY: proto run-user run-product
 proto:
-	protoc -I api/proto --go_out=backend --go_opt=module=remarket/backend --go-grpc_out=backend --go-grpc_opt=module=remarket/backend api/proto/user/v1/user.proto api/proto/product/v1/product.proto api/proto/order/v1/order.proto api/proto/search/v1/search.proto
+	protoc -I api/proto --go_out=backend --go_opt=module=remarket/backend --go-grpc_out=backend --go-grpc_opt=module=remarket/backend api/proto/user/v1/user.proto api/proto/product/v1/product.proto api/proto/order/v1/order.proto api/proto/search/v1/search.proto api/proto/feed/v1/feed.proto
 run-user:
 	cd backend && go run ./cmd/user
 run-product:
@@ -94,3 +94,7 @@ run-search-consumer:
 .PHONY: run-search
 run-search:
 	cd backend && go run ./cmd/search
+
+# Feed 基础查询进程。
+run-feed:
+	cd backend && go run ./cmd/feed

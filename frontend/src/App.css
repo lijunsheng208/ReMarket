@@ -152,3 +152,11 @@ dialog .publish-field>span{line-height:20px}
 .search-panel+.section-label .muted{font-size:12px}
 @media(max-width:1050px){.search-panel-top{gap:18px;padding:16px}.search-panel-intro{gap:8px}.search-panel-symbol{width:44px}.search-panel-intro h2{font-size:20px}.search-panel-intro p{font-size:12px}.search-panel-filters{gap:14px;flex-wrap:wrap;padding:14px 16px}.search-panel-price{padding-right:14px}.search-panel-filters label{min-width:165px}.search-panel-query input{font-size:13px}.search-panel-query button{width:75px}}
 @media(max-width:650px){.search-panel-top{flex-direction:column;align-items:stretch;gap:13px;padding:14px}.search-panel-intro p{font-size:12px}.search-panel-symbol{height:44px}.search-panel-query{flex:none;height:44px;padding-left:12px;gap:8px;border-radius:12px}.search-panel-query input{height:42px;font-size:12px}.search-panel-query button{border-radius:11px;font-size:14px;width:65px}.search-panel-filters{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}.search-panel-price{grid-column:1/-1;border:0;padding:0;gap:8px}.search-panel-price input{flex:1;width:0}.search-panel-filters label{min-width:0;flex-direction:column;align-items:stretch;gap:6px}.search-panel-reset{grid-column:1/-1;justify-self:end}.search-panel+.section-label{align-items:flex-start;flex-direction:column;gap:4px}.search-panel+.section-label .muted{font-size:11px}}
+
+/* 复用分类栏的蓝色选中态，使商品流入口与现有商城导航保持一致。 */
+.feed-navigation { display: flex; gap: 10px; margin-bottom: 18px; }
+.feed-navigation button { padding: 10px 20px; border-radius: 8px; }
+.feed-navigation button.selected { color: #fff; background: var(--blue, #2563eb); border-color: var(--blue, #2563eb); }
+
+/* 关注动态只展示关注商品流，隐藏外层全站分类入口以免意外切换搜索。 */
+.market-main:has([data-feed-mode="following"]) .market-category-bar { display: none; }

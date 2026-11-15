@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	feedv1 "remarket/backend/gen/feed/v1"
 	orderv1 "remarket/backend/gen/order/v1"
 	productv1 "remarket/backend/gen/product/v1"
 	searchv1 "remarket/backend/gen/search/v1"
@@ -92,6 +93,15 @@ func run() error {
 		return err
 	}
 	defer searchConn.Close()
+	feedTarget := os.Getenv("FEED_GRPC_TARGET")
+	if feedTarget == "" {
+		feedTarget = "127.0.0.1:50055"
+	}
+	feedConn, err := grpcx.Dial(feedTarget, nil, timeout)
+	if err != nil {
+		return err
+	}
+	defer feedConn.Close()
 	gin.SetMode(gin.ReleaseMode)
 	rateConfig, err := gateway.RateConfigFromEnv()
 	if err != nil {
@@ -115,6 +125,7 @@ func run() error {
 		middleware = append(middleware, limiter.Middleware())
 	}
 	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
+	gateway.AddFeedRoutes(router, feedv1.NewFeedServiceClient(feedConn), tokens, timeout)
 	gateway.AddFollowRoutes(router, userv1.NewUserServiceClient(conn), tokens, timeout)
 	gateway.AddProductRoutes(router, productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddOrderRoutes(router, orderv1.NewOrderServiceClient(orderConn), tokens, timeout)

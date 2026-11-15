@@ -14,6 +14,7 @@ type DraftCreator interface {
 	CreateDraft(context.Context, service.CreateDraftInput) (*model.Product, error)
 }
 type Server struct {
+	feed *service.FeedQuery
 	productv1.UnimplementedProductServiceServer
 	products     DraftCreator
 	publisher    Publisher

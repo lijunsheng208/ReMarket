@@ -150,7 +150,7 @@ func run() error {
 		}
 	}
 
-	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)).WithSearchExport(service.NewSearchExporter(products, paused)))
+	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)).WithSearchExport(service.NewSearchExporter(products, paused)).WithFeed(service.NewFeedQuery(products)))
 	slog.Info("商品服务已启动", "address", listener.Addr().String(), "detail_cache_enabled", cacheEnabled, "invalidation_enabled", enabled)
 	return grpcx.Serve(ctx, listener, server)
 }

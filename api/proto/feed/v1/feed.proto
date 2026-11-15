@@ -1,0 +1,11 @@
+syntax = "proto3";
+package remarket.feed.v1;
+option go_package = "remarket/backend/gen/feed/v1;feedv1";
+import "product/v1/product.proto";
+service FeedService {
+  rpc Home(ListFeedRequest) returns (ListFeedResponse);
+  // 当前身份由已验证 JWT 确定，不接受用户 ID。
+  rpc Following(ListFeedRequest) returns (ListFeedResponse);
+}
+message ListFeedRequest { string cursor = 1; int32 page_size = 2; }
+message ListFeedResponse { repeated remarket.product.v1.Product products = 1; string next_cursor = 2; }

@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ProductService_ListFeedProducts_FullMethodName     = "/remarket.product.v1.ProductService/ListFeedProducts"
 	ProductService_ExportSearchSnapshot_FullMethodName = "/remarket.product.v1.ProductService/ExportSearchSnapshot"
 	ProductService_CreateProduct_FullMethodName        = "/remarket.product.v1.ProductService/CreateProduct"
 	ProductService_GetProduct_FullMethodName           = "/remarket.product.v1.ProductService/GetProduct"
@@ -38,6 +39,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProductServiceClient interface {
+	// 公开在售商品游标查询；卖家条件仅缩小公开数据范围。
+	ListFeedProducts(ctx context.Context, in *ListFeedProductsRequest, opts ...grpc.CallOption) (*ListFeedProductsResponse, error)
 	// 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
 	ExportSearchSnapshot(ctx context.Context, in *ExportSearchSnapshotRequest, opts ...grpc.CallOption) (*ExportSearchSnapshotResponse, error)
 	CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
@@ -63,6 +66,16 @@ type productServiceClient struct {
 
 func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
 	return &productServiceClient{cc}
+}
+
+func (c *productServiceClient) ListFeedProducts(ctx context.Context, in *ListFeedProductsRequest, opts ...grpc.CallOption) (*ListFeedProductsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFeedProductsResponse)
+	err := c.cc.Invoke(ctx, ProductService_ListFeedProducts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *productServiceClient) ExportSearchSnapshot(ctx context.Context, in *ExportSearchSnapshotRequest, opts ...grpc.CallOption) (*ExportSearchSnapshotResponse, error) {
@@ -199,6 +212,8 @@ func (c *productServiceClient) ConfirmReservation(ctx context.Context, in *Confi
 // All implementations must embed UnimplementedProductServiceServer
 // for forward compatibility.
 type ProductServiceServer interface {
+	// 公开在售商品游标查询；卖家条件仅缩小公开数据范围。
+	ListFeedProducts(context.Context, *ListFeedProductsRequest) (*ListFeedProductsResponse, error)
 	// 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
 	ExportSearchSnapshot(context.Context, *ExportSearchSnapshotRequest) (*ExportSearchSnapshotResponse, error)
 	CreateProduct(context.Context, *CreateProductRequest) (*ProductResponse, error)
@@ -226,6 +241,9 @@ type ProductServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedProductServiceServer struct{}
 
+func (UnimplementedProductServiceServer) ListFeedProducts(context.Context, *ListFeedProductsRequest) (*ListFeedProductsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListFeedProducts not implemented")
+}
 func (UnimplementedProductServiceServer) ExportSearchSnapshot(context.Context, *ExportSearchSnapshotRequest) (*ExportSearchSnapshotResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ExportSearchSnapshot not implemented")
 }
@@ -284,6 +302,24 @@ func RegisterProductServiceServer(s grpc.ServiceRegistrar, srv ProductServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ProductService_ServiceDesc, srv)
+}
+
+func _ProductService_ListFeedProducts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFeedProductsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).ListFeedProducts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_ListFeedProducts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).ListFeedProducts(ctx, req.(*ListFeedProductsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ProductService_ExportSearchSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -527,6 +563,10 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "remarket.product.v1.ProductService",
 	HandlerType: (*ProductServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListFeedProducts",
+			Handler:    _ProductService_ListFeedProducts_Handler,
+		},
 		{
 			MethodName: "ExportSearchSnapshot",
 			Handler:    _ProductService_ExportSearchSnapshot_Handler,
