@@ -13,6 +13,7 @@ import (
 	pc "remarket/backend/internal/product/cache"
 	"remarket/backend/internal/product/client"
 	"remarket/backend/internal/product/handler"
+	"remarket/backend/internal/product/objectstore"
 	"remarket/backend/internal/product/repository"
 	"remarket/backend/internal/product/service"
 	"remarket/backend/pkg/auth"
@@ -83,7 +84,8 @@ func run() error {
 	}
 	defer listener.Close()
 	// 预占方法使用独立服务凭据；其他方法保留用户鉴权和公开读取规则。
-	server := grpcx.NewServer(slog.Default(), productAuth)
+	// 图片确认包含云端读取和重新编码；普通 HTTP 操作仍由 Gateway 的短超时约束。
+	server := grpcx.NewServerWithTimeout(slog.Default(), 30*time.Second, productAuth)
 	products := repository.NewProductRepository(db)
 	target := os.Getenv("USER_GRPC_TARGET")
 	if target == "" {
@@ -150,7 +152,15 @@ func run() error {
 		}
 	}
 
-	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)).WithSearchExport(service.NewSearchExporter(products, paused)).WithFeed(service.NewFeedQuery(products)))
+	var images *service.Images
+	if os.Getenv("OSS_IMAGES_ENABLED") == "true" {
+		objects, e := objectstore.Open(ctx)
+		if e != nil {
+			return e
+		}
+		images = service.NewImages(products, objects, adminVerifier, hook)
+	}
+	productv1.RegisterProductServiceServer(server, handler.NewComplete(service.New(products).WithInvalidation(hook), service.NewPublisher(products).WithInvalidation(hook), query, service.NewMutation(products, adminVerifier).WithInvalidation(hook)).WithCategories(service.NewCategories(products)).WithOwnList(query).WithReservations(service.NewReservations(products).WithInvalidation(hook)).WithSearchExport(service.NewSearchExporter(products, paused)).WithFeed(service.NewFeedQuery(products)).WithImages(images))
 	slog.Info("商品服务已启动", "address", listener.Addr().String(), "detail_cache_enabled", cacheEnabled, "invalidation_enabled", enabled)
 	return grpcx.Serve(ctx, listener, server)
 }

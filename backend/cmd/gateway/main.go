@@ -70,7 +70,8 @@ func run() error {
 	if productTarget == "" {
 		productTarget = "127.0.0.1:50052"
 	}
-	productConn, err := grpcx.Dial(productTarget, nil, timeout)
+	// 商品图片确认最多三十秒，普通商品请求仍由 HTTP 适配层设置原有短 Deadline。
+	productConn, err := grpcx.Dial(productTarget, nil, 30*time.Second)
 	if err != nil {
 		return err
 	}

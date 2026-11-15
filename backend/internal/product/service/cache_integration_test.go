@@ -72,7 +72,7 @@ func cacheSetup(t *testing.T) *cacheFixture {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { pool.Close() })
-	for _, version := range []string{"000001_core", "000002_seed_categories", "000003_reservation_snapshot", "000004_cache_invalidations"} {
+	for _, version := range []string{"000001_core", "000002_seed_categories", "000003_reservation_snapshot", "000004_cache_invalidations", "000006_image_uploads"} {
 		raw, err := os.ReadFile("../../../../migrations/product/" + version + ".up.sql")
 		if err != nil {
 			t.Fatal(err)

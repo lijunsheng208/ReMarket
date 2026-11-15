@@ -22,7 +22,7 @@ func NewAuthInterceptor(verifier auth.TokenVerifier, serviceToken, jwtSecret str
 	if serviceToken != "" && (len(serviceToken) < 32 || strings.ContainsAny(serviceToken, " \t\r\n") || serviceToken == jwtSecret) {
 		return nil, errors.New("Order 服务凭据须至少 32 字节、无空白且独立于 JWT 密钥")
 	}
-	userAuth := grpcx.OptionalAuthInterceptor(verifier, []string{productv1.ProductService_ListFeedProducts_FullMethodName, productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName, productv1.ProductService_ListCategories_FullMethodName}, "/grpc.health.v1.Health/Check")
+	userAuth := grpcx.OptionalAuthInterceptor(verifier, []string{productv1.ProductService_GetProductImages_FullMethodName, productv1.ProductService_ListFeedProducts_FullMethodName, productv1.ProductService_GetProduct_FullMethodName, productv1.ProductService_ListProducts_FullMethodName, productv1.ProductService_ListCategories_FullMethodName}, "/grpc.health.v1.Health/Check")
 	expected := sha256.Sum256([]byte(serviceToken))
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, next grpc.UnaryHandler) (any, error) {
 		switch info.FullMethod {

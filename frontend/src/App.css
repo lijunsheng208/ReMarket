@@ -160,3 +160,14 @@ dialog .publish-field>span{line-height:20px}
 
 /* 关注动态只展示关注商品流，隐藏外层全站分类入口以免意外切换搜索。 */
 .market-main:has([data-feed-mode="following"]) .market-category-bar { display: none; }
+
+/* 商品图片沿用现有卡片尺寸，详情按原图比例展示并允许窄屏横向滚动。 */
+.product-photo { display: block; width: 100%; height: 100%; }
+.product-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.market-cover { position: relative; }
+.market-cover .product-photo { position: absolute; inset: 0; }
+.product-gallery { display: flex; gap: 12px; overflow-x: auto; margin: 16px 0; padding-bottom: 8px; }
+.product-gallery img { max-width: min(100%, 360px); max-height: 340px; object-fit: contain; border-radius: 8px; }
+.image-upload-field { display: grid; gap: 10px; }
+.image-upload-field small, .image-fallback { color: #64748b; }
+.image-upload-field input { max-width: 100%; }

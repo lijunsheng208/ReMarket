@@ -3,6 +3,9 @@ package remarket.product.v1;
 option go_package = "remarket/backend/gen/product/v1;productv1";
 import "google/protobuf/timestamp.proto";
 service ProductService {
+  rpc PrepareImageUpload(PrepareImageUploadRequest) returns (PrepareImageUploadResponse);
+  rpc CompleteImageUpload(CompleteImageUploadRequest) returns (ProductResponse);
+  rpc GetProductImages(GetProductRequest) returns (GetProductImagesResponse);
   // 公开在售商品游标查询；卖家条件仅缩小公开数据范围。
   rpc ListFeedProducts(ListFeedProductsRequest) returns (ListFeedProductsResponse);
   // 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
@@ -106,3 +109,9 @@ message ExportSearchSnapshotResponse { repeated Product products = 1; int64 uppe
 
 message ListFeedProductsRequest { string cursor = 1; int32 page_size = 2; repeated int64 seller_ids = 3; repeated int64 candidate_ids = 4; }
 message ListFeedProductsResponse { repeated Product products = 1; string next_cursor = 2; }
+
+message PrepareImageUploadRequest { int64 product_id = 1; string content_type = 2; int64 size_bytes = 3; }
+message PrepareImageUploadResponse { string upload_id = 1; string upload_url = 2; google.protobuf.Timestamp expires_at = 3; }
+message CompleteImageUploadRequest { int64 product_id = 1; string upload_id = 2; }
+message ImageAccess { int64 id = 1; string url = 2; int32 sort_order = 3; }
+message GetProductImagesResponse { repeated ImageAccess images = 1; google.protobuf.Timestamp expires_at = 2; }

@@ -3,11 +3,13 @@ module remarket/backend
 go 1.26.4
 
 require (
+	github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.6.1
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/twmb/franz-go v1.22.3
+	github.com/twmb/franz-go/pkg/kmsg v1.15.1
 	golang.org/x/crypto v0.59.0
 	golang.org/x/sync v0.25.0
 	google.golang.org/grpc v1.85.0
@@ -45,12 +47,12 @@ require (
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/twmb/franz-go/pkg/kmsg v1.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
+	golang.org/x/time v0.4.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260817212433-ac3dfec99bb1 // indirect
 )

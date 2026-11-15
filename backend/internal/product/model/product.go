@@ -61,11 +61,15 @@ type Category struct {
 
 // ProductImage 对应 product_images，仅保存对象键，最小排序位置为封面。
 type ProductImage struct {
-	ID        int64 `gorm:"primaryKey;autoIncrement"`
-	ProductID int64
-	ObjectKey string
-	SortOrder int32
-	CreatedAt time.Time
+	ContentType string
+	SizeBytes   int64
+	Width       int
+	Height      int
+	ID          int64 `gorm:"primaryKey;autoIncrement"`
+	ProductID   int64
+	ObjectKey   string
+	SortOrder   int32
+	CreatedAt   time.Time
 }
 
 // ProductReservation 对应 product_reservations，生成列只读，不由 GORM 插入或更新。
@@ -126,3 +130,15 @@ func (OutboxEvent) TableName() string { return "outbox_events" }
 
 // ProductStatistics 是当前卖家全量状态计数，不对应持久化表。
 type ProductStatistics struct{ Total, OnSale, Sold, OffShelf int64 }
+
+// ImageUpload 记录受限上传会话；完成后只能幂等返回已关联的正式对象。
+type ImageUpload struct {
+	ID           string `gorm:"primaryKey"`
+	ProductID    int64
+	OwnerID      int64
+	ContentType  string
+	SizeBytes    int64
+	ExpiresAt    time.Time
+	CompletedKey string
+	CreatedAt    time.Time
+}

@@ -1602,6 +1602,290 @@ func (x *ListFeedProductsResponse) GetNextCursor() string {
 	return ""
 }
 
+type PrepareImageUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProductId     int64                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	SizeBytes     int64                  `protobuf:"varint,3,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrepareImageUploadRequest) Reset() {
+	*x = PrepareImageUploadRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrepareImageUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrepareImageUploadRequest) ProtoMessage() {}
+
+func (x *PrepareImageUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrepareImageUploadRequest.ProtoReflect.Descriptor instead.
+func (*PrepareImageUploadRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *PrepareImageUploadRequest) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *PrepareImageUploadRequest) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+func (x *PrepareImageUploadRequest) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+type PrepareImageUploadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UploadId      string                 `protobuf:"bytes,1,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	UploadUrl     string                 `protobuf:"bytes,2,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrepareImageUploadResponse) Reset() {
+	*x = PrepareImageUploadResponse{}
+	mi := &file_product_v1_product_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrepareImageUploadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrepareImageUploadResponse) ProtoMessage() {}
+
+func (x *PrepareImageUploadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrepareImageUploadResponse.ProtoReflect.Descriptor instead.
+func (*PrepareImageUploadResponse) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *PrepareImageUploadResponse) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+func (x *PrepareImageUploadResponse) GetUploadUrl() string {
+	if x != nil {
+		return x.UploadUrl
+	}
+	return ""
+}
+
+func (x *PrepareImageUploadResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+type CompleteImageUploadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProductId     int64                  `protobuf:"varint,1,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	UploadId      string                 `protobuf:"bytes,2,opt,name=upload_id,json=uploadId,proto3" json:"upload_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteImageUploadRequest) Reset() {
+	*x = CompleteImageUploadRequest{}
+	mi := &file_product_v1_product_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteImageUploadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteImageUploadRequest) ProtoMessage() {}
+
+func (x *CompleteImageUploadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteImageUploadRequest.ProtoReflect.Descriptor instead.
+func (*CompleteImageUploadRequest) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *CompleteImageUploadRequest) GetProductId() int64 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *CompleteImageUploadRequest) GetUploadId() string {
+	if x != nil {
+		return x.UploadId
+	}
+	return ""
+}
+
+type ImageAccess struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	SortOrder     int32                  `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageAccess) Reset() {
+	*x = ImageAccess{}
+	mi := &file_product_v1_product_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageAccess) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageAccess) ProtoMessage() {}
+
+func (x *ImageAccess) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageAccess.ProtoReflect.Descriptor instead.
+func (*ImageAccess) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ImageAccess) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ImageAccess) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *ImageAccess) GetSortOrder() int32 {
+	if x != nil {
+		return x.SortOrder
+	}
+	return 0
+}
+
+type GetProductImagesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Images        []*ImageAccess         `protobuf:"bytes,1,rep,name=images,proto3" json:"images,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetProductImagesResponse) Reset() {
+	*x = GetProductImagesResponse{}
+	mi := &file_product_v1_product_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetProductImagesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetProductImagesResponse) ProtoMessage() {}
+
+func (x *GetProductImagesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_product_v1_product_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetProductImagesResponse.ProtoReflect.Descriptor instead.
+func (*GetProductImagesResponse) Descriptor() ([]byte, []int) {
+	return file_product_v1_product_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetProductImagesResponse) GetImages() []*ImageAccess {
+	if x != nil {
+		return x.Images
+	}
+	return nil
+}
+
+func (x *GetProductImagesResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
 var File_product_v1_product_proto protoreflect.FileDescriptor
 
 const file_product_v1_product_proto_rawDesc = "" +
@@ -1741,7 +2025,32 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x18ListFeedProductsResponse\x128\n" +
 	"\bproducts\x18\x01 \x03(\v2\x1c.remarket.product.v1.ProductR\bproducts\x12\x1f\n" +
 	"\vnext_cursor\x18\x02 \x01(\tR\n" +
-	"nextCursor*\xb9\x01\n" +
+	"nextCursor\"|\n" +
+	"\x19PrepareImageUploadRequest\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x01 \x01(\x03R\tproductId\x12!\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x03 \x01(\x03R\tsizeBytes\"\x93\x01\n" +
+	"\x1aPrepareImageUploadResponse\x12\x1b\n" +
+	"\tupload_id\x18\x01 \x01(\tR\buploadId\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x02 \x01(\tR\tuploadUrl\x129\n" +
+	"\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"X\n" +
+	"\x1aCompleteImageUploadRequest\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x01 \x01(\x03R\tproductId\x12\x1b\n" +
+	"\tupload_id\x18\x02 \x01(\tR\buploadId\"N\n" +
+	"\vImageAccess\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1d\n" +
+	"\n" +
+	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"\x8f\x01\n" +
+	"\x18GetProductImagesResponse\x128\n" +
+	"\x06images\x18\x01 \x03(\v2 .remarket.product.v1.ImageAccessR\x06images\x129\n" +
+	"\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt*\xb9\x01\n" +
 	"\rProductStatus\x12\x1e\n" +
 	"\x1aPRODUCT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14PRODUCT_STATUS_DRAFT\x10\x01\x12\x1a\n" +
@@ -1753,8 +2062,11 @@ const file_product_v1_product_proto_rawDesc = "" +
 	"\x1eRESERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19RESERVATION_STATUS_ACTIVE\x10\x01\x12\x1f\n" +
 	"\x1bRESERVATION_STATUS_RELEASED\x10\x02\x12 \n" +
-	"\x1cRESERVATION_STATUS_CONFIRMED\x10\x032\xd6\v\n" +
-	"\x0eProductService\x12o\n" +
+	"\x1cRESERVATION_STATUS_CONFIRMED\x10\x032\xa6\x0e\n" +
+	"\x0eProductService\x12u\n" +
+	"\x12PrepareImageUpload\x12..remarket.product.v1.PrepareImageUploadRequest\x1a/.remarket.product.v1.PrepareImageUploadResponse\x12l\n" +
+	"\x13CompleteImageUpload\x12/.remarket.product.v1.CompleteImageUploadRequest\x1a$.remarket.product.v1.ProductResponse\x12i\n" +
+	"\x10GetProductImages\x12&.remarket.product.v1.GetProductRequest\x1a-.remarket.product.v1.GetProductImagesResponse\x12o\n" +
 	"\x10ListFeedProducts\x12,.remarket.product.v1.ListFeedProductsRequest\x1a-.remarket.product.v1.ListFeedProductsResponse\x12{\n" +
 	"\x14ExportSearchSnapshot\x120.remarket.product.v1.ExportSearchSnapshotRequest\x1a1.remarket.product.v1.ExportSearchSnapshotResponse\x12`\n" +
 	"\rCreateProduct\x12).remarket.product.v1.CreateProductRequest\x1a$.remarket.product.v1.ProductResponse\x12Z\n" +
@@ -1784,7 +2096,7 @@ func file_product_v1_product_proto_rawDescGZIP() []byte {
 }
 
 var file_product_v1_product_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_product_v1_product_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_product_v1_product_proto_goTypes = []any{
 	(ProductStatus)(0),                   // 0: remarket.product.v1.ProductStatus
 	(ReservationStatus)(0),               // 1: remarket.product.v1.ReservationStatus
@@ -1811,61 +2123,75 @@ var file_product_v1_product_proto_goTypes = []any{
 	(*ExportSearchSnapshotResponse)(nil), // 22: remarket.product.v1.ExportSearchSnapshotResponse
 	(*ListFeedProductsRequest)(nil),      // 23: remarket.product.v1.ListFeedProductsRequest
 	(*ListFeedProductsResponse)(nil),     // 24: remarket.product.v1.ListFeedProductsResponse
-	(*timestamppb.Timestamp)(nil),        // 25: google.protobuf.Timestamp
+	(*PrepareImageUploadRequest)(nil),    // 25: remarket.product.v1.PrepareImageUploadRequest
+	(*PrepareImageUploadResponse)(nil),   // 26: remarket.product.v1.PrepareImageUploadResponse
+	(*CompleteImageUploadRequest)(nil),   // 27: remarket.product.v1.CompleteImageUploadRequest
+	(*ImageAccess)(nil),                  // 28: remarket.product.v1.ImageAccess
+	(*GetProductImagesResponse)(nil),     // 29: remarket.product.v1.GetProductImagesResponse
+	(*timestamppb.Timestamp)(nil),        // 30: google.protobuf.Timestamp
 }
 var file_product_v1_product_proto_depIdxs = []int32{
 	0,  // 0: remarket.product.v1.Product.status:type_name -> remarket.product.v1.ProductStatus
-	25, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
-	25, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
-	25, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
+	30, // 1: remarket.product.v1.Product.first_published_at:type_name -> google.protobuf.Timestamp
+	30, // 2: remarket.product.v1.Product.created_at:type_name -> google.protobuf.Timestamp
+	30, // 3: remarket.product.v1.Product.updated_at:type_name -> google.protobuf.Timestamp
 	2,  // 4: remarket.product.v1.Product.images:type_name -> remarket.product.v1.ProductImage
 	3,  // 5: remarket.product.v1.ListProductsResponse.products:type_name -> remarket.product.v1.Product
 	7,  // 6: remarket.product.v1.ListProductsResponse.statistics:type_name -> remarket.product.v1.ProductStatistics
 	3,  // 7: remarket.product.v1.ProductResponse.product:type_name -> remarket.product.v1.Product
 	12, // 8: remarket.product.v1.ListCategoriesResponse.categories:type_name -> remarket.product.v1.Category
 	1,  // 9: remarket.product.v1.Reservation.status:type_name -> remarket.product.v1.ReservationStatus
-	25, // 10: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
-	25, // 11: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
-	25, // 12: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
-	25, // 13: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
-	25, // 14: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
-	25, // 15: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
+	30, // 10: remarket.product.v1.Reservation.expires_at:type_name -> google.protobuf.Timestamp
+	30, // 11: remarket.product.v1.Reservation.confirmed_at:type_name -> google.protobuf.Timestamp
+	30, // 12: remarket.product.v1.Reservation.released_at:type_name -> google.protobuf.Timestamp
+	30, // 13: remarket.product.v1.Reservation.created_at:type_name -> google.protobuf.Timestamp
+	30, // 14: remarket.product.v1.Reservation.updated_at:type_name -> google.protobuf.Timestamp
+	30, // 15: remarket.product.v1.ReserveProductRequest.expires_at:type_name -> google.protobuf.Timestamp
 	15, // 16: remarket.product.v1.ReservationResponse.reservation:type_name -> remarket.product.v1.Reservation
 	3,  // 17: remarket.product.v1.ExportSearchSnapshotResponse.products:type_name -> remarket.product.v1.Product
 	3,  // 18: remarket.product.v1.ListFeedProductsResponse.products:type_name -> remarket.product.v1.Product
-	23, // 19: remarket.product.v1.ProductService.ListFeedProducts:input_type -> remarket.product.v1.ListFeedProductsRequest
-	21, // 20: remarket.product.v1.ProductService.ExportSearchSnapshot:input_type -> remarket.product.v1.ExportSearchSnapshotRequest
-	4,  // 21: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
-	5,  // 22: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
-	6,  // 23: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
-	6,  // 24: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
-	9,  // 25: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
-	10, // 26: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	10, // 27: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
-	13, // 28: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
-	16, // 29: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
-	17, // 30: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
-	18, // 31: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
-	19, // 32: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
-	24, // 33: remarket.product.v1.ProductService.ListFeedProducts:output_type -> remarket.product.v1.ListFeedProductsResponse
-	22, // 34: remarket.product.v1.ProductService.ExportSearchSnapshot:output_type -> remarket.product.v1.ExportSearchSnapshotResponse
-	11, // 35: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
-	11, // 36: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
-	8,  // 37: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
-	8,  // 38: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
-	11, // 39: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
-	11, // 40: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
-	11, // 41: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
-	14, // 42: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
-	20, // 43: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
-	20, // 44: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
-	20, // 45: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
-	20, // 46: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
-	33, // [33:47] is the sub-list for method output_type
-	19, // [19:33] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	30, // 19: remarket.product.v1.PrepareImageUploadResponse.expires_at:type_name -> google.protobuf.Timestamp
+	28, // 20: remarket.product.v1.GetProductImagesResponse.images:type_name -> remarket.product.v1.ImageAccess
+	30, // 21: remarket.product.v1.GetProductImagesResponse.expires_at:type_name -> google.protobuf.Timestamp
+	25, // 22: remarket.product.v1.ProductService.PrepareImageUpload:input_type -> remarket.product.v1.PrepareImageUploadRequest
+	27, // 23: remarket.product.v1.ProductService.CompleteImageUpload:input_type -> remarket.product.v1.CompleteImageUploadRequest
+	5,  // 24: remarket.product.v1.ProductService.GetProductImages:input_type -> remarket.product.v1.GetProductRequest
+	23, // 25: remarket.product.v1.ProductService.ListFeedProducts:input_type -> remarket.product.v1.ListFeedProductsRequest
+	21, // 26: remarket.product.v1.ProductService.ExportSearchSnapshot:input_type -> remarket.product.v1.ExportSearchSnapshotRequest
+	4,  // 27: remarket.product.v1.ProductService.CreateProduct:input_type -> remarket.product.v1.CreateProductRequest
+	5,  // 28: remarket.product.v1.ProductService.GetProduct:input_type -> remarket.product.v1.GetProductRequest
+	6,  // 29: remarket.product.v1.ProductService.ListMyProducts:input_type -> remarket.product.v1.ListProductsRequest
+	6,  // 30: remarket.product.v1.ProductService.ListProducts:input_type -> remarket.product.v1.ListProductsRequest
+	9,  // 31: remarket.product.v1.ProductService.UpdateProduct:input_type -> remarket.product.v1.UpdateProductRequest
+	10, // 32: remarket.product.v1.ProductService.PublishProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	10, // 33: remarket.product.v1.ProductService.OffShelfProduct:input_type -> remarket.product.v1.ChangeProductStateRequest
+	13, // 34: remarket.product.v1.ProductService.ListCategories:input_type -> remarket.product.v1.ListCategoriesRequest
+	16, // 35: remarket.product.v1.ProductService.ReserveProduct:input_type -> remarket.product.v1.ReserveProductRequest
+	17, // 36: remarket.product.v1.ProductService.GetReservation:input_type -> remarket.product.v1.GetReservationRequest
+	18, // 37: remarket.product.v1.ProductService.ReleaseReservation:input_type -> remarket.product.v1.ReleaseReservationRequest
+	19, // 38: remarket.product.v1.ProductService.ConfirmReservation:input_type -> remarket.product.v1.ConfirmReservationRequest
+	26, // 39: remarket.product.v1.ProductService.PrepareImageUpload:output_type -> remarket.product.v1.PrepareImageUploadResponse
+	11, // 40: remarket.product.v1.ProductService.CompleteImageUpload:output_type -> remarket.product.v1.ProductResponse
+	29, // 41: remarket.product.v1.ProductService.GetProductImages:output_type -> remarket.product.v1.GetProductImagesResponse
+	24, // 42: remarket.product.v1.ProductService.ListFeedProducts:output_type -> remarket.product.v1.ListFeedProductsResponse
+	22, // 43: remarket.product.v1.ProductService.ExportSearchSnapshot:output_type -> remarket.product.v1.ExportSearchSnapshotResponse
+	11, // 44: remarket.product.v1.ProductService.CreateProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 45: remarket.product.v1.ProductService.GetProduct:output_type -> remarket.product.v1.ProductResponse
+	8,  // 46: remarket.product.v1.ProductService.ListMyProducts:output_type -> remarket.product.v1.ListProductsResponse
+	8,  // 47: remarket.product.v1.ProductService.ListProducts:output_type -> remarket.product.v1.ListProductsResponse
+	11, // 48: remarket.product.v1.ProductService.UpdateProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 49: remarket.product.v1.ProductService.PublishProduct:output_type -> remarket.product.v1.ProductResponse
+	11, // 50: remarket.product.v1.ProductService.OffShelfProduct:output_type -> remarket.product.v1.ProductResponse
+	14, // 51: remarket.product.v1.ProductService.ListCategories:output_type -> remarket.product.v1.ListCategoriesResponse
+	20, // 52: remarket.product.v1.ProductService.ReserveProduct:output_type -> remarket.product.v1.ReservationResponse
+	20, // 53: remarket.product.v1.ProductService.GetReservation:output_type -> remarket.product.v1.ReservationResponse
+	20, // 54: remarket.product.v1.ProductService.ReleaseReservation:output_type -> remarket.product.v1.ReservationResponse
+	20, // 55: remarket.product.v1.ProductService.ConfirmReservation:output_type -> remarket.product.v1.ReservationResponse
+	39, // [39:56] is the sub-list for method output_type
+	22, // [22:39] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_product_v1_product_proto_init() }
@@ -1880,7 +2206,7 @@ func file_product_v1_product_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_product_v1_product_proto_rawDesc), len(file_product_v1_product_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   23,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

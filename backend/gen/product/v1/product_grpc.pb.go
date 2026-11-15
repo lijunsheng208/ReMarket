@@ -19,6 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ProductService_PrepareImageUpload_FullMethodName   = "/remarket.product.v1.ProductService/PrepareImageUpload"
+	ProductService_CompleteImageUpload_FullMethodName  = "/remarket.product.v1.ProductService/CompleteImageUpload"
+	ProductService_GetProductImages_FullMethodName     = "/remarket.product.v1.ProductService/GetProductImages"
 	ProductService_ListFeedProducts_FullMethodName     = "/remarket.product.v1.ProductService/ListFeedProducts"
 	ProductService_ExportSearchSnapshot_FullMethodName = "/remarket.product.v1.ProductService/ExportSearchSnapshot"
 	ProductService_CreateProduct_FullMethodName        = "/remarket.product.v1.ProductService/CreateProduct"
@@ -39,6 +42,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProductServiceClient interface {
+	PrepareImageUpload(ctx context.Context, in *PrepareImageUploadRequest, opts ...grpc.CallOption) (*PrepareImageUploadResponse, error)
+	CompleteImageUpload(ctx context.Context, in *CompleteImageUploadRequest, opts ...grpc.CallOption) (*ProductResponse, error)
+	GetProductImages(ctx context.Context, in *GetProductRequest, opts ...grpc.CallOption) (*GetProductImagesResponse, error)
 	// 公开在售商品游标查询；卖家条件仅缩小公开数据范围。
 	ListFeedProducts(ctx context.Context, in *ListFeedProductsRequest, opts ...grpc.CallOption) (*ListFeedProductsResponse, error)
 	// 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
@@ -66,6 +72,36 @@ type productServiceClient struct {
 
 func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
 	return &productServiceClient{cc}
+}
+
+func (c *productServiceClient) PrepareImageUpload(ctx context.Context, in *PrepareImageUploadRequest, opts ...grpc.CallOption) (*PrepareImageUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PrepareImageUploadResponse)
+	err := c.cc.Invoke(ctx, ProductService_PrepareImageUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) CompleteImageUpload(ctx context.Context, in *CompleteImageUploadRequest, opts ...grpc.CallOption) (*ProductResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProductResponse)
+	err := c.cc.Invoke(ctx, ProductService_CompleteImageUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *productServiceClient) GetProductImages(ctx context.Context, in *GetProductRequest, opts ...grpc.CallOption) (*GetProductImagesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProductImagesResponse)
+	err := c.cc.Invoke(ctx, ProductService_GetProductImages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *productServiceClient) ListFeedProducts(ctx context.Context, in *ListFeedProductsRequest, opts ...grpc.CallOption) (*ListFeedProductsResponse, error) {
@@ -212,6 +248,9 @@ func (c *productServiceClient) ConfirmReservation(ctx context.Context, in *Confi
 // All implementations must embed UnimplementedProductServiceServer
 // for forward compatibility.
 type ProductServiceServer interface {
+	PrepareImageUpload(context.Context, *PrepareImageUploadRequest) (*PrepareImageUploadResponse, error)
+	CompleteImageUpload(context.Context, *CompleteImageUploadRequest) (*ProductResponse, error)
+	GetProductImages(context.Context, *GetProductRequest) (*GetProductImagesResponse, error)
 	// 公开在售商品游标查询；卖家条件仅缩小公开数据范围。
 	ListFeedProducts(context.Context, *ListFeedProductsRequest) (*ListFeedProductsResponse, error)
 	// 仅允许独立 Search 运维凭据在商品写维护窗口导出曾发布快照。
@@ -241,6 +280,15 @@ type ProductServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedProductServiceServer struct{}
 
+func (UnimplementedProductServiceServer) PrepareImageUpload(context.Context, *PrepareImageUploadRequest) (*PrepareImageUploadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PrepareImageUpload not implemented")
+}
+func (UnimplementedProductServiceServer) CompleteImageUpload(context.Context, *CompleteImageUploadRequest) (*ProductResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CompleteImageUpload not implemented")
+}
+func (UnimplementedProductServiceServer) GetProductImages(context.Context, *GetProductRequest) (*GetProductImagesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetProductImages not implemented")
+}
 func (UnimplementedProductServiceServer) ListFeedProducts(context.Context, *ListFeedProductsRequest) (*ListFeedProductsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListFeedProducts not implemented")
 }
@@ -302,6 +350,60 @@ func RegisterProductServiceServer(s grpc.ServiceRegistrar, srv ProductServiceSer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ProductService_ServiceDesc, srv)
+}
+
+func _ProductService_PrepareImageUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrepareImageUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).PrepareImageUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_PrepareImageUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).PrepareImageUpload(ctx, req.(*PrepareImageUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_CompleteImageUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteImageUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).CompleteImageUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_CompleteImageUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).CompleteImageUpload(ctx, req.(*CompleteImageUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProductService_GetProductImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProductRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProductServiceServer).GetProductImages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProductService_GetProductImages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProductServiceServer).GetProductImages(ctx, req.(*GetProductRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ProductService_ListFeedProducts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -563,6 +665,18 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "remarket.product.v1.ProductService",
 	HandlerType: (*ProductServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PrepareImageUpload",
+			Handler:    _ProductService_PrepareImageUpload_Handler,
+		},
+		{
+			MethodName: "CompleteImageUpload",
+			Handler:    _ProductService_CompleteImageUpload_Handler,
+		},
+		{
+			MethodName: "GetProductImages",
+			Handler:    _ProductService_GetProductImages_Handler,
+		},
 		{
 			MethodName: "ListFeedProducts",
 			Handler:    _ProductService_ListFeedProducts_Handler,

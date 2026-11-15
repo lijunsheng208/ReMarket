@@ -20,12 +20,15 @@ func AddProductRoutes(router *gin.Engine, products productv1.ProductServiceClien
 	read := router.Group("/api/v1", optionalBearer(verifier))
 	read.GET("/products", h.list)
 	read.GET("/products/:id", h.detail)
+	read.GET("/products/:id/images", h.images)
 	read.GET("/categories", h.categories)
 	write := router.Group("/api/v1/products", bearerAuth(verifier))
 	write.GET("/mine", h.listMine)
 	write.POST("", h.create)
 	write.PATCH("/:id", h.update)
 	write.POST("/:id/publish", h.publish)
+	write.POST("/:id/images/uploads", h.prepareImage)
+	write.POST("/:id/images/complete", h.completeImage)
 	write.POST("/:id/off-shelf", h.offShelf)
 }
 

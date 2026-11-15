@@ -4,14 +4,14 @@ export interface Product { id: string; seller_id: string; category_id: string; t
 export class ApiError extends Error { status: number; requestId?: string; constructor(message: string, status: number, requestId?: string) { super(message); this.status = status; this.requestId = requestId } }
 
 // request 统一调用同源 Gateway；不记录密码及 Token，超时和取消传递给 fetch。
-export async function request<T>(path: string, options: { method?: string; body?: unknown; token?: string; signal?: AbortSignal; idempotencyKey?: string } = {}): Promise<T> {
+export async function request<T>(path: string, options: { method?: string; body?: unknown; token?: string; signal?: AbortSignal; idempotencyKey?: string; timeoutMs?: number } = {}): Promise<T> {
   const headers: Record<string, string> = {}
   if (options.body !== undefined) headers['Content-Type'] = 'application/json'
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey
   if (options.token) headers.Authorization = `Bearer ${options.token}`
   let response: Response
   try {
-    response = await fetch(`/api/v1${path}`, { method: options.method ?? 'GET', headers, body: options.body === undefined ? undefined : JSON.stringify(options.body), signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000), cache: 'no-store' })
+    response = await fetch(`/api/v1${path}`, { method: options.method ?? 'GET', headers, body: options.body === undefined ? undefined : JSON.stringify(options.body), signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(options.timeoutMs ?? 12000)]) : AbortSignal.timeout(options.timeoutMs ?? 12000), cache: 'no-store' })
   } catch (error) {
     if (options.signal?.aborted) throw error
     throw new ApiError('暂时无法连接服务，请确认服务已启动后重试。', 0)
