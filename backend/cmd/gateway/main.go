@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	chatv1 "remarket/backend/gen/chat/v1"
 	feedv1 "remarket/backend/gen/feed/v1"
 	orderv1 "remarket/backend/gen/order/v1"
 	productv1 "remarket/backend/gen/product/v1"
@@ -126,6 +127,16 @@ func run() error {
 		middleware = append(middleware, limiter.Middleware())
 	}
 	router := gateway.NewAuthenticatedRouter(userv1.NewUserServiceClient(conn), userv1.NewUserServiceClient(conn), tokens, timeout, middleware...)
+	chatTarget := os.Getenv("CHAT_GRPC_TARGET")
+	if chatTarget == "" {
+		chatTarget = "127.0.0.1:50056"
+	}
+	chatConn, err := grpcx.Dial(chatTarget, nil, timeout)
+	if err != nil {
+		return err
+	}
+	defer chatConn.Close()
+	gateway.AddChatRoutes(router, chatv1.NewChatServiceClient(chatConn), tokens, timeout)
 	gateway.AddFeedRoutes(router, feedv1.NewFeedServiceClient(feedConn), tokens, timeout)
 	gateway.AddProfileRoutes(router, userv1.NewUserServiceClient(conn), productv1.NewProductServiceClient(productConn), tokens, timeout)
 	gateway.AddFollowRoutes(router, userv1.NewUserServiceClient(conn), tokens, timeout)

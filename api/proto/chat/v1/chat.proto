@@ -1,0 +1,27 @@
+syntax = "proto3";
+package remarket.chat.v1;
+option go_package = "remarket/backend/gen/chat/v1;chatv1";
+import "google/protobuf/timestamp.proto";
+service ChatService {
+  rpc CreateConversation(CreateConversationRequest) returns (Conversation);
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+}
+message Conversation {
+  int64 id = 1; int64 product_id = 2; int64 buyer_id = 3; int64 seller_id = 4;
+  int64 last_seq = 5; int64 last_message_id = 6;
+  google.protobuf.Timestamp last_message_at = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+message Message {
+  int64 id = 1; int64 conversation_id = 2; int64 sender_id = 3;
+  string client_msg_id = 4; int64 seq = 5; string content = 6;
+  string message_type = 7; google.protobuf.Timestamp created_at = 8;
+}
+// 买卖双方从可信身份和 Product RPC 获取。
+message CreateConversationRequest { int64 product_id = 1; }
+message ListConversationsRequest { string cursor = 1; int32 page_size = 2; }
+message ListConversationsResponse { repeated Conversation conversations = 1; string next_cursor = 2; }
+// before_seq 倒序历史、after_seq 正序补拉互斥；两者为零表示最新历史。
+message ListMessagesRequest { int64 conversation_id = 1; int64 before_seq = 2; int64 after_seq = 3; int32 page_size = 4; }
+message ListMessagesResponse { repeated Message messages = 1; bool has_more = 2; int64 next_seq = 3; }
