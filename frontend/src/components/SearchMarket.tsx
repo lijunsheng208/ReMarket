@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ProductImages } from './ProductImages'
 import type { FormEvent } from 'react'
 import { ApiError, request, yuan } from '../api/client'
@@ -30,10 +30,13 @@ export function SearchMarket({ category, categories, token, signedIn, login, ope
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expired, setExpired] = useState(false)
+  const [notice, setNotice] = useState('')
+  const recoveredCursor = useRef(false)
   const [revision, setRevision] = useState(0)
   useEffect(() => {
+    if (recoveredCursor.current) { recoveredCursor.current = false; return }
     const controller = new AbortController()
-    queueMicrotask(() => { if (!controller.signal.aborted) { setLoading(true); setError(''); setExpired(false) } })
+    queueMicrotask(() => { if (!controller.signal.aborted) { setLoading(true); setError(''); setExpired(false); setNotice('') } })
     const params = new URLSearchParams({ page_size: '12' })
     if (mode === 'search') {
       params.set('query', filters.query); params.set('sort', filters.sort)
@@ -43,7 +46,25 @@ export function SearchMarket({ category, categories, token, signedIn, login, ope
     }
     if (cursor) params.set('cursor', cursor)
     const path = mode === 'search' ? '/search/products' : `/feed/${mode}`
-    request<{ products?: SearchProduct[]; next_cursor?: string }>(`${path}?${params}`, { signal: controller.signal, token: mode === 'following' ? token : undefined })
+    // loadPage 仅对带旧游标的过期请求恢复一次；新快照从第一页开始，禁止复用旧排序位置。
+    async function loadPage() {
+      try {
+        return await request<{ products?: SearchProduct[]; next_cursor?: string }>(`${path}?${params}`, { signal: controller.signal, token: mode === 'following' ? token : undefined })
+      } catch (err) {
+        if (controller.signal.aborted || mode !== 'search' || !cursor || !(err instanceof ApiError) || err.status !== 409) throw err
+        params.delete('cursor')
+        // 先清除失效分页状态；更新 cursor 交给首屏请求成功后执行，避免触发重复请求。
+        const data = await request<{ products?: SearchProduct[]; next_cursor?: string }>(`${path}?${params}`, { signal: controller.signal })
+        if (!controller.signal.aborted) {
+          recoveredCursor.current = true
+          setCursor('')
+          setHistory([])
+          setNotice('搜索结果已过期，已为你刷新并返回第一页。')
+        }
+        return data
+      }
+    }
+    loadPage()
       .then(data => { if (!controller.signal.aborted) { setProducts(data.products ?? []); setNext(data.next_cursor ?? '') } })
       .catch(err => { if (!controller.signal.aborted) { setProducts([]); setNext(''); setExpired(err instanceof ApiError && mode === 'search' && err.status === 409); setError(err instanceof Error ? err.message : '商品加载失败，请重试。') } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
@@ -86,6 +107,7 @@ export function SearchMarket({ category, categories, token, signedIn, login, ope
       </div>
     </form>}
     <div className="section-label"><div className="list-heading"><h2>{mode === 'following' ? '关注动态' : mode === 'home' ? '最新商品' : '搜索结果'}</h2></div><span className="muted">{mode === 'search' ? '商品状态可能稍有延迟，详情以最新状态为准' : mode === 'following' ? '你关注的卖家正在出售的商品' : '发现新发布的闲置好物'}</span></div>
+    {notice && <p className="muted" role="status">{notice}</p>}
     {error ? <div className="empty error" role="alert"><p>{error}</p><button onClick={expired ? restart : () => setRevision(value => value + 1)}>{expired ? '重新搜索' : '重试'}</button></div> : loading ? <div className="market-grid" aria-label={mode === 'search' ? '正在搜索' : '正在加载商品'}>{[0, 1, 2, 3].map(i => <div className="skeleton" key={i} />)}</div> : products.length ? <div className="market-grid">{products.map(product => <button className="market-card" key={product.id} onClick={() => open(product.id)}><div className="market-cover"><ProductImages id={product.id} token={token} /><span className="cover-category">{categories.find(item => item.id === product.category_id)?.name ?? '二手商品'}</span></div><div className="market-card-info"><h3>{product.title}</h3><strong>¥ {yuan(product.price_cent)}</strong></div></button>)}</div> : <div className="empty"><h3>{mode === 'following' ? '暂无关注动态' : mode === 'home' ? '暂无在售商品' : '没有匹配的商品'}</h3><p>{mode === 'following' ? '关注卖家后，可以在这里查看他们的在售商品。' : mode === 'home' ? '稍后刷新，看看新发布的闲置好物。' : '试试其他关键词、分类或价格范围。'}</p></div>}
     <div className="pagination"><button disabled={!history.length || loading || !!error} onClick={restart}>返回第一页</button><span>第 {history.length + 1} 页</span><button disabled={!next || loading || !!error} onClick={() => { setHistory([...history, cursor]); setCursor(next) }}>下一页 →</button></div>
   </section>

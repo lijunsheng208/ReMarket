@@ -92,7 +92,7 @@ func (r *Repository) Search(ctx context.Context, q Query, pit string, after []js
 	if err != nil {
 		return Page{}, err
 	}
-	if code == 404 && (errorType(data) == "search_context_missing_exception" || errorType(data) == "resource_not_found_exception") {
+	if code != http.StatusOK && pitMissing(data) {
 		return Page{}, ErrPITExpired
 	}
 	var result struct {
@@ -116,4 +116,51 @@ func (r *Repository) Search(ctx context.Context, q Query, pit string, after []js
 		}
 	}
 	return Page{PIT: result.PIT, Hits: result.Hits.Hits}, nil
+}
+
+// pitMissing 仅检查结构化错误链中的快照丢失类型，不把索引缺失或一般分片故障当成过期。
+func pitMissing(data []byte) bool {
+	type esError struct {
+		Type         string            `json:"type"`
+		RootCause    []json.RawMessage `json:"root_cause"`
+		CausedBy     json.RawMessage   `json:"caused_by"`
+		FailedShards []struct {
+			Reason json.RawMessage `json:"reason"`
+		} `json:"failed_shards"`
+	}
+	var response struct {
+		Error json.RawMessage `json:"error"`
+	}
+	if json.Unmarshal(data, &response) != nil {
+		return false
+	}
+	var inspect func(json.RawMessage, int) bool
+	// inspect 限制错误链深度，避免异常响应造成无界递归。
+	inspect = func(raw json.RawMessage, depth int) bool {
+		if depth > 16 {
+			return false
+		}
+		var e esError
+		if json.Unmarshal(raw, &e) != nil {
+			return false
+		}
+		if e.Type == "search_context_missing_exception" || e.Type == "resource_not_found_exception" {
+			return true
+		}
+		if inspect(e.CausedBy, depth+1) {
+			return true
+		}
+		for _, cause := range e.RootCause {
+			if inspect(cause, depth+1) {
+				return true
+			}
+		}
+		for _, shard := range e.FailedShards {
+			if inspect(shard.Reason, depth+1) {
+				return true
+			}
+		}
+		return false
+	}
+	return inspect(response.Error, 0)
 }

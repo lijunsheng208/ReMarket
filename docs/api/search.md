@@ -197,3 +197,9 @@ POST /_aliases
 商城已接入服务器搜索，包含关键词、分类、元价格边界、排序、游标下一页、返回第一页、新快照刷新及错误提示；商品管理沿用原接口。Search 三个运行命令现在优先 ELASTICSEARCH_URL，缺省读取 ELASTICSEARCH_PORT 后拼接本地 URL；启动前识别 Elasticsearch 8，误连 OpenSearch 会拒绝。SEARCH_CONSUMER_GROUP 可覆盖默认组以隔离验收。
 
 2026-11-14 已完成真实发布/修改/下架/重上架、订单预占/释放/售出到 ES 的同步及查询验收，详见 [实测记录及限制](../testing/search-acceptance.md)。前端 build、lint、现有订单 API 测试及后端完整测试通过；浏览器宿主不可用，UI 点击与视觉验收仍待完成。未完成真实故障注入或重建回滚验收。
+
+### PIT 过期恢复调整（2026-11-18）
+
+Repository 现在检查 ES 结构化错误的 root_cause、caused_by 和 failed_shards.reason，将嵌套的搜索上下文丢失映射为 FailedPrecondition/409；索引缺失和普通分片故障仍返回 503。前端搜索续页收到 409 时，保留已提交条件，自动且仅一次去掉游标重搜第一页，清空分页历史，并提示“搜索结果已过期，已为你刷新并返回第一页”。恢复请求失败后展示错误与重试入口，不递归自动恢复。PIT 空闲 60 秒与游标绝对寿命 300 秒保持不变。
+
+验证：Go 全量测试、前端 lint/build 和 git diff --check 通过；尚未执行真实 ES 等待过期及浏览器交互验收。

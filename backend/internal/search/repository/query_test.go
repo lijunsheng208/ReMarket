@@ -22,6 +22,11 @@ func TestSearchProtocol(t *testing.T) {
 		{`{"pit_id":"next","timed_out":true,"_shards":{"total":1,"successful":1,"failed":0},"hits":{"hits":[]}}`, 200, ErrUnavailable},
 		{`{"pit_id":"next","_shards":{"total":2,"successful":1,"failed":1},"hits":{"hits":[]}}`, 200, ErrUnavailable},
 		{`{"error":{"type":"search_context_missing_exception"}}`, 404, ErrPITExpired},
+		{`{"error":{"type":"search_phase_execution_exception","root_cause":[{"type":"search_context_missing_exception"}]} }`, 404, ErrPITExpired},
+		{`{"error":{"type":"search_phase_execution_exception","caused_by":{"type":"search_context_missing_exception"}}}`, 404, ErrPITExpired},
+		{`{"error":{"type":"search_phase_execution_exception","failed_shards":[{"reason":{"type":"search_context_missing_exception"}}]}}`, 404, ErrPITExpired},
+		{`{"error":{"type":"index_not_found_exception"}}`, 404, ErrUnavailable},
+		{`{"error":{"type":"search_phase_execution_exception","root_cause":[{"type":"no_shard_available_action_exception"}]}}`, 503, ErrUnavailable},
 	} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var body map[string]json.RawMessage
